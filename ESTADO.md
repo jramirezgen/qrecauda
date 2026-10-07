@@ -8,8 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 34 |
-| pendiente | 25 |
+| hecho | 36 |
+| pendiente | 23 |
 
 ## En curso, bloqueados y pausados
 
@@ -20,10 +20,9 @@ Plan v1 · 2026-10-07
 - **F0.09** Remotos: GitHub privado y espejo bare
 - **F2.07** Correr y juzgar: de la declaración al veredicto
 - **F7.05** Wiki repo: mapas, bases e incidencias publicados en la bóveda
-- **P.E3** Preinscripción E3: tasa, latencia y caso de uso
 - **F3.04** SamplerV2 sobre hardware IBM con Batch/Session (opcional)
 - **F4.02** ZNE y PEC/PNA sobre el observable de sesgo ⟨Z⟩
-- **P.E2** Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 %
+- **C.E3** E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado
 - **F7.06** Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado
 
 ## Hechos y juzgados
@@ -63,4 +62,6 @@ Plan v1 · 2026-10-07
 | F6.01 | hecho | `aea23de` | Cifrado AES-256-GCM con clave QRNG |
 | F6.02 | hecho | `a7cd133` | Transacción de peaje/Metro cifrada con la clave certificada |
 | P.E0 | hecho | `f8e21d0` | Parámetros y aritmética de la cadena, fijados antes de medir |
+| P.E2 | hecho | `43e2649` | Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 % |
+| P.E3 | hecho | `d0f062a` | Preinscripción E3: tasa, latencia y caso de uso |
 | F7.03 | hecho | `d9609a1` | Modelo de amenazas |
