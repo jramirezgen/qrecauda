@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Rechaza cualquier atribución a un modelo en el mensaje (decisión del usuario: nunca se atribuye a Claude).
+if grep -Eiq '^(Co-Authored-By|Assisted-by|Generated-by):.*(claude|anthropic|noreply@anthropic)|🤖 Generated with|claude code' "$1"; then
+  echo "✗ commit rechazado: el mensaje atribuye el trabajo a un modelo. Quita el trailer." >&2
+  exit 1
+fi

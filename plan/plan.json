@@ -1,0 +1,999 @@
+{
+ "proyecto": "QRECAUDA",
+ "version_plan": 1,
+ "fecha": "2026-10-07",
+ "degradaciones": {},
+ "nodos": [
+  {
+   "id": "F0.00",
+   "fase": "F0",
+   "tipo": "infra",
+   "titulo": "Repo git con la identidad del usuario",
+   "depende_de": [],
+   "entrega": "repo QRECAUDA con git y rama main",
+   "hecho_cuando": "git log muestra al usuario como autor y committer",
+   "cubre": [
+    "T-empaquetado"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F0.01",
+   "fase": "F0",
+   "tipo": "infra",
+   "titulo": "uv, pyproject y árbol de capas",
+   "depende_de": [
+    "F0.00"
+   ],
+   "entrega": "pyproject.toml, uv.lock y src/qrecauda/ con las capas de docs/DISENO.md §3",
+   "hecho_cuando": "uv sync termina sin error y el árbol coincide con DISENO §3",
+   "cubre": [
+    "T-empaquetado"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F0.02",
+   "fase": "F0",
+   "tipo": "doc",
+   "titulo": "FUNDAMENTO, DISENO y GLOSARIO",
+   "depende_de": [
+    "F0.01"
+   ],
+   "entrega": "docs/FUNDAMENTO.md, docs/DISENO.md, docs/GLOSARIO.md, tests/arquitectura/test_glosario.py",
+   "hecho_cuando": "objetivo, alcance, limitaciones, tabla O1–O7/R1–R6 contra el mensaje fundacional, mapa de capas y vocabulario sin términos con dos sentidos; un test cruza el glosario con los tipos públicos de src/",
+   "cubre": [
+    "A-fundamento"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F0.03",
+   "fase": "F0",
+   "tipo": "decision",
+   "titulo": "Decisiones D-001…D-008",
+   "depende_de": [
+    "F0.02"
+   ],
+   "entrega": "docs/decisiones/D-001.md … D-008.md",
+   "hecho_cuando": "una decisión por archivo con motivo, fecha y cómo se revertiría",
+   "cubre": [
+    "A-decisiones",
+    "D-001",
+    "D-002",
+    "D-003",
+    "D-004",
+    "D-005",
+    "D-006",
+    "D-007",
+    "D-008"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F0.04",
+   "fase": "F0",
+   "tipo": "infra",
+   "titulo": "Contratos de imports y trinquetes de arquitectura",
+   "depende_de": [
+    "F0.01"
+   ],
+   "entrega": ".importlinter y tests/arquitectura/",
+   "hecho_cuando": "lint-imports pasa con 5 contratos y un import prohibido sembrado a propósito lo hace fallar",
+   "cubre": [
+    "C-contratos"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F0.05",
+   "fase": "F0",
+   "tipo": "infra",
+   "titulo": "DAG verificable, registro append-only y ESTADO.md generado",
+   "depende_de": [
+    "F0.01"
+   ],
+   "entrega": "plan/plan.json, registro/nodos.jsonl, ESTADO.md, tests/test_dag_estandar.py",
+   "hecho_cuando": "python3 plan/dag.py validar sale en verde y ESTADO.md coincide con su regeneración",
+   "cubre": [
+    "A-dag"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F0.06",
+   "fase": "F0",
+   "tipo": "infra",
+   "titulo": "RETOMA.md y CLAUDE.md del repo",
+   "depende_de": [
+    "F0.05"
+   ],
+   "entrega": "RETOMA.md y CLAUDE.md",
+   "hecho_cuando": "una sesión nueva sabe por dónde seguir leyendo sólo esos dos ficheros y ESTADO.md",
+   "cubre": [
+    "A-retoma"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F0.07",
+   "fase": "F0",
+   "tipo": "infra",
+   "titulo": "Hooks commit-msg (sin atribución) y pre-push (CI local)",
+   "depende_de": [
+    "F0.00",
+    "F0.08"
+   ],
+   "entrega": "scripts/hooks/commit-msg, scripts/hooks/pre-push, scripts/instalar_hooks.sh y tests/arquitectura/test_sin_atribucion.py",
+   "hecho_cuando": "git config core.hooksPath apunta a scripts/hooks; un commit con trailer de modelo se rechaza, un push con la CI local en rojo se rechaza y el test recorre toda la historia",
+   "cubre": [
+    "R-sin-atribucion"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F0.08",
+   "fase": "F0",
+   "tipo": "infra",
+   "titulo": "CI local: ruff, mypy, lint-imports, pytest y DAG",
+   "depende_de": [
+    "F0.04",
+    "F0.05"
+   ],
+   "entrega": "scripts/ci_local.sh",
+   "hecho_cuando": "un comando corre todo lo anterior y sale distinto de cero si algo falla; se corre ANTES de empujar",
+   "cubre": [
+    "T-empaquetado"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F0.09",
+   "fase": "F0",
+   "tipo": "infra",
+   "titulo": "Remotos: GitHub privado y espejo bare",
+   "depende_de": [
+    "F0.07"
+   ],
+   "entrega": "scripts/remotos.md con origin y espejo, sin ningún token",
+   "hecho_cuando": "primer push a origin y al espejo en F:/REPOSITORIOS/espejos/QRECAUDA.git; la credencial se pasa por ruta",
+   "cubre": [
+    "T-seguridad"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "R.00",
+   "fase": "F0",
+   "tipo": "revision",
+   "titulo": "Revisión adversarial del diseño, antes de construir",
+   "depende_de": [
+    "F0.02",
+    "F0.03"
+   ],
+   "entrega": "docs/informes/REVISION_DISENO_R00.md",
+   "hecho_cuando": "un agente independiente intentó romper arquitectura y DAG (28 hallazgos); cada uno verificado contra el texto o el código y aceptado, degradado o rechazado con motivo, y el aceptado entra al tablero antes que al DAG",
+   "cubre": [
+    "A-honestidad"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F1.01",
+   "fase": "F1",
+   "tipo": "dominio",
+   "titulo": "Bits inmutable y errores con nombre",
+   "depende_de": [
+    "F0.04"
+   ],
+   "entrega": "src/qrecauda/dominio/bits.py, src/qrecauda/dominio/errores.py, tests/dominio/",
+   "hecho_cuando": "Bits rechaza lo que no es 0/1 y no congela el array del llamante; hay una excepción raíz y cuatro hijas",
+   "cubre": [
+    "L-dominio",
+    "T-errores"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F1.02",
+   "fase": "F1",
+   "tipo": "dominio",
+   "titulo": "Extractores von Neumann, Peres y Toeplitz con LHL",
+   "depende_de": [
+    "F1.01"
+   ],
+   "entrega": "src/qrecauda/dominio/extractores.py, tests/dominio/test_bits_y_extractores.py",
+   "hecho_cuando": "von Neumann quita el sesgo medido; Toeplitz coincide con la matriz densa mod 2 (y por FFT con el producto exacto a n ≥ 2e5), es lineal sobre GF(2) y longitud_segura aborta cuando no sale ni un bit; el test de sembrado usa un directorio temporal, nunca src/",
+   "cubre": [
+    "O4"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F1.03",
+   "fase": "F1",
+   "tipo": "dominio",
+   "titulo": "Entropía, métricas M1–M7 y Muestra con su origen",
+   "depende_de": [
+    "F1.01"
+   ],
+   "entrega": "src/qrecauda/dominio/entropia.py, src/qrecauda/dominio/metricas.py, src/qrecauda/dominio/muestra.py",
+   "hecho_cuando": "umbrales en un solo sitio, desigualdad estricta, veredicto conjuntivo; Muestra lleva procedencia (backend, job_id, versión) y HARDWARE_IBM sin job_id no se construye; una mitigación que no conserva los bits por disparo degrada el Origen a PRNG_CLASICO; np.random vetado en dominio/",
+   "cubre": [
+    "M1",
+    "M2"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F2.01",
+   "fase": "F2",
+   "tipo": "infra",
+   "titulo": "Puertos (Protocol) y datos con esquema versionado",
+   "depende_de": [
+    "F1.03"
+   ],
+   "entrega": "src/qrecauda/puertos/__init__.py, src/qrecauda/datos/__init__.py",
+   "hecho_cuando": "diez puertos como Protocol: los siete actuales más EstimadorDeEntropia, EstimadorDeSesgo (⟨Z⟩ con y sin mitigar) y FuenteDeSemilla; ZNE/PEC no se disfrazan de Mitigador",
+   "cubre": [
+    "L-puertos"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F2.02",
+   "fase": "F2",
+   "tipo": "adaptador",
+   "titulo": "Línea base PRNG y validador estadístico propio",
+   "depende_de": [
+    "F2.01"
+   ],
+   "entrega": "src/qrecauda/adaptadores/prng.py, src/qrecauda/adaptadores/estadistica.py, tests/adaptadores/test_vectores_nist.py",
+   "hecho_cuando": "monobit y runs reproducen los ejemplos publicados de NIST SP 800-22 (p = 0,527089, 0,109599, 0,147232, 0,500798) con |Δp| < 1e-6; χ² de bytes exige ≥ 10 240 bits y falla con EntropiaInsuficiente; el PRNG es reproducible por semilla",
+   "cubre": [
+    "M3",
+    "M4",
+    "M5"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F2.03",
+   "fase": "F2",
+   "tipo": "aplicacion",
+   "titulo": "Orquestador del pipeline (bala trazadora)",
+   "depende_de": [
+    "F1.02",
+    "F2.01"
+   ],
+   "entrega": "src/qrecauda/aplicacion/pipeline.py, tests/aplicacion/",
+   "hecho_cuando": "fuente → Peres → Toeplitz → clave corre con cualquier FuenteDeBits y Resultado trae M1, M3, M4 y M5 en tres puntos (muestra cruda, mitigada, clave) más h_min de entrada y de salida; EstimadorDeEntropia sustituye al MCV directo",
+   "cubre": [
+    "L-aplicacion"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F2.04",
+   "fase": "F2",
+   "tipo": "infra",
+   "titulo": "Transversales: configuración, observabilidad, reproducibilidad, seguridad, concurrencia",
+   "depende_de": [
+    "F2.01"
+   ],
+   "entrega": "src/qrecauda/transversal/",
+   "hecho_cuando": "configuración inmutable con clave desconocida que aborta, BLAS a un hilo forzado, secretos sólo por ruta y candado de máquina",
+   "cubre": [
+    "T-config",
+    "T-observabilidad",
+    "T-reproducibilidad",
+    "T-seguridad",
+    "T-concurrencia"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F2.05",
+   "fase": "F2",
+   "tipo": "infra",
+   "titulo": "Presentación, fachada pública y CLI",
+   "depende_de": [
+    "F2.03",
+    "F2.04",
+    "F2.06"
+   ],
+   "entrega": "src/qrecauda/presentacion/__init__.py, src/qrecauda/api.py, src/qrecauda/entrada/cli.py, src/qrecauda/entrada/codigos.py, src/qrecauda/composicion.py, tests/arquitectura/test_api.py",
+   "hecho_cuando": "la CLI es un cliente más de la fachada, un test congela sus firmas, cada excepción tiene su código de salida y la regla de transversales (C6) se cumple en composicion y entrada",
+   "cubre": [
+    "L-presentacion",
+    "L-api"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F2.06",
+   "fase": "F2",
+   "tipo": "adaptador",
+   "titulo": "Capa de datos: InformeCorrida versionado y Almacén JSON append-only",
+   "depende_de": [
+    "F2.01",
+    "F1.03"
+   ],
+   "entrega": "src/qrecauda/datos/informe.py, src/qrecauda/adaptadores/almacen_json.py, tests/adaptadores/test_almacen_e_informe.py",
+   "hecho_cuando": "esquema 2 con semilla, sha256 de la muestra cruda, epsilon, profundidad de Peres, validador, sha de la preinscripción y commit; esquemas de E2 y E3; una sola función leer_esquema que rechaza el futuro; serialización canónica, registro append-only y atómico (incluido registro/corridas/) e ida y vuelta exacta",
+   "cubre": [
+    "L-datos"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F2.07",
+   "fase": "F2",
+   "tipo": "aplicacion",
+   "titulo": "Correr y juzgar: de la declaración al veredicto",
+   "depende_de": [
+    "F2.05",
+    "F2.06",
+    "R.00"
+   ],
+   "entrega": "src/qrecauda/aplicacion/juez.py, tests/aplicacion/test_juez.py",
+   "hecho_cuando": "qrecauda correr declaraciones/E1.toml escribe registro/corridas/<id>.json por el Almacén; qrecauda juzgar E1 aplica el criterio de la declaración, añade una línea a veredictos.jsonl y se niega si la preinscripción no precede a la corrida en git (merge-base --is-ancestor) o falta un control",
+   "cubre": [
+    "L-aplicacion"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "S.01",
+   "fase": "F3",
+   "tipo": "insumo",
+   "titulo": "Spike de versiones: qiskit, aer, runtime, mthree y nistrng en un mismo entorno",
+   "depende_de": [
+    "F0.01",
+    "R.00"
+   ],
+   "entrega": "spikes/S01_versiones/RESULTADO.md, spikes/S01_versiones/resultado.json, requirements.txt, .python-version",
+   "hecho_cuando": "la combinación exacta que instala y corre un circuito queda fijada con == en requirements.txt y uv.lock; el resultado.json dice qué extra choca con cuál (⚠️ mthree puede no soportar el qiskit actual) y qué paquete falta para transpilación y 90B",
+   "cubre": [
+    "R2"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "S.02",
+   "fase": "F3",
+   "tipo": "insumo",
+   "titulo": "Spike de alcance de la mitigación: ¿TREX, ZNE y PEC actúan sobre bitstrings?",
+   "depende_de": [
+    "S.01"
+   ],
+   "entrega": "spikes/S02_mitigacion_alcance/RESULTADO.md, spikes/S02_mitigacion_alcance/resultado.json, docs/decisiones/D-009.md",
+   "hecho_cuando": "por técnica: ¿conserva los bits por disparo?, ¿corre local con Aer?, ¿qué observable la mide? (⚠️ mthree devuelve cuasi-probabilidades: si no conserva bits, F4.01 implementa twirling con máscara X y XOR clásico y mthree queda de contraste); la decisión se registra como D-009",
+   "cubre": [
+    "R4"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "S.03",
+   "fase": "F3",
+   "tipo": "insumo",
+   "titulo": "Spike de honestidad: el muestreo de AerSimulator es pseudoaleatorio",
+   "depende_de": [
+    "S.01"
+   ],
+   "entrega": "spikes/S03_aer_pseudoaleatorio/RESULTADO.md, spikes/S03_aer_pseudoaleatorio/resultado.json",
+   "hecho_cuando": "se demuestra con la misma semilla ⇒ los mismos bits, y se fija qué puede y qué no puede afirmar la demo sobre entropía cuántica",
+   "cubre": [
+    "A-honestidad"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "S.04",
+   "fase": "F3",
+   "tipo": "insumo",
+   "titulo": "Spike del estimador SP 800-90B: qué herramienta, instalable y probada",
+   "depende_de": [
+    "S.01"
+   ],
+   "entrega": "spikes/S04_90b/RESULTADO.md, spikes/S04_90b/resultado.json",
+   "hecho_cuando": "una herramienta elegida, instalable con uv sync --extra validacion o con un script documentado, que devuelve h para tres señales sintéticas (IID sesgada, Markov, determinista) y documenta su mínimo de muestras; reimplementar la fórmula en numpy haría al evaluador no independiente",
+   "cubre": [
+    "A-honestidad"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F3.01",
+   "fase": "F3",
+   "tipo": "adaptador",
+   "titulo": "Circuito H⊗n + medición sobre AerSimulator con SamplerV2",
+   "depende_de": [
+    "S.01",
+    "S.03",
+    "F2.01"
+   ],
+   "entrega": "src/qrecauda/adaptadores/aer/__init__.py, tests/adaptadores/test_aer.py",
+   "hecho_cuando": "devuelve una Muestra con Origen.SIMULADOR_AER usando PUBs y get_bitstrings, sin red ni credenciales; el orden de los bits es qubit-mayor (todos los disparos del qubit 0, luego el 1…) y un test lo fija",
+   "cubre": [
+    "O1",
+    "R2"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F3.02",
+   "fase": "F3",
+   "tipo": "adaptador",
+   "titulo": "Modelo de ruido del backend: lectura asimétrica, relajación y cross-talk",
+   "depende_de": [
+    "F3.01"
+   ],
+   "entrega": "src/qrecauda/adaptadores/aer/ruido.py, tests/adaptadores/test_ruido.py",
+   "hecho_cuando": "el canal de lectura se escribe como matriz de confusión y su sesgo inyectado coincide con el medido dentro de su error; además de tres niveles sintéticos hay un nivel realista con NoiseModel.from_backend sobre un backend falso (⚠️ sin verificar que exista en la versión fijada); Pauli-Lindblad y NoiseLearnerV3 se declaran no aplicables en local",
+   "cubre": [
+    "O2",
+    "R1"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F3.03",
+   "fase": "F3",
+   "tipo": "adaptador",
+   "titulo": "Transpilación guiada (AIRouting / StagedPassManager) con salida local",
+   "depende_de": [
+    "F3.01"
+   ],
+   "entrega": "src/qrecauda/adaptadores/aer/transpilacion.py, tests/adaptadores/test_transpilacion.py",
+   "hecho_cuando": "el circuito sale en forma ISA; si el servicio de IA no está disponible, cae a un pass manager local y lo registra",
+   "cubre": [
+    "R3"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F3.04",
+   "fase": "F3",
+   "tipo": "adaptador",
+   "titulo": "SamplerV2 sobre hardware IBM con Batch/Session (opcional)",
+   "depende_de": [
+    "F3.03",
+    "F2.04"
+   ],
+   "entrega": "src/qrecauda/adaptadores/ibm_runtime.py, tests/adaptadores/test_ibm_runtime.py",
+   "hecho_cuando": "contract test sin red con un doble, token por ruta, transpilación inyectada desde la composición; el doble NO puede devolver HARDWARE_IBM sin job_id (lo impide Muestra); la corrida real es F3.06",
+   "cubre": [
+    "L-integracion"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F3.06",
+   "fase": "F3",
+   "tipo": "decision",
+   "titulo": "Acceso a hardware IBM: corrida real o constancia de no acceso",
+   "depende_de": [
+    "F3.04"
+   ],
+   "entrega": "docs/decisiones/D-010.md y registro/corridas/HW.json",
+   "hecho_cuando": "o bien una corrida real con job_id, backend y versión (TRL de la fuente cuántica sube a lo que T.TRL diga), o bien una constancia fechada de que no hay acceso; las dos cierran el nodo y ninguna cambia el resto del plan",
+   "cubre": [
+    "A-honestidad"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F3.05",
+   "fase": "F3",
+   "tipo": "infra",
+   "titulo": "Composición y configuración de la demo con Aer ruidoso y mitigación",
+   "depende_de": [
+    "F3.02",
+    "F4.01",
+    "F5.01"
+   ],
+   "entrega": "src/qrecauda/composicion.py, src/qrecauda/transversal/configuracion.py, tests/arquitectura/test_configuracion.py",
+   "hecho_cuando": "Configuracion(backend='aer_ruidoso', mitigacion='lectura', nivel_ruido=…, validador=…) corre de punta a punta, un_hilo y entorno() se aplican desde la composición y una clave desconocida sigue abortando",
+   "cubre": [
+    "L-integracion",
+    "T-reproducibilidad"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F4.01",
+   "fase": "F4",
+   "tipo": "adaptador",
+   "titulo": "Mitigación de lectura (TREX / mthree) como puerto Mitigador",
+   "depende_de": [
+    "S.02",
+    "F3.02"
+   ],
+   "entrega": "src/qrecauda/adaptadores/mthree.py, tests/adaptadores/test_mthree.py",
+   "hecho_cuando": "dada una muestra con sesgo de lectura conocido, devuelve otra marcada mitigada con menos sesgo y conservando los bits por disparo (si la técnica remuestrea, el Origen se degrada); la técnica sale de D-009",
+   "cubre": [
+    "O3"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F4.02",
+   "fase": "F4",
+   "tipo": "adaptador",
+   "titulo": "ZNE y PEC/PNA sobre el observable de sesgo ⟨Z⟩",
+   "depende_de": [
+    "S.02",
+    "F3.02"
+   ],
+   "entrega": "src/qrecauda/adaptadores/zne_pec.py, tests/adaptadores/test_zne_pec.py",
+   "hecho_cuando": "ZNE y PEC implementan EstimadorDeSesgo donde D-009 dice que tienen sentido, reportan ⟨Z⟩ con y sin mitigar, y contra ruido de lectura declaran «sin efecto esperado» con una corrida de puerta que lo muestra",
+   "cubre": [
+    "R4"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F5.01",
+   "fase": "F5",
+   "tipo": "adaptador",
+   "titulo": "Batería NIST SP 800-22 con nistrng y contraste con el validador propio",
+   "depende_de": [
+    "F2.02",
+    "S.01"
+   ],
+   "entrega": "src/qrecauda/adaptadores/nist.py, tests/adaptadores/test_nist.py",
+   "hecho_cuando": "nistrng y adaptadores/estadistica coinciden en monobit y runs con |Δp| < 1e-6 sobre 100 secuencias; M5 se contrasta con scipy.stats.chisquare y con frequency_within_block; el criterio es la proporción de aprobados sobre N secuencias (SP 800-22 §4.2) y no un p único",
+   "cubre": [
+    "O5"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F5.02",
+   "fase": "F5",
+   "tipo": "adaptador",
+   "titulo": "Min-entropía SP 800-90B y contraste con la cota MCV del dominio",
+   "depende_de": [
+    "F1.03",
+    "S.04"
+   ],
+   "entrega": "src/qrecauda/adaptadores/min_entropia.py, tests/adaptadores/test_min_entropia.py",
+   "hecho_cuando": "implementa EstimadorDeEntropia con la herramienta que eligió S.04: una fuente de Markov con permanencia 0,8 da h ≤ 0,4 y longitud_segura recorta la clave; una IID sesgada da h ≈ −log2(p_max); exige ≥ 10^6 muestras o falla con EntropiaInsuficiente",
+   "cubre": [
+    "M2"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F6.01",
+   "fase": "F6",
+   "tipo": "adaptador",
+   "titulo": "Cifrado AES-256-GCM con clave QRNG",
+   "depende_de": [
+    "F2.01"
+   ],
+   "entrega": "src/qrecauda/adaptadores/aes_gcm.py, tests/adaptadores/test_aes_gcm.py",
+   "hecho_cuando": "clave de 256 bits y nonce de 96 bits cortados de bloques consecutivos distintos de la clave certificada; un cursor de consumo impide entregar dos veces el mismo trozo; ida y vuelta, rechazo de un texto alterado y de un nonce repetido con la misma clave",
+   "cubre": [
+    "O6"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F6.02",
+   "fase": "F6",
+   "tipo": "aplicacion",
+   "titulo": "Transacción de peaje/Metro cifrada con la clave certificada",
+   "depende_de": [
+    "F2.03",
+    "F6.01"
+   ],
+   "entrega": "src/qrecauda/aplicacion/transaccion.py, tests/aplicacion/test_transaccion.py",
+   "hecho_cuando": "una transacción simulada se cifra, se descifra y se verifica; la clave sale de Resultado.clave de un pipeline con Origen declarado y la demo con Aer se rotula «validación del pipeline», no «entropía cuántica»",
+   "cubre": [
+    "A-caso-de-uso"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "P.E0",
+   "fase": "E",
+   "tipo": "decision",
+   "titulo": "Parámetros y aritmética de la cadena, fijados antes de medir",
+   "depende_de": [
+    "F2.03",
+    "R.00"
+   ],
+   "entrega": "docs/preinscripciones/PARAMETROS.md y declaraciones/PARAMETROS.toml",
+   "hecho_cuando": "qubits, shots, bits crudos necesarios (la clave es ≈ 0,3 de lo crudo), semillas, N de secuencias NIST, repeticiones n ≥ 3 por eureka, M2 sobre bloques de 4096 bits (no sobre 256) y el 90B sobre ≥ 10^6 bits; si falta muestra se suben los shots, no se relajan los umbrales",
+   "cubre": [
+    "M2"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "P.E1",
+   "fase": "E",
+   "tipo": "preinscripcion",
+   "titulo": "Preinscripción E1: el pipeline entrega claves que cumplen M1–M5 con entrada ruidosa",
+   "depende_de": [
+    "F2.03",
+    "F2.07",
+    "F0.02",
+    "P.E0"
+   ],
+   "entrega": "docs/preinscripciones/E1.md y declaraciones/E1.toml",
+   "hecho_cuando": "criterio fijado ANTES de correr: la muestra cruda sin mitigar FALLA M1 o M3 al nivel de ruido declarado, la mitigada PASA y la clave PASA; controles negativo (un PRNG pasa) y positivo (fuentes malas rechazadas) declarados; regla de reintento sin elegir semilla",
+   "cubre": [
+    "E1"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "C.E1a",
+   "fase": "E",
+   "tipo": "corrida",
+   "titulo": "E1a · control: PRNG clásico pasa M1–M5 (la batería no distingue origen)",
+   "depende_de": [
+    "P.E1",
+    "F5.01"
+   ],
+   "entrega": "registro/corridas/E1a.json",
+   "hecho_cuando": "la corrida del PRNG sale con su veredicto en los tres puntos; que pase es el resultado esperado y se declara",
+   "cubre": [
+    "E1",
+    "M3",
+    "M4",
+    "M5"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "C.E1b",
+   "fase": "E",
+   "tipo": "corrida",
+   "titulo": "E1b · Aer ruidoso sin mitigar",
+   "depende_de": [
+    "P.E1",
+    "F3.05",
+    "F5.01"
+   ],
+   "entrega": "registro/corridas/E1b.json",
+   "hecho_cuando": "M1, M3, M4 y M5 sobre la muestra cruda ruidosa sin mitigar, y sobre la clave, al menos 3 repeticiones; el veredicto lee la muestra cruda, no sólo la clave",
+   "cubre": [
+    "E1",
+    "M3",
+    "M4",
+    "M5"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "C.E1c",
+   "fase": "E",
+   "tipo": "corrida",
+   "titulo": "E1c · Aer ruidoso mitigado",
+   "depende_de": [
+    "P.E1",
+    "F3.05",
+    "F5.01",
+    "F5.02"
+   ],
+   "entrega": "registro/corridas/E1c.json",
+   "hecho_cuando": "M1, M3, M4, M5 y la min-entropía de entrada y de salida sobre la muestra mitigada y sobre la clave, al menos 3 repeticiones",
+   "cubre": [
+    "E1",
+    "M3",
+    "M4",
+    "M5",
+    "M2"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "C.E1d",
+   "fase": "E",
+   "tipo": "corrida",
+   "titulo": "E1d · control positivo: fuentes defectuosas rechazadas, fuente ideal aceptada",
+   "depende_de": [
+    "P.E1",
+    "F5.01",
+    "F5.02",
+    "F3.05"
+   ],
+   "entrega": "registro/corridas/E1d.json",
+   "hecho_cuando": "una fuente sesgada, una periódica y una de Markov (permanencia 0,8) son rechazadas por al menos una métrica o por h_min, la Markov por h_min y no por NIST, y la ideal pasa; sin esto un veredicto «pasa» no informa",
+   "cubre": [
+    "E1"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "E1",
+   "fase": "E",
+   "tipo": "eureka",
+   "titulo": "¡EUREKA 1! Pipeline de punta a punta con veredicto M1–M5 y control negativo",
+   "depende_de": [
+    "C.E1a",
+    "C.E1b",
+    "C.E1c",
+    "C.E1d"
+   ],
+   "entrega": "registro/veredictos.jsonl",
+   "hecho_cuando": "las cuatro corridas cumplen su preinscripción y el informe dice, sin adornos, qué prueba y qué NO prueba sobre el origen cuántico",
+   "cubre": [
+    "E1"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "P.E2",
+   "fase": "E",
+   "tipo": "preinscripcion",
+   "titulo": "Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 %",
+   "depende_de": [
+    "F3.02",
+    "S.02",
+    "P.E0"
+   ],
+   "entrega": "docs/preinscripciones/E2.md y declaraciones/E2.toml",
+   "hecho_cuando": "tres niveles sintéticos más uno realista, factor mínimo de reducción y residuo máximo fijados antes de correr; declara qué técnica puede mover qué fuente de ruido y que «sin efecto esperado» de ZNE/PEC sobre lectura es un veredicto válido",
+   "cubre": [
+    "E2"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "C.E2",
+   "fase": "E",
+   "tipo": "corrida",
+   "titulo": "E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido",
+   "depende_de": [
+    "P.E2",
+    "F4.01",
+    "F4.02"
+   ],
+   "entrega": "registro/corridas/E2.json",
+   "hecho_cuando": "sesgo crudo y residual por técnica y por nivel, con su intervalo",
+   "cubre": [
+    "E2",
+    "M1"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "E2",
+   "fase": "E",
+   "tipo": "eureka",
+   "titulo": "¡EUREKA 2! La mitigación mueve el sesgo bajo el umbral M1",
+   "depende_de": [
+    "C.E2"
+   ],
+   "entrega": "registro/veredictos.jsonl",
+   "hecho_cuando": "el residuo cumple M1 en los tres niveles o el veredicto lo dice con el nivel donde deja de cumplir",
+   "cubre": [
+    "E2"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "P.E3",
+   "fase": "E",
+   "tipo": "preinscripcion",
+   "titulo": "Preinscripción E3: tasa, latencia y caso de uso",
+   "depende_de": [
+    "F6.02",
+    "F2.04",
+    "P.E0"
+   ],
+   "entrega": "docs/preinscripciones/E3.md y declaraciones/E3.toml",
+   "hecho_cuando": "M6 = bits de clave por segundo de reloj de pared a un hilo; M7 = p95 sobre N ≥ 30 repeticiones tras 3 de calentamiento, extremo a extremo (fuente, mitigación, extracción, validación, cifrado); sin cola ni red de IBM; lote, hilos y máquina fijados antes de medir",
+   "cubre": [
+    "E3"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "C.E3",
+   "fase": "E",
+   "tipo": "medicion",
+   "titulo": "E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado",
+   "depende_de": [
+    "P.E3",
+    "F6.02",
+    "F5.02",
+    "F3.05",
+    "F5.01"
+   ],
+   "entrega": "registro/corridas/E3.json",
+   "hecho_cuando": "bit/s y ms medidos con reloj monotónico sobre el pipeline con Aer, N repeticiones y la máquina registrada, con la definición de M6 y M7 de la preinscripción",
+   "cubre": [
+    "E3",
+    "M6",
+    "M7"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "E3",
+   "fase": "E",
+   "tipo": "eureka",
+   "titulo": "¡EUREKA 3! Tasa y latencia dentro de umbral con la transacción cifrada",
+   "depende_de": [
+    "C.E3"
+   ],
+   "entrega": "registro/veredictos.jsonl",
+   "hecho_cuando": "M6 y M7 cumplen con el pipeline completo, o el veredicto dice cuál no y por cuánto",
+   "cubre": [
+    "E3"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F7.03",
+   "fase": "F7",
+   "tipo": "doc",
+   "titulo": "Modelo de amenazas",
+   "depende_de": [
+    "F0.02",
+    "F0.03"
+   ],
+   "entrega": "docs/AMENAZAS.md",
+   "hecho_cuando": "qué ataques cubre un QRNG, cuáles NO (el canal, la implementación, el HSM) y qué certifica y qué no certifica NIST",
+   "cubre": [
+    "A-amenazas"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F7.06",
+   "fase": "F7",
+   "tipo": "infra",
+   "titulo": "Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado",
+   "depende_de": [
+    "F6.02",
+    "F3.05"
+   ],
+   "entrega": "tests/integracion/test_e2e_aer.py",
+   "hecho_cuando": "la cadena completa corre sin red en la CI local y el texto descifrado es igual al original",
+   "cubre": [
+    "L-integracion"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "T.TRL",
+   "fase": "F7",
+   "tipo": "doc",
+   "titulo": "Matriz de TRL por componente, derivada de la evidencia",
+   "depende_de": [
+    "F0.02",
+    "F3.06",
+    "F7.06",
+    "E1",
+    "E2",
+    "E3"
+   ],
+   "entrega": "docs/TRL.md y tests/arquitectura/test_trl.py",
+   "hecho_cuando": "una fila por componente con su evidencia (id de nodo y de corrida), el TRL alcanzado sin hardware y con él; el TRL del sistema es el de la fila más baja; TRL 4 pide repetibilidad n ≥ 3, protocolo preinscrito y que un tercero pueda auditarlo; el test falla si una fila cita un nodo inexistente",
+   "cubre": [
+    "A-trl"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F7.05",
+   "fase": "F7",
+   "tipo": "doc",
+   "titulo": "Wiki repo: mapas, bases e incidencias publicados en la bóveda",
+   "depende_de": [
+    "F0.05",
+    "F0.06",
+    "F2.05"
+   ],
+   "entrega": "docs/wiki/wiki.json y docs/wiki/",
+   "hecho_cuando": "publicar.py termina sin rechazos, la nota puerta enlaza los índices y el vault_audit no marca huérfanas",
+   "cubre": [
+    "W-wiki"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F7.01",
+   "fase": "F7",
+   "tipo": "doc",
+   "titulo": "Notebook reproducible con versiones exactas",
+   "depende_de": [
+    "E1",
+    "E2",
+    "E3"
+   ],
+   "entrega": "notebooks/qrecauda.ipynb, src/qrecauda/presentacion/figuras.py, tests/presentacion/test_figuras.py",
+   "hecho_cuando": "un clon limpio reproduce las tablas del pitch con dos comandos y los pins de uv.lock; el notebook sólo llama a presentacion/figuras.py, que tiene su test",
+   "cubre": [
+    "O7",
+    "R5"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F7.02",
+   "fase": "F7",
+   "tipo": "doc",
+   "titulo": "Pitch de 10 slides",
+   "depende_de": [
+    "E1",
+    "E2",
+    "E3",
+    "F7.03",
+    "T.TRL"
+   ],
+   "entrega": "docs/pitch/PITCH.md, tests/arquitectura/test_cifras_del_pitch.py",
+   "hecho_cuando": "las diez láminas con cada cifra marcada {{corrida:ID.métrica}} y un test que la cruza con registro/corridas/; la lámina de límites dice «validación del pipeline», no «entropía cuántica», con el TRL de T.TRL",
+   "cubre": [
+    "R6"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F7.04",
+   "fase": "F7",
+   "tipo": "doc",
+   "titulo": "Roadmap TRL 4 → TRL 5 → piloto → producción",
+   "depende_de": [
+    "E3",
+    "F3.06",
+    "F7.03",
+    "T.TRL"
+   ],
+   "entrega": "docs/ROADMAP.md",
+   "hecho_cuando": "qué evidencia falta para cada salto de TRL, empezando por el hardware real y la certificación formal que NO se hace en la hackatón",
+   "cubre": [
+    "A-roadmap"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "R.01",
+   "fase": "R",
+   "tipo": "revision",
+   "titulo": "Revisión adversarial propia previa al release 0.1.0",
+   "depende_de": [
+    "E1",
+    "E2",
+    "E3",
+    "F7.01",
+    "F4.02",
+    "T.TRL",
+    "F7.06"
+   ],
+   "entrega": "docs/informes/REVISION_ADVERSARIAL_0.1.0.md",
+   "hecho_cuando": "un agente independiente intentó romper las claims con las eurekas y las mediciones ya hechas; cada hallazgo verificado contra el texto y registrado; esta revisión es distinta de R.00",
+   "cubre": [
+    "A-honestidad"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "REL-0.1.0",
+   "fase": "R",
+   "tipo": "release",
+   "titulo": "Release 0.1.0: pipeline QRNG reproducible en simulador (rótulo de TRL según T.TRL)",
+   "depende_de": [
+    "R.01",
+    "F7.02",
+    "F7.04",
+    "F0.09",
+    "F7.05"
+   ],
+   "entrega": "docs/releases/EXPEDIENTE_0.1.0.md, CHANGELOG.md y tests/arquitectura/test_release_sin_dudas.py",
+   "hecho_cuando": "expediente con alcance, arquitectura, pruebas, validación contra línea base, despliegue y límites; el título dice lo que T.TRL sostiene; un test falla si queda un ⚠️ sin verificar vigente en FUNDAMENTO o en las decisiones",
+   "cubre": [
+    "T-empaquetado"
+   ],
+   "estado": "pendiente"
+  }
+ ]
+}

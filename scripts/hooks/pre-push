@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Antes de empujar corre la CI local (regla 6 de FUNDAMENTO): si algo está en rojo, el push no sale.
+exec "$(git rev-parse --show-toplevel)/scripts/ci_local.sh"

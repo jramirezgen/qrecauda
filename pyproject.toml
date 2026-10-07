@@ -1,0 +1,56 @@
+[project]
+name = "qrecauda"
+version = "0.1.0.dev0"
+description = "Entropía cuántica certificada (QRNG) para la recaudación del Perú: Hadamard → mitigación → extractores → validación NIST → clave"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.14",
+    "threadpoolctl>=3.5",
+]
+
+[project.optional-dependencies]
+# El núcleo (dominio, puertos, aplicación) corre sin ninguno de estos extras. Cada uno alimenta UN adaptador.
+cuantico = ["qiskit>=1.0", "qiskit-aer>=0.15", "qiskit-ibm-runtime>=0.30"]   # adaptadores/aer, adaptadores/ibm_runtime
+mitigacion = ["mthree>=2.7"]                                                  # adaptadores/mthree (⚠️ compatibilidad con qiskit: spike S.02)
+validacion = ["nistrng>=1.2"]                                                 # adaptadores/nist
+cifrado = ["cryptography>=43"]                                                # adaptadores/aes_gcm
+informe = ["matplotlib>=3.9", "plotly>=5.24", "jupyter>=1.1"]                 # presentacion/ y notebooks/
+
+[project.scripts]
+qrecauda = "qrecauda.entrada.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "hypothesis>=6",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "import-linter>=2",
+    "scipy-stubs>=1.14",
+]
+
+[build-system]
+requires = ["uv_build>=0.8,<0.12"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 140
+extend-exclude = ["plan/dag.py", "plan/dag_lib.py", "tests/test_dag_estandar.py", "docs/wiki"]  # vendorizados: no se editan
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+strict = true
+files = ["src"]
+python_version = "3.11"
+
+[[tool.mypy.overrides]]
+module = ["qiskit", "qiskit.*", "qiskit_aer", "qiskit_aer.*", "qiskit_ibm_runtime", "qiskit_ibm_runtime.*", "mthree", "mthree.*", "nistrng", "nistrng.*", "threadpoolctl"]
+ignore_missing_imports = true   # sólo los importan sus adaptadores (contrato «sdk-solo-en-adaptadores»)
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

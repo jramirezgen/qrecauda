@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.pyc
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.ipynb_checkpoints/
+dist/
+*.egg-info/
+
+# Secretos: por RUTA, nunca por valor (CLAUDE.md del vault §2·bis). Nada de esto se versiona.
+.env
+*.token
+*token*.txt
+qrecauda.toml
+inputs/secretos/
+
+# Salidas pesadas o regenerables
+salidas/
+registro/muestras/

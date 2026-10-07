@@ -1,0 +1,89 @@
+# Contratos de imports de docs/DISENO.md §3. tests/arquitectura/test_contratos.py los ejecuta y comprueba que
+# las capas de aquí son las mismas que declara qrecauda.CAPAS.
+[importlinter]
+root_package = qrecauda
+include_external_packages = True
+
+[importlinter:contract:capas]
+name = C1: una capa sólo importa las de su derecha (entrada → api → composicion → adaptadores|presentacion → aplicacion → puertos → datos → dominio)
+type = layers
+layers =
+    qrecauda.entrada
+    qrecauda.api
+    qrecauda.composicion
+    qrecauda.adaptadores | qrecauda.presentacion
+    qrecauda.aplicacion
+    qrecauda.puertos
+    qrecauda.datos
+    qrecauda.dominio
+
+[importlinter:contract:adaptadores-independientes]
+name = C2: los adaptadores no se importan entre sí (cada uno implementa UN puerto)
+type = independence
+modules =
+    qrecauda.adaptadores.aer
+    qrecauda.adaptadores.ibm_runtime
+    qrecauda.adaptadores.mthree
+    qrecauda.adaptadores.nist
+    qrecauda.adaptadores.estadistica
+    qrecauda.adaptadores.aes_gcm
+    qrecauda.adaptadores.prng
+    qrecauda.adaptadores.almacen_json
+    qrecauda.adaptadores.zne_pec
+    qrecauda.adaptadores.min_entropia
+
+[importlinter:contract:nucleo-sin-transversal]
+name = C3: dominio, datos, puertos, aplicación y presentación no importan transversal; les llega por puertos o ya validado
+type = forbidden
+source_modules =
+    qrecauda.dominio
+    qrecauda.datos
+    qrecauda.puertos
+    qrecauda.aplicacion
+    qrecauda.presentacion
+forbidden_modules =
+    qrecauda.transversal
+    qrecauda.adaptadores
+    qrecauda.entrada
+
+[importlinter:contract:dominio-puro]
+name = C4: el dominio no toca SDKs, IO, reloj ni aleatoriedad global
+type = forbidden
+source_modules =
+    qrecauda.dominio
+forbidden_modules =
+    qiskit
+    qiskit_aer
+    qiskit_ibm_runtime
+    mthree
+    nistrng
+    cryptography
+    matplotlib
+    plotly
+    requests
+    subprocess
+    socket
+    time
+    random
+    secrets
+
+[importlinter:contract:sdk-solo-en-adaptadores]
+name = C5: los SDKs cuánticos y de criptografía sólo los importan sus adaptadores
+type = forbidden
+source_modules =
+    qrecauda.dominio
+    qrecauda.datos
+    qrecauda.puertos
+    qrecauda.aplicacion
+    qrecauda.presentacion
+    qrecauda.api
+    qrecauda.composicion
+    qrecauda.entrada
+    qrecauda.transversal
+forbidden_modules =
+    qiskit
+    qiskit_aer
+    qiskit_ibm_runtime
+    mthree
+    nistrng
+    cryptography
