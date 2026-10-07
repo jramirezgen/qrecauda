@@ -1,0 +1,41 @@
+{
+ "python": "3.13.14",
+ "paquetes": {
+  "qiskit": "2.5.2",
+  "qiskit-aer": "0.17.2",
+  "qiskit-ibm-runtime": "0.50.0",
+  "qiskit-ibm-transpiler": null,
+  "mthree": "3.0.0",
+  "nistrng": "1.2.3",
+  "cryptography": "50.0.2",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1"
+ },
+ "pruebas": {
+  "aer_sampler_v2": {
+   "ok": true,
+   "bitstrings": 1000,
+   "ancho": 8
+  },
+  "import_mthree": {
+   "ok": true
+  },
+  "import_nistrng": {
+   "ok": true
+  },
+  "import_qiskit_ibm_runtime": {
+   "ok": true
+  },
+  "import_qiskit_ibm_transpiler": {
+   "ok": false,
+   "error": "ModuleNotFoundError(\"No module named 'qiskit_ibm_transpiler'\")"
+  },
+  "import_cryptography.hazmat.primitives.ciphers.aead": {
+   "ok": true
+  },
+  "mthree_API": {
+   "ok": true,
+   "tiene_M3Mitigation": true
+  }
+ }
+}

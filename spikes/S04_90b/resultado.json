@@ -1,0 +1,77 @@
+{
+ "herramienta": "usnistgov/SP800-90B_EntropyAssessment, ea_non_iid (C++ oficial del NIST)",
+ "version": "v1.1.8 (tag GitHub, tarball)",
+ "instalacion": "bash spikes/S04_90b/build_nist.sh -> /tmp/qrecauda_nist90b/ea_non_iid (curl del tarball del tag; dependencias libdivsufsort, libbz2-dev y libjsoncpp por apt-get download + dpkg -x sin root; g++ -fopenmp). Sin sudo, sin pip.",
+ "min_muestras": 1000000,
+ "senales": {
+  "iid_sesgada": {
+   "h_esperada": 0.5146,
+   "h_medida": 0.322078,
+   "estimador_minimo": "Compression Test",
+   "por_estimador": {
+    "Most Common Value": 0.512258,
+    "Collision Test": 0.507887,
+    "Markov Test": 0.514662,
+    "Compression Test": 0.322078,
+    "T-Tuple Test": 0.507008,
+    "LRS Test": 0.780367,
+    "Multi Most Common in Window (MultiMCW) Prediction Test": 0.512514,
+    "Lag Prediction Test": 0.783176,
+    "Multi Markov Model with Counting (MultiMMC) Prediction Test": 0.512265,
+    "LZ78Y Prediction Test": 0.512262
+   },
+   "mcv_propio": 0.512258,
+   "mcv_nist": 0.512258,
+   "rc": 0
+  },
+  "markov": {
+   "h_esperada": 0.3219,
+   "h_medida": 0.170394,
+   "estimador_minimo": "Collision Test",
+   "por_estimador": {
+    "Most Common Value": 0.991594,
+    "Collision Test": 0.170394,
+    "Markov Test": 0.325133,
+    "Compression Test": 0.213159,
+    "T-Tuple Test": 0.330651,
+    "LRS Test": 0.557275,
+    "Multi Most Common in Window (MultiMCW) Prediction Test": 0.485507,
+    "Lag Prediction Test": 0.319175,
+    "Multi Markov Model with Counting (MultiMMC) Prediction Test": 0.319184,
+    "LZ78Y Prediction Test": 0.319172
+   },
+   "mcv_propio": 0.991594,
+   "mcv_nist": 0.991594,
+   "rc": 0
+  },
+  "determinista": {
+   "h_esperada": 0.0,
+   "h_medida": -0.0,
+   "estimador_minimo": "Collision Test",
+   "por_estimador": {
+    "Most Common Value": 0.996289,
+    "Collision Test": -0.0,
+    "Markov Test": 0.419605,
+    "Compression Test": 0.068617,
+    "T-Tuple Test": -0.0,
+    "LRS Test": -0.0,
+    "Multi Most Common in Window (MultiMCW) Prediction Test": 1.0,
+    "Lag Prediction Test": 0.0,
+    "Multi Markov Model with Counting (MultiMMC) Prediction Test": 3e-06,
+    "LZ78Y Prediction Test": 0.412898
+   },
+   "mcv_propio": 0.996289,
+   "mcv_nist": 0.996289,
+   "rc": 0
+  }
+ },
+ "independiente": true,
+ "advertencias": [
+  "H_original = mínimo de los 10 estimadores no-IID; los 3 resultados salen de -i -a con 1 bit/símbolo.",
+  "Un -0.000000 de NIST es cero (se parsea como float; el determinista da h=0).",
+  "Bias conservador: en IID sesgada el estimador de compresión baja el mínimo a 0,322 (esperado 0,515) y en Markov el de colisión a 0,170 (esperado 0,322); MCV solo no detecta la dependencia (0,99 en Markov). Los predictores (Lag/MultiMMC/LZ78Y) clavan 0,319 en Markov: el mínimo NIST es una cota inferior, no un valor puntual.",
+  "mcv_propio coincide con el MCV de NIST a 6 decimales en las tres señales: validación independiente de dominio/entropia.py.",
+  "Compilación depende de red (GitHub, archive.ubuntu.com) y de apt-get download; el PyPI 'sp800-90b' 0.1.1 (hnj2, tercero, sdist 52 KB) existe pero NO se evaluó: no es del NIST. No hay ea_non_iid embebido en ningún paquete instalado (no buscado a fondo).",
+  "El binario usa -march=native: el resultado numérico no cambia, pero el binario no es portable entre CPUs."
+ ]
+}

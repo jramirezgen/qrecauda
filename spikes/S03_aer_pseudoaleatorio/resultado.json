@@ -1,0 +1,39 @@
+{
+  "versiones": {
+    "qiskit": "2.5.2",
+    "qiskit_aer": "0.17.2"
+  },
+  "shots": 2048,
+  "qubits": 8,
+  "misma_semilla_identica": true,
+  "semillas_distintas_distintas": true,
+  "hashes": {
+    "backend_s42_a": "1e59162030a2de735d88bf9beee953f7d341033fdb1cc45ee6f389c067bba7e4",
+    "backend_s42_b": "1e59162030a2de735d88bf9beee953f7d341033fdb1cc45ee6f389c067bba7e4",
+    "backend_s43": "b68e53fafaced40ff4ae0f0ec32f7f322f39e24dfc7856fd975ecd44465745f6",
+    "backend_ruido_s42_a": "7dbbda25bcdb1fb8c792332399d1d06f0cd99c0c0d597b2f8f5dd8c5507af175",
+    "backend_ruido_s42_b": "7dbbda25bcdb1fb8c792332399d1d06f0cd99c0c0d597b2f8f5dd8c5507af175",
+    "backend_ruido_s43": "32c9c6ef1e21c5659fe6de81f47c6ae388443d6096b4dfa02b8f29a2e64c4933",
+    "backend_sinseed_a": "c4093cf54ef4e039bb5c5ce23d21568f5b83bd9275336c409d7086d3abe7e715",
+    "backend_sinseed_b": "7662e4026854673785de02667464ad1d100f2d34cb160cacbdc67adc23d0e6d4",
+    "sampler_s42_a": "1e59162030a2de735d88bf9beee953f7d341033fdb1cc45ee6f389c067bba7e4",
+    "sampler_s42_b": "1e59162030a2de735d88bf9beee953f7d341033fdb1cc45ee6f389c067bba7e4",
+    "sampler_s43": "b68e53fafaced40ff4ae0f0ec32f7f322f39e24dfc7856fd975ecd44465745f6",
+    "sampler_ruido_s42_a": "7dbbda25bcdb1fb8c792332399d1d06f0cd99c0c0d597b2f8f5dd8c5507af175",
+    "sampler_ruido_s42_b": "7dbbda25bcdb1fb8c792332399d1d06f0cd99c0c0d597b2f8f5dd8c5507af175",
+    "sampler_ruido_s43": "32c9c6ef1e21c5659fe6de81f47c6ae388443d6096b4dfa02b8f29a2e64c4933",
+    "sampler_sinseed_a": "28ea58aebc91719dc9b5ef024116ab79e77040f73155bfcb34fcc6e87da44c08",
+    "sampler_sinseed_b": "206956eee315c776825549b0bedf452b38252f24803a07b4db073b3e7c04eb03"
+  },
+  "con_ruido_determinista": true,
+  "sin_semilla_corridas_difieren": true,
+  "ruido_altera_secuencia": true,
+  "hallazgos": [
+    "Dos corridas con seed_simulator=42 dan secuencias idénticas disparo a disparo (AerSimulator.run y SamplerV2): muestreo pseudoaleatorio.",
+    "Semillas 42 y 43 dan secuencias distintas.",
+    "Con NoiseModel(ReadoutError) y semilla fija sigue siendo determinista.",
+    "Sin semilla, las dos corridas difirieron: True.",
+    "SamplerV2(seed=...) pasa seed_simulator=self._seed a backend.run (sampler_v2.py:166-173); con seed=None pasa None.",
+    "La librería C++ de Aer enlaza std::random_device (strings del .so) y el seed por defecto de AerBackend es None; ⚠️ sin verificar que el seed por defecto salga de std::random_device (no se inspeccionó el fuente C++)."
+  ]
+}

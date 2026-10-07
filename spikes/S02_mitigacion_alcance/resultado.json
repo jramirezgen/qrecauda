@@ -1,0 +1,244 @@
+{
+  "semillas": [
+    11,
+    22,
+    33
+  ],
+  "disparos": 100000,
+  "n_qubits": 8,
+  "ruido_lectura": {
+    "p1_dado_0": 0.02,
+    "p0_dado_1": 0.08
+  },
+  "sampler_options": {
+    "conserva_bits_por_disparo": true,
+    "conserva_bits_verificado": false,
+    "corre_local_aer": false,
+    "observable": "bitstrings por disparo (SamplerV2 devuelve PubResult.data.<reg>.get_bitstrings()); solo twirling y DD",
+    "mueve_sesgo_de_lectura": null,
+    "campos_SamplerOptions": [
+      "default_shots",
+      "dynamical_decoupling",
+      "environment",
+      "execution",
+      "experimental",
+      "max_execution_time",
+      "simulator",
+      "twirling"
+    ],
+    "campos_solo_EstimatorOptions": [
+      "default_precision",
+      "resilience",
+      "resilience_level",
+      "seed_estimator"
+    ],
+    "aceptado": {
+      "resilience_level": false,
+      "resilience": false,
+      "resilience.zne_mitigation": false,
+      "twirling": true,
+      "dynamical_decoupling": true
+    },
+    "rechazado_por": {
+      "resilience_level": "ValidationError",
+      "resilience": "ValidationError",
+      "resilience.zne_mitigation": "ValidationError"
+    },
+    "twirling_sampler": "enable_measure existe en SamplerOptions; en Sampler la mitigación de lectura (measure_mitigation) NO existe"
+  },
+  "mthree": {
+    "conserva_bits_por_disparo": false,
+    "corre_local_aer": true,
+    "observable": "conteos agregados -> cuasi-probabilidades (QuasiCollection); sin API por disparo",
+    "mueve_sesgo_de_lectura": true,
+    "version": "3.0.0",
+    "metodos_publicos_M3Mitigation": [
+      "apply_correction",
+      "cals_from_file",
+      "cals_from_matrices",
+      "cals_from_system",
+      "cals_to_file",
+      "cals_to_matrices",
+      "readout_fidelity",
+      "reduced_cal_matrix",
+      "tensored_cals_from_file",
+      "tensored_cals_from_system"
+    ],
+    "hay_metodo_por_disparo": false,
+    "bits_sin_PRNG": "no: para obtener bitstrings habría que muestrear la cuasi-distribución con un PRNG (remuestreo), lo que anula el origen cuántico",
+    "sesgo_medio_antes": 0.02993583333333334,
+    "sesgo_medio_despues": 0.0016571280333058287,
+    "esperado_analitico_antes": 0.02999999999999997,
+    "por_semilla": [
+      {
+        "semilla": 11,
+        "antes": {
+          "medio": 0.030178750000000004,
+          "maximo": 0.03264,
+          "p1_global": 0.46982125
+        },
+        "despues_cuasiprob": {
+          "medio": 0.0019124554237350821,
+          "maximo": 0.0031494922004640102,
+          "negativas": false
+        },
+        "tipo_devuelto": "QuasiDistribution"
+      },
+      {
+        "semilla": 22,
+        "antes": {
+          "medio": 0.030073750000000003,
+          "maximo": 0.03161000000000003,
+          "p1_global": 0.46992625
+        },
+        "despues_cuasiprob": {
+          "medio": 0.001616805442608893,
+          "maximo": 0.004137464798986912,
+          "negativas": false
+        },
+        "tipo_devuelto": "QuasiDistribution"
+      },
+      {
+        "semilla": 33,
+        "antes": {
+          "medio": 0.029554999999999998,
+          "maximo": 0.03188000000000002,
+          "p1_global": 0.470445
+        },
+        "despues_cuasiprob": {
+          "medio": 0.0014421232335735112,
+          "maximo": 0.0023994699586182833,
+          "negativas": false
+        },
+        "tipo_devuelto": "QuasiDistribution"
+      }
+    ]
+  },
+  "twirling_propio": {
+    "conserva_bits_por_disparo": true,
+    "corre_local_aer": true,
+    "observable": "bitstrings por disparo (máscara X por qubit y bloque, XOR clásico tras medir)",
+    "mueve_sesgo_de_lectura": true,
+    "bloques": 500,
+    "disparos_por_bloque": 200,
+    "nota_mascara": "la máscara es aleatoria pero pública para el análisis; con PRNG clásico para la máscara no se añade ni resta entropía a H (el XOR de uniforme con constante es uniforme); ⚠️ sin verificar su efecto sobre estado NO uniforme (ahí el twirling promedia el canal, no lo elimina)",
+    "sesgo_medio_sin_twirling": 0.02993583333333334,
+    "sesgo_medio_con_twirling": 0.002001250000000008,
+    "por_semilla": [
+      {
+        "semilla": 11,
+        "disparos": 100000,
+        "sesgo": {
+          "medio": 0.0017175000000000107,
+          "maximo": 0.005029999999999979,
+          "p1_global": 0.4992725
+        }
+      },
+      {
+        "semilla": 22,
+        "disparos": 100000,
+        "sesgo": {
+          "medio": 0.001412500000000004,
+          "maximo": 0.003379999999999994,
+          "p1_global": 0.4992425
+        }
+      },
+      {
+        "semilla": 33,
+        "disparos": 100000,
+        "sesgo": {
+          "medio": 0.0028737500000000082,
+          "maximo": 0.004550000000000054,
+          "p1_global": 0.49972875
+        }
+      }
+    ]
+  },
+  "zne": {
+    "observable": "valores esperados <O> (EstimatorV2); no devuelve bitstrings",
+    "conserva_bits_por_disparo": false,
+    "corre_local_aer": false,
+    "mueve_sesgo_de_lectura": false,
+    "prueba_minima": {
+      "descripcion": "<Z> de H con factores de plegado 1,3,5 y solo ruido de lectura; |<Z>|=|1-2p1|; extrapolación lineal a ruido 0",
+      "sesgo_Z_factor1": 0.06002,
+      "sesgo_Z_extrapolado": 0.06002000000000001,
+      "esperado_Z_sesgado": 0.05999999999999994,
+      "por_semilla": [
+        {
+          "semilla": 11,
+          "Z_por_factor": {
+            "1": 0.06004,
+            "3": 0.06004,
+            "5": 0.06004
+          },
+          "extrapolado_a_0": 0.06004000000000001,
+          "ideal": 0.0
+        },
+        {
+          "semilla": 22,
+          "Z_por_factor": {
+            "1": 0.0603,
+            "3": 0.0603,
+            "5": 0.0603
+          },
+          "extrapolado_a_0": 0.06030000000000001,
+          "ideal": 0.0
+        },
+        {
+          "semilla": 33,
+          "Z_por_factor": {
+            "1": 0.05972,
+            "3": 0.05972,
+            "5": 0.05972
+          },
+          "extrapolado_a_0": 0.059719999999999995,
+          "ideal": 0.0
+        }
+      ]
+    },
+    "qiskit_mitigation": "0.1.1",
+    "mitiq_instalado": false,
+    "modulos_qiskit_mitigation": [
+      "GateFolding",
+      "MitigationTask",
+      "PEA",
+      "PEC",
+      "TREX",
+      "find_combined_unique_layers",
+      "load_tasks_from_result",
+      "mitigation_task",
+      "pec",
+      "trex",
+      "utils",
+      "zne"
+    ],
+    "EstimatorOptions_resilience": {
+      "zne_mitigation": true,
+      "pec_mitigation": true,
+      "solo_en_Estimator": true
+    }
+  },
+  "pec": {
+    "observable": "valores esperados <O> (EstimatorV2); no devuelve bitstrings",
+    "conserva_bits_por_disparo": false,
+    "corre_local_aer": false,
+    "mueve_sesgo_de_lectura": false,
+    "nota": "PEC pondera muestras con signos para estimar <O>: las muestras individuales no son bitstrings válidos",
+    "ejecutado_local": false,
+    "modulos": [
+      "GateFolding",
+      "MitigationTask",
+      "PEA",
+      "PEC",
+      "TREX",
+      "find_combined_unique_layers",
+      "load_tasks_from_result",
+      "mitigation_task",
+      "pec",
+      "trex",
+      "utils",
+      "zne"
+    ]
+  }
+}
