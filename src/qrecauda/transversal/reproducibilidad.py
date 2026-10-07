@@ -8,13 +8,27 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from importlib import metadata
 
-from threadpoolctl import threadpool_limits
+from threadpoolctl import threadpool_info, threadpool_limits
+
+from qrecauda.dominio.errores import EntradaInvalida
 
 
 @contextmanager
 def un_hilo() -> Iterator[None]:
     with threadpool_limits(limits=1):
         yield
+
+
+def hilos_blas() -> dict[str, int]:
+    """Hilos que usa ahora cada biblioteca BLAS/OpenMP cargada (clave `api:prefijo`)."""
+    return {f"{i['internal_api']}:{i['prefix']}": int(i["num_threads"]) for i in threadpool_info()}
+
+
+def verificar_un_hilo() -> None:
+    """Comprobación, no sólo fuerza: un sello con BLAS multihilo cambia en la 15.ª cifra."""
+    mal = {k: n for k, n in hilos_blas().items() if n != 1}
+    if mal:
+        raise EntradaInvalida(f"BLAS no está a un hilo: {mal}")
 
 
 def entorno(

@@ -67,5 +67,5 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 | `InformeCorrida` | artefacto versionado de una corrida; lo guarda el `Almacen`. |
 | `ExperimentoE2` | una celda de E2: sesgo de lectura antes y después de una técnica, a un nivel de ruido, con su intervalo. |
 | `ExperimentoE3` | E3: tasa (M6) y latencia (M7) con la máquina en que se midieron. |
-| `ErrorQRecauda` | raíz de los errores; hijas: `EntradaInvalida`, `EntropiaInsuficiente`, `FuenteNoDisponible`, `EsquemaFuturo`, `AutenticacionFallida` (cifrado o datos asociados no autentican), `NonceRepetido` (mismo nonce con la misma clave), cada una con su código de salida. |
+| `ErrorQRecauda` | raíz de los errores; hijas: `EntradaInvalida`, `EntropiaInsuficiente`, `FuenteNoDisponible`, `EsquemaFuturo`, `AutenticacionFallida` (cifrado o datos asociados no autentican), `NonceRepetido` (mismo nonce con la misma clave), `CandadoOcupado` (otra corrida pesada sostiene el candado de máquina), cada una con su código de salida. |
 | `Transaccion`, `TransaccionCifrada`, `ServicioDeTransacciones` | F6.02: el cobro de peaje/Metro, su cifrado con rótulo de origen («validación del pipeline» salvo hardware IBM con `job_id`) y el caso de uso que lo cifra con `Resultado.clave`. |

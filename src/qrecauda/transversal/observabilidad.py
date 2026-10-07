@@ -19,6 +19,15 @@ class RelojMonotonico:
         return time.perf_counter_ns()
 
 
+_SENSIBLES = ("token", "secret", "secreto", "password", "clave", "key", "credencial")
+
+
+def _es_sensible(campo: str) -> bool:
+    """Una ruta (`*_ruta`, `*_file`) nombra dónde está el secreto, no es el secreto."""
+    c = campo.lower()
+    return any(s in c for s in _SENSIBLES) and not c.endswith(("_ruta", "_file", "_path"))
+
+
 class BitacoraJsonl:
     """Implementa `Bitacora`: una línea JSON por evento, nunca un secreto (seguridad.describir)."""
 
@@ -26,7 +35,8 @@ class BitacoraJsonl:
         self._salida = salida or sys.stderr
 
     def registrar(self, evento: str, **campos: object) -> None:
-        self._salida.write(json.dumps({"evento": evento, **campos}, sort_keys=True, default=str) + "\n")
+        seguros = {k: "<oculto>" if _es_sensible(k) else v for k, v in campos.items()}
+        self._salida.write(json.dumps({"evento": evento, **seguros}, sort_keys=True, default=str) + "\n")
 
 
 @dataclass(slots=True)
@@ -37,7 +47,7 @@ class CosteEtapa:
 
 
 @contextmanager
-def medir_etapa(etapa: str) -> Iterator[CosteEtapa]:
+def medir_etapa(etapa: str, bitacora: BitacoraJsonl | None = None) -> Iterator[CosteEtapa]:
     coste = CosteEtapa(etapa)
     ya = tracemalloc.is_tracing()
     if not ya:
@@ -50,3 +60,5 @@ def medir_etapa(etapa: str) -> Iterator[CosteEtapa]:
         coste.pico_bytes = tracemalloc.get_traced_memory()[1]
         if not ya:
             tracemalloc.stop()
+        if bitacora is not None:
+            bitacora.registrar("etapa", etapa=etapa, segundos=coste.segundos, pico_bytes=coste.pico_bytes)

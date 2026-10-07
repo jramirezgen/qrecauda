@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import tomllib
 from collections.abc import Mapping
-from dataclasses import dataclass, fields
+from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
 from qrecauda.dominio.errores import EntradaInvalida
@@ -39,7 +39,17 @@ class Configuracion:
         sobran = set(mapa) - {f.name for f in fields(cls)}
         if sobran:
             raise EntradaInvalida(f"claves desconocidas en la configuración: {sorted(sobran)}")
+        for f in fields(cls):
+            if f.name in mapa:
+                v = mapa[f.name]
+                # bool es subclase de int: `qubits = true` no es un entero de configuración
+                if type(v) is not {"str": str, "int": int}[str(f.type)]:
+                    raise EntradaInvalida(f"tipo de {f.name}: se esperaba {f.type}, llegó {type(v).__name__}")
         return cls(**mapa)  # type: ignore[arg-type]
+
+    def como_dict(self) -> dict[str, object]:
+        """Para el manifiesto: claves ordenadas, sólo rutas (nunca el valor de un secreto)."""
+        return dict(sorted(asdict(self).items()))
 
     @classmethod
     def cargar(cls, ruta: Path | None) -> Configuracion:

@@ -27,3 +27,7 @@ class AutenticacionFallida(ErrorQRecauda):
 
 class NonceRepetido(ErrorQRecauda):
     """Se pidió cifrar dos veces con la misma clave y el mismo nonce: en GCM rompe confidencialidad y autenticidad."""
+
+
+class CandadoOcupado(ErrorQRecauda):
+    """Otra corrida pesada sostiene el candado de máquina y la espera acotada se agotó."""
