@@ -1,0 +1,74 @@
+# Declaración de E1 (nodo P.E1), fijada ANTES de correr. Hereda PARAMETROS.toml; aquí sólo lo propio de E1.
+# Ninguna cifra de este archivo es un resultado. Prosa y justificación: docs/preinscripciones/E1.md
+hereda = "declaraciones/PARAMETROS.toml"        # qubits, shots, semillas, [validacion], [ruido_lectura]
+
+[experimento]
+id = "E1"
+nodo_corrida = "C.E1"                            # ⚠️ un solo manifiesto para las cuatro corridas (ver [corridas] y E1.md, «Abierto»)
+metricas = ["M1_sesgo", "M2_min_entropia", "M3_nist_monobit", "M4_nist_runs", "M5_chi_cuadrado"]   # umbrales en dominio/metricas.py: no se teclean aquí
+
+[corridas]                                       # cada informe cita su corrida en `corrida`
+ids = ["C.E1a", "C.E1b", "C.E1c", "C.E1d"]
+c_e1a = "control_negativo_prng"                  # el PRNG pasa M1–M5: la batería no certifica origen (D-007)
+c_e1b = "aer_ruidoso_sin_mitigar"
+c_e1c = "aer_ruidoso_twirling_propio"
+c_e1d = "control_positivo_fuentes_defectuosas"   # 90B vs MCV (FUNDAMENTO, discrepancia 8)
+
+[ruido]
+nivel = "medio"                                  # valor en PARAMETROS.toml [ruido_lectura]; bajo y alto son de E2, no de E1
+sesgo_analitico = 0.03                           # |p01 − p10| / 2 con (0,02; 0,08); analítico, no resultado
+mitigacion = "twirling_propio"                   # F4.01, D-009
+twirling_bloque = 200                            # el de E2; no se ajusta
+
+[puntos_de_medida]                               # P.E0 regla 4
+metricas_en_tres_puntos = ["cruda", "mitigada", "clave"]   # M1, M3, M4, M5
+estimador_90b_sobre = ["cruda", "mitigada"]
+m2 = "salida: mediana de bloques de 4096 (P.E0 [validacion]); entrada: h_min del estimador, decide la longitud segura"
+
+[decisiones_previas]                             # tomadas ANTES de correr; ver E1.md
+m5_en_mitigada = "informativa"                   # decisión delegada 2026-10-07: el twirling por bloques de 200 deja sesgo local que M5 detecta
+m5_decide_en = ["clave", "cruda_de_c_e1a"]       # M5 decide sobre la CLAVE y sobre la cruda de la fuente ideal (C.E1a), no sobre la mitigada
+m4_en_mitigada = "decide"                        # ⚠️ alerta analítica en E1.md: puede compartir la causa de M5; NO se relaja sin enmienda
+estimador_90b_en_mitigada = "informativo"            # el 90B de cruda/mitigada se mide y se reporta; el umbral 0,9 sólo decide en C.E1d y en M2 de salida
+
+[criterios.c_e1a]                                # PRNG, 3 semillas
+cruda_pasa = ["M1", "M3", "M4", "M5"]
+clave_pasa = ["M1", "M2", "M3", "M4", "M5"]
+nunca_certifica_origen = true
+
+[criterios.c_e1b]                                # Aer ruidoso sin mitigar, por semilla
+cruda_falla_al_menos_una_de = ["M1", "M3"]       # si ninguna falla: desenlace NULO
+sesgo_cruda_vs_analitico_tolerancia = 0.002      # control D1: el detector ve el sesgo inyectado (misma tolerancia que C1 de E2)
+clave_se_reporta = true                          # que Toeplitz limpie la cruda es un hallazgo, no un criterio de E1b
+
+[criterios.c_e1c]                                # Aer ruidoso mitigado, por semilla
+mitigada_pasa = ["M1", "M3", "M4"]               # M5 informativa (decisión previa)
+clave_pasa = ["M1", "M2", "M3", "M4", "M5"]      # M5 sobre la clave sí decide
+
+[criterios.c_e1d]                                # control positivo, por semilla; fuentes de 1 000 000 de bits (mínimo del 90B)
+bits = 1_000_000
+sesgada_p1 = 0.7                                 # como el spike S.04
+periodica = "00001111"                           # como el spike S.04
+markov_permanencia = 0.8                         # como el spike S.04 (h real 0,322 bit/bit, analítico)
+rechazo_por_90b_menor_que = 0.9                  # UMBRALES[MIN_ENTROPIA]
+mcv_deja_pasar_markov_mayor_que = 0.9            # la tesis de la discrepancia 8
+ideal_pasa = ["M1", "M3", "M4", "M5", "M2_90b"]  # si la ideal no pasa el 90B > 0,9, el control falla: instrumento inválido
+
+[informativo]                                    # se reporta, no decide
+proporcion_nist_secuencias = 93                  # P.E0
+proporcion_nist_longitud = 10_240
+proporcion_nist_minimo = 0.959                   # 0,99 − 3·sqrt(0,0099/93), analítico
+falsa_alarma_c_e1a_analitica = 0.165             # 1 − 0,99^18, supone independencia; ⚠️ sin verificar
+
+[controles]                                      # los que exige el juez antes de emitir veredicto (validez del instrumento, no del pipeline)
+requeridos = ["N1", "D1", "P1"]
+n1 = "C.E1a: la batería acepta una fuente ideal conocida (no rechaza lo bueno)"
+d1 = "C.E1b: |sesgo de la cruda − 0,03| <= 0,002 (el detector ve lo inyectado)"
+p1 = "C.E1d: sesgada, periódica y Markov rechazadas; ideal aceptada; MCV de la Markov > 0,9"
+
+[desenlaces]
+validos = ["CUMPLE", "NO_CUMPLE", "NULO", "CUMPLE_PARCIAL"]   # INVALIDA no es desenlace: es CorridaInvalida (código 9)
+
+[reintento]
+otra_semilla = false                             # selección de semilla prohibida (P.E0 regla 3)
+ampliar_shots = false                            # sólo P.E0 regla 1 (falta de muestra para una prueba), nunca por un resultado
