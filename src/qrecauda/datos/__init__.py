@@ -8,10 +8,11 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 
-from qrecauda.datos.informe import ESQUEMA_INFORME, InformeCorrida
-from qrecauda.dominio.errores import EntradaInvalida, EsquemaFuturo
+from qrecauda.datos.esquema import leer_esquema
+from qrecauda.datos.informe import ESQUEMA_INFORME, ExperimentoE2, ExperimentoE3, InformeCorrida
+from qrecauda.dominio.errores import EntradaInvalida
 
-__all__ = ["ESQUEMA_INFORME", "InformeCorrida", "leer_informe", "serializar"]
+__all__ = ["ESQUEMA_INFORME", "ExperimentoE2", "ExperimentoE3", "InformeCorrida", "leer_esquema", "leer_informe", "serializar"]
 
 
 def serializar(artefacto: Mapping[str, object]) -> str:
@@ -21,8 +22,7 @@ def serializar(artefacto: Mapping[str, object]) -> str:
 
 def leer_informe(texto: str) -> dict[str, object]:
     datos = json.loads(texto)
-    if not isinstance(datos, dict) or "esquema" not in datos:
-        raise EntradaInvalida("el informe no declara `esquema`")
-    if int(datos["esquema"]) > ESQUEMA_INFORME:
-        raise EsquemaFuturo(f"esquema {datos['esquema']} > {ESQUEMA_INFORME}: actualiza qrecauda")
+    if not isinstance(datos, dict):
+        raise EntradaInvalida("el informe no es un objeto JSON")
+    leer_esquema(datos, ESQUEMA_INFORME, que="informe")
     return dict(datos)

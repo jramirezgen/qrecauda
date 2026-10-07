@@ -48,7 +48,7 @@ files = ["src"]
 python_version = "3.11"
 
 [[tool.mypy.overrides]]
-module = ["qiskit", "qiskit.*", "qiskit_aer", "qiskit_aer.*", "qiskit_ibm_runtime", "qiskit_ibm_runtime.*", "mthree", "mthree.*", "nistrng", "nistrng.*", "threadpoolctl"]
+module = ["qiskit", "qiskit.*", "qiskit_aer", "qiskit_aer.*", "qiskit_ibm_runtime", "qiskit_ibm_runtime.*", "mthree", "mthree.*", "nistrng", "nistrng.*", "threadpoolctl", "cryptography", "cryptography.*"]
 ignore_missing_imports = true   # sólo los importan sus adaptadores (contrato «sdk-solo-en-adaptadores»)
 
 [tool.pytest.ini_options]

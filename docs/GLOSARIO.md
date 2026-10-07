@@ -64,4 +64,6 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 | `Veredicto` | conjunción de `Medida`; vacío no aprueba. |
 | `ParametrosPipeline`, `Resultado` | entrada y salida del orquestador; `Resultado.etapas` lleva las medidas en la muestra cruda, la mitigada y la clave. |
 | `InformeCorrida` | artefacto versionado de una corrida; lo guarda el `Almacen`. |
-| `ErrorQRecauda` | raíz de los errores; hijas: `EntradaInvalida`, `EntropiaInsuficiente`, `FuenteNoDisponible`, `EsquemaFuturo`, cada una con su código de salida. |
+| `ExperimentoE2` | una celda de E2: sesgo de lectura antes y después de una técnica, a un nivel de ruido, con su intervalo. |
+| `ExperimentoE3` | E3: tasa (M6) y latencia (M7) con la máquina en que se midieron. |
+| `ErrorQRecauda` | raíz de los errores; hijas: `EntradaInvalida`, `EntropiaInsuficiente`, `FuenteNoDisponible`, `EsquemaFuturo`, `AutenticacionFallida` (cifrado o datos asociados no autentican), `NonceRepetido` (mismo nonce con la misma clave), cada una con su código de salida. |
