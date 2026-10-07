@@ -58,3 +58,7 @@ rotulo_esperado = "validación del pipeline"
 # Antes decía: guard_f6_02 = "ServicioDeTransacciones exige veredicto.aprobado (incluye M6/M7 internas hasta Toeplitz); decisión pendiente antes de C.E3"
 guard_f6_02 = "resuelto 2026-10-07 (commit 8984147, salida A de docs/preinscripciones/E3.md): el guard de cifrado juzga sólo M1–M5 (calidad_de_clave_aprobada); M6/M7 las juzga C.E3 de extremo a extremo"
 estado = "resuelto"
+
+[validacion_en_t_rep]                            # enmienda fechada 2026-10-07: no cambia ningún criterio ni umbral
+mitigada = "informativa"                         # M1–M5 en el punto «mitigada» se ejecutan y registran; no deciden (twirling por bloques de 200 deja sesgo local que M5 detecta; ver E1.md)
+decide_para_cifrar = "clave"                     # calidad_de_clave_aprobada (M1–M5 sobre la clave), guard de F6.02
