@@ -704,7 +704,7 @@
     "F3.05"
    ],
    "entrega": "registro/corridas/E1d.json",
-   "hecho_cuando": "una fuente sesgada, una periódica y una de Markov (permanencia 0,8) son rechazadas por al menos una métrica o por h_min, la Markov por h_min y no por NIST, y la ideal pasa; sin esto un veredicto «pasa» no informa",
+   "hecho_cuando": "una fuente sesgada, una periódica y una de Markov (permanencia 0,8) son rechazadas por al menos una métrica o por h_min, la Markov pasa el MCV (≥ 0,9) y la rechaza el 90B (< 0,9), y la ideal pasa; sin esto un veredicto «pasa» no informa",
    "cubre": [
     "E1"
    ],

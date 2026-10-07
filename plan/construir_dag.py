@@ -132,7 +132,7 @@ n("C.E1b", "E", "corrida", "E1b · Aer ruidoso sin mitigar", ["P.E1", "F3.05", "
 n("C.E1c", "E", "corrida", "E1c · Aer ruidoso mitigado", ["P.E1", "F3.05", "F5.01", "F5.02"], "registro/corridas/E1c.json",
   "M1, M3, M4, M5 y la min-entropía de entrada y de salida sobre la muestra mitigada y sobre la clave, al menos 3 repeticiones", ["E1", "M3", "M4", "M5", "M2"])
 n("C.E1d", "E", "corrida", "E1d · control positivo: fuentes defectuosas rechazadas, fuente ideal aceptada", ["P.E1", "F5.01", "F5.02", "F3.05"], "registro/corridas/E1d.json",
-  "una fuente sesgada, una periódica y una de Markov (permanencia 0,8) son rechazadas por al menos una métrica o por h_min, la Markov por h_min y no por NIST, y la ideal pasa; sin esto un veredicto «pasa» no informa", ["E1"])
+  "una fuente sesgada, una periódica y una de Markov (permanencia 0,8) son rechazadas por al menos una métrica o por h_min, la Markov pasa el MCV (≥ 0,9) y la rechaza el 90B (< 0,9), y la ideal pasa; sin esto un veredicto «pasa» no informa", ["E1"])
 n("E1", "E", "eureka", "¡EUREKA 1! Pipeline de punta a punta con veredicto M1–M5 y control negativo", ["C.E1a", "C.E1b", "C.E1c", "C.E1d"], "registro/veredictos.jsonl",
   "las cuatro corridas cumplen su preinscripción y el informe dice, sin adornos, qué prueba y qué NO prueba sobre el origen cuántico", ["E1"])
 n("P.E2", "E", "preinscripcion", "Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 %", ["F3.02", "S.02", "P.E0"], "docs/preinscripciones/E2.md y declaraciones/E2.toml",
