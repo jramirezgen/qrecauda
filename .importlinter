@@ -87,3 +87,18 @@ forbidden_modules =
     mthree
     nistrng
     cryptography
+
+[importlinter:contract:transversal-hoja]
+name = C6: lo transversal es hoja — sólo depende de dominio.errores; entrada, api, composicion y adaptadores lo usan, él no sube
+type = forbidden
+source_modules =
+    qrecauda.transversal
+forbidden_modules =
+    qrecauda.entrada
+    qrecauda.api
+    qrecauda.composicion
+    qrecauda.presentacion
+    qrecauda.adaptadores
+    qrecauda.aplicacion
+    qrecauda.puertos
+    qrecauda.datos
