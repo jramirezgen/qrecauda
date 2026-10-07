@@ -8,8 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 32 |
-| pendiente | 27 |
+| hecho | 34 |
+| pendiente | 25 |
 
 ## En curso, bloqueados y pausados
 
@@ -18,12 +18,13 @@ Plan v1 · 2026-10-07
 ## Listos
 
 - **F0.09** Remotos: GitHub privado y espejo bare
-- **F2.05** Presentación, fachada pública y CLI
+- **F2.07** Correr y juzgar: de la declaración al veredicto
+- **F7.05** Wiki repo: mapas, bases e incidencias publicados en la bóveda
 - **P.E3** Preinscripción E3: tasa, latencia y caso de uso
 - **F3.04** SamplerV2 sobre hardware IBM con Batch/Session (opcional)
 - **F4.02** ZNE y PEC/PNA sobre el observable de sesgo ⟨Z⟩
 - **P.E2** Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 %
-- **F3.05** Composición y configuración de la demo con Aer ruidoso y mitigación
+- **F7.06** Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado
 
 ## Hechos y juzgados
 
@@ -46,6 +47,7 @@ Plan v1 · 2026-10-07
 | F2.02 | hecho | `564dc94` | Línea base PRNG y validador estadístico propio |
 | F2.03 | hecho | `564dc94` | Orquestador del pipeline (bala trazadora) |
 | F2.04 | hecho | `a898076` | Transversales: configuración, observabilidad, reproducibilidad, seguridad, concurrencia |
+| F2.05 | hecho | `dc0ab6d` | Presentación, fachada pública y CLI |
 | F2.06 | hecho | `73c4c42` | Capa de datos: InformeCorrida versionado y Almacén JSON append-only |
 | S.01 | hecho | `7856f4e` | Spike de versiones: qiskit, aer, runtime, mthree y nistrng en un mismo entorno |
 | S.02 | hecho | `7856f4e` | Spike de alcance de la mitigación: ¿TREX, ZNE y PEC actúan sobre bitstrings? |
@@ -54,6 +56,7 @@ Plan v1 · 2026-10-07
 | F3.01 | hecho | `5312674` | Circuito H⊗n + medición sobre AerSimulator con SamplerV2 |
 | F3.02 | hecho | `5312674` | Modelo de ruido del backend: lectura asimétrica, relajación y cross-talk |
 | F3.03 | hecho | `5312674` | Transpilación guiada (AIRouting / StagedPassManager) con salida local |
+| F3.05 | hecho | `bcd0dd2` | Composición y configuración de la demo con Aer ruidoso y mitigación |
 | F4.01 | hecho | `a9bd306` | Mitigación de lectura (TREX / mthree) como puerto Mitigador |
 | F5.01 | hecho | `42b54c9` | Batería NIST SP 800-22 con nistrng y contraste con el validador propio |
 | F5.02 | hecho | `42b54c9` | Min-entropía SP 800-90B y contraste con la cota MCV del dominio |
