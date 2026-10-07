@@ -8,8 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 29 |
-| pendiente | 30 |
+| hecho | 30 |
+| pendiente | 29 |
 
 ## En curso, bloqueados y pausados
 
@@ -19,7 +19,6 @@ Plan v1 · 2026-10-07
 
 - **F0.09** Remotos: GitHub privado y espejo bare
 - **F2.04** Transversales: configuración, observabilidad, reproducibilidad, seguridad, concurrencia
-- **F6.02** Transacción de peaje/Metro cifrada con la clave certificada
 - **F4.01** Mitigación de lectura (TREX / mthree) como puerto Mitigador
 - **F4.02** ZNE y PEC/PNA sobre el observable de sesgo ⟨Z⟩
 - **P.E2** Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 %
@@ -55,5 +54,6 @@ Plan v1 · 2026-10-07
 | F5.01 | hecho | `42b54c9` | Batería NIST SP 800-22 con nistrng y contraste con el validador propio |
 | F5.02 | hecho | `42b54c9` | Min-entropía SP 800-90B y contraste con la cota MCV del dominio |
 | F6.01 | hecho | `aea23de` | Cifrado AES-256-GCM con clave QRNG |
+| F6.02 | hecho | `a7cd133` | Transacción de peaje/Metro cifrada con la clave certificada |
 | P.E0 | hecho | `f8e21d0` | Parámetros y aritmética de la cadena, fijados antes de medir |
 | F7.03 | hecho | `d9609a1` | Modelo de amenazas |
