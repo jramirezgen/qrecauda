@@ -8,8 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 38 |
-| pendiente | 21 |
+| hecho | 39 |
+| pendiente | 20 |
 
 ## En curso, bloqueados y pausados
 
@@ -22,7 +22,6 @@ Plan v1 · 2026-10-07
 - **F3.04** SamplerV2 sobre hardware IBM con Batch/Session (opcional)
 - **C.E2** E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido
 - **C.E3** E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado
-- **F7.06** Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado
 
 ## Hechos y juzgados
 
@@ -65,4 +64,5 @@ Plan v1 · 2026-10-07
 | P.E2 | hecho | `43e2649` | Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 % |
 | P.E3 | hecho | `d0f062a` | Preinscripción E3: tasa, latencia y caso de uso |
 | F7.03 | hecho | `d9609a1` | Modelo de amenazas |
+| F7.06 | hecho | `013fd62` | Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado |
 | F7.05 | hecho | `7db7730` | Wiki repo: mapas, bases e incidencias publicados en la bóveda |
