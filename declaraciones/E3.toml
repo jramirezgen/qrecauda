@@ -1,0 +1,57 @@
+# Declaración de E3 (nodo P.E3), fijada ANTES de medir. Hereda PARAMETROS.toml. Ninguna cifra es un resultado.
+# Prosa y justificación: docs/preinscripciones/E3.md
+hereda = "declaraciones/PARAMETROS.toml"        # qubits, shots, semillas, [tiempos]
+
+[experimento]
+id = "E3"
+nodo_corrida = "C.E3"
+metricas = ["M6_tasa_bps", "M7_latencia_ms"]    # umbrales en dominio/metricas.py: no se teclean aquí
+
+[definiciones]
+m6 = "sum(len(clave)) / sum(t_rep) por semilla; pared; un hilo"
+m7 = "percentil 95 (method=higher) de t_rep sobre 30 repeticiones tras 3 de calentamiento"
+t_rep = "fuente + mitigacion + extraccion + validacion(M1-M5 en tres puntos + 90B) + una transaccion cifrada y descifrada"
+reloj = "time.perf_counter_ns"
+sin_cola_ni_red_de_ibm = true
+
+[configuracion]
+perfil_decisivo = "A"
+backend = "aer_ruidoso"
+nivel_ruido = "medio"                            # valor en PARAMETROS.toml [ruido_lectura]
+mitigacion = "twirling_propio"
+twirling_bloque = 200
+repeticiones = 30
+calentamiento = 3
+semilla_repeticion = "semilla * 100 + i"        # i = 0..32
+hilos = 1
+omp_num_threads = 1
+aer_max_parallel_threads = 1
+carga_previa_maxima = 1.0                        # os.getloadavg()[0] < 1.0
+candado_de_maquina = true
+maquina = "la registrada por entorno() + CPU, nucleos logicos, RAM y kernel; una sola para las tres semillas"
+
+[validez_un_hilo]
+cpu_sobre_pared_maximo = 1.10                    # fuera de eso, corrida INVALIDA
+
+[criterios]                                      # conjuntivos, por semilla y en las tres
+t1_m6 = "medir(TASA) estricto, perfil A"
+t2_m7 = "medir(LATENCIA) estricto, perfil A, p95"
+t3_controles = ["U1", "U2", "U3", "U4", "U5"]
+t4_un_hilo = true
+cv_t_rep_aviso = 0.2                             # sólo se reporta
+
+[perfil_b]                                       # complementario: NO decide, NO rescata a A
+decide = false
+transacciones = 1000
+peaje = 500
+metro = 500
+bits_por_transaccion = 352                       # clave 256 + nonce 96
+datos = "sinteticos, sin datos personales"
+
+[controles_uso]
+u2_casos = 100
+u3_casos = 100
+rotulo_esperado = "validación del pipeline"
+
+[prerrequisitos_abiertos]
+guard_f6_02 = "ServicioDeTransacciones exige veredicto.aprobado (incluye M6/M7 internas hasta Toeplitz); decisión pendiente antes de C.E3"
