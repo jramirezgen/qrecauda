@@ -55,6 +55,15 @@ class Cifrador(Protocol):
     def descifrar(self, clave: Bits, nonce: Bits, cifrado: bytes, asociado: bytes) -> bytes: ...
 
 
+class ReservaDeClaves(Protocol):
+    """Reparte una clave certificada en pares (clave, nonce) que salen una sola vez; sin bits suficientes, `EntropiaInsuficiente`."""
+
+    @property
+    def restantes(self) -> int: ...
+
+    def siguiente(self) -> tuple[Bits, Bits]: ...
+
+
 class Almacen(Protocol):
     """Persistencia de artefactos canónicos. Append-only: guardar un nombre que ya existe es un error."""
 
