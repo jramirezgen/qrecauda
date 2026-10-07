@@ -1,0 +1,80 @@
+filters:
+  and:
+    - or:
+        - file.inFolder("QRECAUDA/Incidencias")
+        - file.inFolder("wiki/QRECAUDA/Incidencias")
+    - file.hasTag("incidencia")
+properties:
+  inc:
+    displayName: "#"
+  tipo:
+    displayName: Tipo
+  situacion:
+    displayName: Situación
+  peso:
+    displayName: Peso
+  hito:
+    displayName: Hito
+  bloqueado_por:
+    displayName: Bloqueada por
+  mapa_n:
+    displayName: Mapa
+  nodo:
+    displayName: Nodo
+  file.name:
+    displayName: Incidencia
+views:
+  - type: table
+    name: Vivas por peso
+    filters:
+      and:
+        - situacion != "resuelta"
+        - situacion != "descartada"
+    order:
+      - inc
+      - tipo
+      - peso
+      - file.name
+      - situacion
+      - hito
+      - mapa_n
+  - type: table
+    name: Por tipo
+    groupBy:
+      property: tipo
+      direction: ASC
+    order:
+      - tipo
+      - inc
+      - peso
+      - file.name
+      - situacion
+  - type: table
+    name: Por hito
+    groupBy:
+      property: hito
+      direction: ASC
+    order:
+      - hito
+      - peso
+      - inc
+      - file.name
+      - situacion
+  - type: table
+    name: Bloqueadas
+    filters:
+      and:
+        - situacion == "bloqueada"
+    order:
+      - inc
+      - file.name
+      - bloqueado_por
+      - peso
+      - hito
+  - type: cards
+    name: Fichas
+    order:
+      - file.name
+      - tipo
+      - situacion
+      - peso

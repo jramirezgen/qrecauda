@@ -1,0 +1,80 @@
+{
+ "_": "Manifiesto del wiki repo de QRECAUDA. Lo que este fichero declara es la INTENCIÓN; lo que la bóveda tiene de verdad está en `wiki.lock.json`, que es generado y no se edita a mano.",
+ "proyecto": "QRECAUDA",
+ "vault": "/mnt/f/OBSIDIAN",
+ "estructura": {
+  "mapas": "Mapas",
+  "mapas_de": "QRECAUDA",
+  "versiones": "Mapas/Versiones",
+  "bases": "Bases",
+  "incidencias": "Incidencias"
+ },
+ "frontmatter": {
+  "area": [
+   "Investigación"
+  ],
+  "tema": [
+   "QRECAUDA"
+  ]
+ },
+ "_mapas": "Cada mapa: n · fuente (el .canvas del repo) · titulo · mapea · generador · libres (ids que el humano puede mover). Opcional `issue`.",
+ "mapas": [
+  {
+   "n": 1,
+   "fuente": "01 — El DAG del plan.canvas",
+   "titulo": "El DAG del plan",
+   "mapea": "los nodos del plan —su número lo da la leyenda— por fase (F0 fundación … cierre) con sus dependencias reducidas, coloreados por estado desde plan/plan.json + registro/; eurekas, release y spikes marcados",
+   "generador": "docs/wiki/generar_dag_plan.py",
+   "libres": [
+    "leyenda"
+   ],
+   "issue": "INC-001"
+  },
+  {
+   "n": 2,
+   "fuente": "02 — Arquitectura de capas.canvas",
+   "titulo": "Arquitectura de capas",
+   "mapea": "las cuatro macro-capas (datos, lógica, integración, transversales) con sus módulos reales y los contratos que lint-imports hace cumplir; sale de .importlinter y src/qrecauda/",
+   "generador": "docs/wiki/generar_arquitectura.py",
+   "libres": [
+    "leyenda"
+   ],
+   "issue": "INC-002"
+  }
+ ],
+ "_bases": "Cada base: n · titulo · fuente (.base) · generador · tabula · indice (la nota 00 que la abre) · gancho (cómo se la nombra desde la nota puerta).",
+ "bases": [
+  {
+   "n": 1,
+   "titulo": "Incidencias de QRECAUDA",
+   "fuente": "01 — Incidencias de QRECAUDA.base",
+   "generador": "docs/wiki/generar_incidencias.py",
+   "tabula": "el tablero: qué está mal o qué se propone, de qué tipo, con qué peso y qué lo cierra",
+   "indice": "00 — Incidencias de QRECAUDA",
+   "gancho": "🐛 las incidencias"
+  },
+  {
+   "n": 2,
+   "titulo": "Versiones de mapas de QRECAUDA",
+   "fuente": "02 — Versiones de mapas de QRECAUDA.base",
+   "generador": "docs/wiki/generar_versiones.py",
+   "tabula": "el histórico de diseños: cada canvas que se archivó antes de que el siguiente lo pisara",
+   "indice": "00 — Versiones de mapas de QRECAUDA",
+   "gancho": "🗄️ el histórico de diseños"
+  }
+ ],
+ "git_commit_al_cerrar_incidencia": true,
+ "coautoria_commit": "",
+ "alejandria": {
+  "coleccion_raiz": "QRECAUDA",
+  "eleva_cuando": "la incidencia que sostiene el informe pasa a `resuelta` con `hito` (EXPEDIENTE de release o veredicto de un eureka)",
+  "ejemplos_de_reporte_elevable": [
+   "docs/releases/EXPEDIENTE_<version>.md"
+  ],
+  "no_se_eleva": [
+   "Incidencias/ (issues)",
+   "Mapas/*.canvas y su histórico"
+  ],
+  "protocolos_y_database_indexados_no_duplicados": true
+ }
+}

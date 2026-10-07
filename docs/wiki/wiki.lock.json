@@ -1,0 +1,39 @@
+{
+  "_que_es": "GENERADO por publicar.py — no se edita a mano. Por artefacto, las huellas canónicas del repo Y de la bóveda tal y como quedaron la última vez. Hacen falta las dos: con una sola, adoptar una edición manual la dejaba pisable en la corrida siguiente, porque «la bóveda está donde la dejamos» se leía como «avanzó el generador».",
+  "adoptado": {
+    "01 — El DAG del plan.canvas": {
+      "repo": "81df35ac9476472b",
+      "vault": "81df35ac9476472b",
+      "sellado": "2026-10-07",
+      "version": 3
+    },
+    "01 — Incidencias de QRECAUDA.base": {
+      "repo": "c71d6cb5cf97384c",
+      "vault": "c71d6cb5cf97384c",
+      "sellado": "2026-10-07",
+      "version": 1
+    },
+    "02 — Arquitectura de capas.canvas": {
+      "repo": "9f025b3e91db0e73",
+      "vault": "9f025b3e91db0e73",
+      "sellado": "2026-10-07",
+      "version": 3
+    },
+    "02 — Versiones de mapas de QRECAUDA.base": {
+      "repo": "bb69912f318d2a84",
+      "vault": "bb69912f318d2a84",
+      "sellado": "2026-10-07",
+      "version": 1
+    }
+  },
+  "_incidencias": "`situacion:` de cada incidencia, observada la última vez — sólo existe si el proyecto activó `git_commit_al_cerrar_incidencia`. Sin este 'antes', publicar no puede distinguir una incidencia que YA estaba resuelta de una que se acaba de cerrar.",
+  "incidencias": {
+    "INC-001": "en_curso",
+    "INC-002": "en_curso",
+    "INC-003": "en_curso",
+    "INC-004": "en_curso",
+    "INC-005": "en_curso",
+    "INC-006": "en_curso",
+    "INC-007": "en_curso"
+  }
+}

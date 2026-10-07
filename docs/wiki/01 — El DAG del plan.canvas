@@ -1,0 +1,1492 @@
+{
+ "nodes": [
+  {
+   "id": "leyenda",
+   "type": "text",
+   "x": -1400,
+   "y": 0,
+   "width": 620,
+   "height": 900,
+   "text": "## QRECAUDA — el DAG del plan\n*generado de `plan/plan.json` + `registro/` · plan v1 · 2026-10-07*\n\n**59 nodos** · eurekas 0/3\n\n🟩 hecho: **37** · 🟦 juzgado: **0**\n🟧 en curso: **0**\n🟨 listo (dependencias hechas): **7**\n⬜ espera dependencias: **15**\n🟥 bloqueado: **0**\n\n**Siguiente:** F0.09, F2.07, F7.05, F3.04, C.E2, C.E3, F7.06\n\nLas flechas son la reducción transitiva de `depende_de`.\n⭐ eureka · 🏷️ release · 🧱 insumo (spike) · 🐛 incidencia anclada\n\n**Tablero:** [[INC-001 — El plan de QRECAUDA necesita su DAG visible y verificable|INC-001]] (en_curso) · [[INC-002 — La arquitectura debe separar datos, lógica, integración y transversales|INC-002]] (en_curso) · [[INC-003 — Los criterios de éxito de E1 se cumplen por construcción|INC-003]] (en_curso) · [[INC-004 — El camino a TRL 4 no está definido y el hardware opcional bloquea el release|INC-004]] (en_curso) · [[INC-005 — Nadie ejecuta, persiste ni juzga las corridas|INC-005]] (en_curso) · [[INC-006 — Fugas de capa: C2 contradice el diseño y faltan puertos|INC-006]] (en_curso) · [[INC-007 — Dimensionamiento y spikes que faltan antes de construir|INC-007]] (en_curso)",
+   "color": "6"
+  },
+  {
+   "id": "F0.00",
+   "type": "text",
+   "x": 0,
+   "y": 0,
+   "width": 620,
+   "height": 202,
+   "text": "### 🟩 F0.00 · Repo git con la identidad del usuario\n*infra* · **entrega:** repo QRECAUDA con git y rama main\n\n✔ git log muestra al usuario como autor y committer\n\n`cubre:` T-empaquetado",
+   "color": "4"
+  },
+  {
+   "id": "F0.01",
+   "type": "text",
+   "x": 0,
+   "y": 312,
+   "width": 620,
+   "height": 256,
+   "text": "### 🟩 F0.01 · uv, pyproject y árbol de capas\n*infra* · **entrega:** pyproject.toml, uv.lock y src/qrecauda/ con las capas de docs/DISENO.md §3\n\n✔ uv sync termina sin error y el árbol coincide con DISENO §3\n\n`cubre:` T-empaquetado",
+   "color": "4"
+  },
+  {
+   "id": "F0.02",
+   "type": "text",
+   "x": 0,
+   "y": 678,
+   "width": 620,
+   "height": 310,
+   "text": "### 🟩 F0.02 · FUNDAMENTO, DISENO y GLOSARIO\n*doc* · **entrega:** docs/FUNDAMENTO.md, docs/DISENO.md, docs/GLOSARIO.md, tests/arquitectura/test_glosario.py\n\n✔ objetivo, alcance, limitaciones, tabla O1–O7/R1–R6 contra el mensaje fundacional, mapa de capas y vocabulario sin términos con dos sentidos; un test cruza el glosario con los tipos públicos de src/\n\n`cubre:` A-fundamento",
+   "color": "4"
+  },
+  {
+   "id": "F0.04",
+   "type": "text",
+   "x": 0,
+   "y": 1098,
+   "width": 620,
+   "height": 256,
+   "text": "### 🟩 F0.04 · Contratos de imports y trinquetes de arquitectura\n*infra* · **entrega:** .importlinter y tests/arquitectura/\n\n✔ lint-imports pasa con 5 contratos y un import prohibido sembrado a propósito lo hace fallar\n\n`cubre:` C-contratos",
+   "color": "4"
+  },
+  {
+   "id": "F0.05",
+   "type": "text",
+   "x": 0,
+   "y": 1464,
+   "width": 620,
+   "height": 283,
+   "text": "### 🟩 F0.05 · DAG verificable, registro append-only y ESTADO.md generado\n*infra* · **entrega:** plan/plan.json, registro/nodos.jsonl, ESTADO.md, tests/test_dag_estandar.py\n\n✔ python3 plan/dag.py validar sale en verde y ESTADO.md coincide con su regeneración\n\n`cubre:` A-dag",
+   "color": "4"
+  },
+  {
+   "id": "F0.03",
+   "type": "text",
+   "x": 0,
+   "y": 1857,
+   "width": 620,
+   "height": 283,
+   "text": "### 🟩 F0.03 · Decisiones D-001…D-008\n*decision* · **entrega:** docs/decisiones/D-001.md … D-008.md\n\n✔ una decisión por archivo con motivo, fecha y cómo se revertiría\n\n`cubre:` A-decisiones, D-001, D-002, D-003, D-004, D-005, D-006, D-007, D-008",
+   "color": "4"
+  },
+  {
+   "id": "F0.06",
+   "type": "text",
+   "x": 0,
+   "y": 2250,
+   "width": 620,
+   "height": 229,
+   "text": "### 🟩 F0.06 · RETOMA.md y CLAUDE.md del repo\n*infra* · **entrega:** RETOMA.md y CLAUDE.md\n\n✔ una sesión nueva sabe por dónde seguir leyendo sólo esos dos ficheros y ESTADO.md\n\n`cubre:` A-retoma",
+   "color": "4"
+  },
+  {
+   "id": "F0.08",
+   "type": "text",
+   "x": 0,
+   "y": 2589,
+   "width": 620,
+   "height": 256,
+   "text": "### 🟩 F0.08 · CI local: ruff, mypy, lint-imports, pytest y DAG\n*infra* · **entrega:** scripts/ci_local.sh\n\n✔ un comando corre todo lo anterior y sale distinto de cero si algo falla; se corre ANTES de empujar\n\n`cubre:` T-empaquetado",
+   "color": "4"
+  },
+  {
+   "id": "F0.07",
+   "type": "text",
+   "x": 0,
+   "y": 2955,
+   "width": 620,
+   "height": 337,
+   "text": "### 🟩 F0.07 · Hooks commit-msg (sin atribución) y pre-push (CI local)\n*infra* · **entrega:** scripts/hooks/commit-msg, scripts/hooks/pre-push, scripts/instalar_hooks.sh y tests/arquitectura/test_sin_atribucion.py\n\n✔ git config core.hooksPath apunta a scripts/hooks; un commit con trailer de modelo se rechaza, un push con la CI local en rojo se rechaza y el test recorre toda la historia\n\n`cubre:` R-sin-atribucion",
+   "color": "4"
+  },
+  {
+   "id": "R.00",
+   "type": "text",
+   "x": 0,
+   "y": 3402,
+   "width": 620,
+   "height": 337,
+   "text": "### 🟩 R.00 · Revisión adversarial del diseño, antes de construir\n*revision* · **entrega:** docs/informes/REVISION_DISENO_R00.md\n\n✔ un agente independiente intentó romper arquitectura y DAG (28 hallazgos); cada uno verificado contra el texto o el código y aceptado, degradado o rechazado con motivo, y el aceptado entra al tablero antes que al DAG\n\n`cubre:` A-honestidad",
+   "color": "4"
+  },
+  {
+   "id": "F0.09",
+   "type": "text",
+   "x": 0,
+   "y": 3849,
+   "width": 620,
+   "height": 256,
+   "text": "### 🟨 F0.09 · Remotos: GitHub privado y espejo bare\n*infra* · **entrega:** scripts/remotos.md con origin y espejo, sin ningún token\n\n✔ primer push a origin y al espejo en F:/REPOSITORIOS/espejos/QRECAUDA.git; la credencial se pasa por ruta\n\n`cubre:` T-seguridad",
+   "color": "3"
+  },
+  {
+   "id": "g_F0",
+   "type": "group",
+   "x": -60,
+   "y": -124,
+   "width": 740,
+   "height": 4289,
+   "label": "F0 · FUNDACIÓN — repo, contratos, DAG, hooks, CI"
+  },
+  {
+   "id": "F1.01",
+   "type": "text",
+   "x": 1400,
+   "y": 0,
+   "width": 620,
+   "height": 256,
+   "text": "### 🟩 F1.01 · Bits inmutable y errores con nombre\n*dominio* · **entrega:** src/qrecauda/dominio/bits.py, src/qrecauda/dominio/errores.py, tests/dominio/\n\n✔ Bits rechaza lo que no es 0/1 y no congela el array del llamante; hay una excepción raíz y cuatro hijas\n\n`cubre:` L-dominio, T-errores",
+   "color": "4"
+  },
+  {
+   "id": "F1.02",
+   "type": "text",
+   "x": 1400,
+   "y": 366,
+   "width": 620,
+   "height": 364,
+   "text": "### 🟩 F1.02 · Extractores von Neumann, Peres y Toeplitz con LHL\n*dominio* · **entrega:** src/qrecauda/dominio/extractores.py, tests/dominio/test_bits_y_extractores.py\n\n✔ von Neumann quita el sesgo medido; Toeplitz coincide con la matriz densa mod 2 (y por FFT con el producto exacto a n ≥ 2e5), es lineal sobre GF(2) y longitud_segura aborta cuando no sale ni un bit; el test de sembrado usa un directorio temporal, nunca src/\n\n`cubre:` O4",
+   "color": "4"
+  },
+  {
+   "id": "F1.03",
+   "type": "text",
+   "x": 1400,
+   "y": 840,
+   "width": 620,
+   "height": 391,
+   "text": "### 🟩 F1.03 · Entropía, métricas M1–M7 y Muestra con su origen\n*dominio* · **entrega:** src/qrecauda/dominio/entropia.py, src/qrecauda/dominio/metricas.py, src/qrecauda/dominio/muestra.py\n\n✔ umbrales en un solo sitio, desigualdad estricta, veredicto conjuntivo; Muestra lleva procedencia (backend, job_id, versión) y HARDWARE_IBM sin job_id no se construye; una mitigación que no conserva los bits por disparo degrada el Origen a PRNG_CLASICO; np.random vetado en dominio/\n\n`cubre:` M1, M2",
+   "color": "4"
+  },
+  {
+   "id": "g_F1",
+   "type": "group",
+   "x": 1340,
+   "y": -124,
+   "width": 740,
+   "height": 1415,
+   "label": "F1 · LÓGICA — dominio puro: Bits, extractores, métricas"
+  },
+  {
+   "id": "F2.01",
+   "type": "text",
+   "x": 2800,
+   "y": 0,
+   "width": 620,
+   "height": 310,
+   "text": "### 🟩 F2.01 · Puertos (Protocol) y datos con esquema versionado\n*infra* · **entrega:** src/qrecauda/puertos/__init__.py, src/qrecauda/datos/__init__.py\n\n✔ diez puertos como Protocol: los siete actuales más EstimadorDeEntropia, EstimadorDeSesgo (⟨Z⟩ con y sin mitigar) y FuenteDeSemilla; ZNE/PEC no se disfrazan de Mitigador\n\n`cubre:` L-puertos",
+   "color": "4"
+  },
+  {
+   "id": "F2.02",
+   "type": "text",
+   "x": 2800,
+   "y": 420,
+   "width": 620,
+   "height": 391,
+   "text": "### 🟩 F2.02 · Línea base PRNG y validador estadístico propio\n*adaptador* · **entrega:** src/qrecauda/adaptadores/prng.py, src/qrecauda/adaptadores/estadistica.py, tests/adaptadores/test_vectores_nist.py\n\n✔ monobit y runs reproducen los ejemplos publicados de NIST SP 800-22 (p = 0,527089, 0,109599, 0,147232, 0,500798) con |Δp| < 1e-6; χ² de bytes exige ≥ 10 240 bits y falla con EntropiaInsuficiente; el PRNG es reproducible por semilla\n\n`cubre:` M3, M4, M5",
+   "color": "4"
+  },
+  {
+   "id": "F2.03",
+   "type": "text",
+   "x": 2800,
+   "y": 921,
+   "width": 620,
+   "height": 391,
+   "text": "### 🟩 F2.03 · Orquestador del pipeline (bala trazadora)\n*aplicacion* · **entrega:** src/qrecauda/aplicacion/pipeline.py, tests/aplicacion/\n\n✔ fuente → Peres → Toeplitz → clave corre con cualquier FuenteDeBits y Resultado trae M1, M3, M4 y M5 en tres puntos (muestra cruda, mitigada, clave) más h_min de entrada y de salida; EstimadorDeEntropia sustituye al MCV directo\n\n`cubre:` L-aplicacion\n\n🐛 [[INC-005 — Nadie ejecuta, persiste ni juzga las corridas|INC-005]] (en_curso)",
+   "color": "4"
+  },
+  {
+   "id": "F2.04",
+   "type": "text",
+   "x": 2800,
+   "y": 1422,
+   "width": 620,
+   "height": 310,
+   "text": "### 🟩 F2.04 · Transversales: configuración, observabilidad, reproducibilidad, seguridad, concurrencia\n*infra* · **entrega:** src/qrecauda/transversal/\n\n✔ configuración inmutable con clave desconocida que aborta, BLAS a un hilo forzado, secretos sólo por ruta y candado de máquina\n\n`cubre:` T-config, T-observabilidad, T-reproducibilidad, T-seguridad, T-concurrencia",
+   "color": "4"
+  },
+  {
+   "id": "F2.06",
+   "type": "text",
+   "x": 2800,
+   "y": 1842,
+   "width": 620,
+   "height": 418,
+   "text": "### 🟩 F2.06 · Capa de datos: InformeCorrida versionado y Almacén JSON append-only\n*adaptador* · **entrega:** src/qrecauda/datos/informe.py, src/qrecauda/adaptadores/almacen_json.py, tests/adaptadores/test_almacen_e_informe.py\n\n✔ esquema 2 con semilla, sha256 de la muestra cruda, epsilon, profundidad de Peres, validador, sha de la preinscripción y commit; esquemas de E2 y E3; una sola función leer_esquema que rechaza el futuro; serialización canónica, registro append-only y atómico (incluido registro/corridas/) e ida y vuelta exacta\n\n`cubre:` L-datos",
+   "color": "4"
+  },
+  {
+   "id": "F2.05",
+   "type": "text",
+   "x": 2800,
+   "y": 2370,
+   "width": 620,
+   "height": 364,
+   "text": "### 🟩 F2.05 · Presentación, fachada pública y CLI\n*infra* · **entrega:** src/qrecauda/presentacion/__init__.py, src/qrecauda/api.py, src/qrecauda/entrada/cli.py, src/qrecauda/entrada/codigos.py, src/qrecauda/composicion.py, tests/arquitectura/test_api.py\n\n✔ la CLI es un cliente más de la fachada, un test congela sus firmas, cada excepción tiene su código de salida y la regla de transversales (C6) se cumple en composicion y entrada\n\n`cubre:` L-presentacion, L-api",
+   "color": "4"
+  },
+  {
+   "id": "F2.07",
+   "type": "text",
+   "x": 2800,
+   "y": 2844,
+   "width": 620,
+   "height": 391,
+   "text": "### 🟨 F2.07 · Correr y juzgar: de la declaración al veredicto\n*aplicacion* · **entrega:** src/qrecauda/aplicacion/juez.py, tests/aplicacion/test_juez.py\n\n✔ qrecauda correr declaraciones/E1.toml escribe registro/corridas/<id>.json por el Almacén; qrecauda juzgar E1 aplica el criterio de la declaración, añade una línea a veredictos.jsonl y se niega si la preinscripción no precede a la corrida en git (merge-base --is-ancestor) o falta un control\n\n`cubre:` L-aplicacion",
+   "color": "3"
+  },
+  {
+   "id": "g_F2",
+   "type": "group",
+   "x": 2740,
+   "y": -124,
+   "width": 740,
+   "height": 3419,
+   "label": "F2 · DATOS Y BALA TRAZADORA — puertos, aplicación, almacén, CLI"
+  },
+  {
+   "id": "S.01",
+   "type": "text",
+   "x": 4200,
+   "y": 0,
+   "width": 620,
+   "height": 391,
+   "text": "### 🟩 🧱 S.01 · Spike de versiones: qiskit, aer, runtime, mthree y nistrng en un mismo entorno\n*insumo* · **entrega:** spikes/S01_versiones/RESULTADO.md, spikes/S01_versiones/resultado.json, requirements.txt, .python-version\n\n✔ la combinación exacta que instala y corre un circuito queda fijada con == en requirements.txt y uv.lock; el resultado.json dice qué extra choca con cuál (⚠️ mthree puede no soportar el qiskit actual) y qué paquete falta para transpilación y 90B\n\n`cubre:` R2",
+   "color": "4"
+  },
+  {
+   "id": "S.02",
+   "type": "text",
+   "x": 4200,
+   "y": 501,
+   "width": 620,
+   "height": 391,
+   "text": "### 🟩 🧱 S.02 · Spike de alcance de la mitigación: ¿TREX, ZNE y PEC actúan sobre bitstrings?\n*insumo* · **entrega:** spikes/S02_mitigacion_alcance/RESULTADO.md, spikes/S02_mitigacion_alcance/resultado.json, docs/decisiones/D-009.md\n\n✔ por técnica: ¿conserva los bits por disparo?, ¿corre local con Aer?, ¿qué observable la mide? (⚠️ mthree devuelve cuasi-probabilidades: si no conserva bits, F4.01 implementa twirling con máscara X y XOR clásico y mthree queda de contraste); la decisión se registra como D-009\n\n`cubre:` R4",
+   "color": "4"
+  },
+  {
+   "id": "S.03",
+   "type": "text",
+   "x": 4200,
+   "y": 1002,
+   "width": 620,
+   "height": 310,
+   "text": "### 🟩 🧱 S.03 · Spike de honestidad: el muestreo de AerSimulator es pseudoaleatorio\n*insumo* · **entrega:** spikes/S03_aer_pseudoaleatorio/RESULTADO.md, spikes/S03_aer_pseudoaleatorio/resultado.json\n\n✔ se demuestra con la misma semilla ⇒ los mismos bits, y se fija qué puede y qué no puede afirmar la demo sobre entropía cuántica\n\n`cubre:` A-honestidad",
+   "color": "4"
+  },
+  {
+   "id": "S.04",
+   "type": "text",
+   "x": 4200,
+   "y": 1422,
+   "width": 620,
+   "height": 364,
+   "text": "### 🟩 🧱 S.04 · Spike del estimador SP 800-90B: qué herramienta, instalable y probada\n*insumo* · **entrega:** spikes/S04_90b/RESULTADO.md, spikes/S04_90b/resultado.json\n\n✔ una herramienta elegida, instalable con uv sync --extra validacion o con un script documentado, que devuelve h para tres señales sintéticas (IID sesgada, Markov, determinista) y documenta su mínimo de muestras; reimplementar la fórmula en numpy haría al evaluador no independiente\n\n`cubre:` A-honestidad",
+   "color": "4"
+  },
+  {
+   "id": "F3.01",
+   "type": "text",
+   "x": 4200,
+   "y": 1896,
+   "width": 620,
+   "height": 418,
+   "text": "### 🟩 F3.01 · Circuito H⊗n + medición sobre AerSimulator con SamplerV2\n*adaptador* · **entrega:** src/qrecauda/adaptadores/aer/__init__.py, tests/adaptadores/test_aer.py\n\n✔ devuelve una Muestra con Origen.SIMULADOR_AER usando PUBs y get_bitstrings, sin red ni credenciales; el orden de los bits es qubit-mayor (todos los disparos del qubit 0, luego el 1…) y un test lo fija\n\n`cubre:` O1, R2\n\n🐛 [[INC-006 — Fugas de capa: C2 contradice el diseño y faltan puertos|INC-006]] (en_curso)",
+   "color": "4"
+  },
+  {
+   "id": "F3.02",
+   "type": "text",
+   "x": 4200,
+   "y": 2424,
+   "width": 620,
+   "height": 472,
+   "text": "### 🟩 F3.02 · Modelo de ruido del backend: lectura asimétrica, relajación y cross-talk\n*adaptador* · **entrega:** src/qrecauda/adaptadores/aer/ruido.py, tests/adaptadores/test_ruido.py\n\n✔ el canal de lectura se escribe como matriz de confusión y su sesgo inyectado coincide con el medido dentro de su error; además de tres niveles sintéticos hay un nivel realista con NoiseModel.from_backend sobre un backend falso (⚠️ sin verificar que exista en la versión fijada); Pauli-Lindblad y NoiseLearnerV3 se declaran no aplicables en local\n\n`cubre:` O2, R1\n\n🐛 [[INC-007 — Dimensionamiento y spikes que faltan antes de construir|INC-007]] (en_curso)",
+   "color": "4"
+  },
+  {
+   "id": "F3.03",
+   "type": "text",
+   "x": 4200,
+   "y": 3006,
+   "width": 620,
+   "height": 283,
+   "text": "### 🟩 F3.03 · Transpilación guiada (AIRouting / StagedPassManager) con salida local\n*adaptador* · **entrega:** src/qrecauda/adaptadores/aer/transpilacion.py, tests/adaptadores/test_transpilacion.py\n\n✔ el circuito sale en forma ISA; si el servicio de IA no está disponible, cae a un pass manager local y lo registra\n\n`cubre:` R3",
+   "color": "4"
+  },
+  {
+   "id": "F3.04",
+   "type": "text",
+   "x": 4200,
+   "y": 3399,
+   "width": 620,
+   "height": 337,
+   "text": "### 🟨 F3.04 · SamplerV2 sobre hardware IBM con Batch/Session (opcional)\n*adaptador* · **entrega:** src/qrecauda/adaptadores/ibm_runtime.py, tests/adaptadores/test_ibm_runtime.py\n\n✔ contract test sin red con un doble, token por ruta, transpilación inyectada desde la composición; el doble NO puede devolver HARDWARE_IBM sin job_id (lo impide Muestra); la corrida real es F3.06\n\n`cubre:` L-integracion",
+   "color": "3"
+  },
+  {
+   "id": "F3.06",
+   "type": "text",
+   "x": 4200,
+   "y": 3846,
+   "width": 620,
+   "height": 337,
+   "text": "### ⬜ F3.06 · Acceso a hardware IBM: corrida real o constancia de no acceso\n*decision* · **entrega:** docs/decisiones/D-010.md y registro/corridas/HW.json\n\n✔ o bien una corrida real con job_id, backend y versión (TRL de la fuente cuántica sube a lo que T.TRL diga), o bien una constancia fechada de que no hay acceso; las dos cierran el nodo y ninguna cambia el resto del plan\n\n`cubre:` A-honestidad"
+  },
+  {
+   "id": "F3.05",
+   "type": "text",
+   "x": 4200,
+   "y": 4293,
+   "width": 620,
+   "height": 364,
+   "text": "### 🟩 F3.05 · Composición y configuración de la demo con Aer ruidoso y mitigación\n*infra* · **entrega:** src/qrecauda/composicion.py, src/qrecauda/transversal/configuracion.py, tests/arquitectura/test_configuracion.py\n\n✔ Configuracion(backend='aer_ruidoso', mitigacion='lectura', nivel_ruido=…, validador=…) corre de punta a punta, un_hilo y entorno() se aplican desde la composición y una clave desconocida sigue abortando\n\n`cubre:` L-integracion, T-reproducibilidad",
+   "color": "4"
+  },
+  {
+   "id": "g_F3",
+   "type": "group",
+   "x": 4140,
+   "y": -124,
+   "width": 740,
+   "height": 4841,
+   "label": "F3 · INTEGRACIÓN CUÁNTICA — spikes, Aer, ruido, transpilación, IBM"
+  },
+  {
+   "id": "F4.01",
+   "type": "text",
+   "x": 5600,
+   "y": 0,
+   "width": 620,
+   "height": 337,
+   "text": "### 🟩 F4.01 · Mitigación de lectura (TREX / mthree) como puerto Mitigador\n*adaptador* · **entrega:** src/qrecauda/adaptadores/mthree.py, tests/adaptadores/test_mthree.py\n\n✔ dada una muestra con sesgo de lectura conocido, devuelve otra marcada mitigada con menos sesgo y conservando los bits por disparo (si la técnica remuestrea, el Origen se degrada); la técnica sale de D-009\n\n`cubre:` O3",
+   "color": "4"
+  },
+  {
+   "id": "F4.02",
+   "type": "text",
+   "x": 5600,
+   "y": 447,
+   "width": 620,
+   "height": 337,
+   "text": "### 🟩 F4.02 · ZNE y PEC/PNA sobre el observable de sesgo ⟨Z⟩\n*adaptador* · **entrega:** src/qrecauda/adaptadores/zne_pec.py, tests/adaptadores/test_zne_pec.py\n\n✔ ZNE y PEC implementan EstimadorDeSesgo donde D-009 dice que tienen sentido, reportan ⟨Z⟩ con y sin mitigar, y contra ruido de lectura declaran «sin efecto esperado» con una corrida de puerta que lo muestra\n\n`cubre:` R4",
+   "color": "4"
+  },
+  {
+   "id": "g_F4",
+   "type": "group",
+   "x": 5540,
+   "y": -124,
+   "width": 740,
+   "height": 968,
+   "label": "F4 · MITIGACIÓN — lectura, ZNE, PEC"
+  },
+  {
+   "id": "F5.01",
+   "type": "text",
+   "x": 7000,
+   "y": 0,
+   "width": 620,
+   "height": 364,
+   "text": "### 🟩 F5.01 · Batería NIST SP 800-22 con nistrng y contraste con el validador propio\n*adaptador* · **entrega:** src/qrecauda/adaptadores/nist.py, tests/adaptadores/test_nist.py\n\n✔ nistrng y adaptadores/estadistica coinciden en monobit y runs con |Δp| < 1e-6 sobre 100 secuencias; M5 se contrasta con scipy.stats.chisquare y con frequency_within_block; el criterio es la proporción de aprobados sobre N secuencias (SP 800-22 §4.2) y no un p único\n\n`cubre:` O5",
+   "color": "4"
+  },
+  {
+   "id": "F5.02",
+   "type": "text",
+   "x": 7000,
+   "y": 474,
+   "width": 620,
+   "height": 364,
+   "text": "### 🟩 F5.02 · Min-entropía SP 800-90B y contraste con la cota MCV del dominio\n*adaptador* · **entrega:** src/qrecauda/adaptadores/min_entropia.py, tests/adaptadores/test_min_entropia.py\n\n✔ implementa EstimadorDeEntropia con la herramienta que eligió S.04: una fuente de Markov con permanencia 0,8 da h ≤ 0,4 y longitud_segura recorta la clave; una IID sesgada da h ≈ −log2(p_max); exige ≥ 10^6 muestras o falla con EntropiaInsuficiente\n\n`cubre:` M2",
+   "color": "4"
+  },
+  {
+   "id": "g_F5",
+   "type": "group",
+   "x": 6940,
+   "y": -124,
+   "width": 740,
+   "height": 1022,
+   "label": "F5 · VALIDACIÓN — NIST y min-entropía"
+  },
+  {
+   "id": "F6.01",
+   "type": "text",
+   "x": 8400,
+   "y": 0,
+   "width": 620,
+   "height": 337,
+   "text": "### 🟩 F6.01 · Cifrado AES-256-GCM con clave QRNG\n*adaptador* · **entrega:** src/qrecauda/adaptadores/aes_gcm.py, tests/adaptadores/test_aes_gcm.py\n\n✔ clave de 256 bits y nonce de 96 bits cortados de bloques consecutivos distintos de la clave certificada; un cursor de consumo impide entregar dos veces el mismo trozo; ida y vuelta, rechazo de un texto alterado y de un nonce repetido con la misma clave\n\n`cubre:` O6",
+   "color": "4"
+  },
+  {
+   "id": "F6.02",
+   "type": "text",
+   "x": 8400,
+   "y": 447,
+   "width": 620,
+   "height": 337,
+   "text": "### 🟩 F6.02 · Transacción de peaje/Metro cifrada con la clave certificada\n*aplicacion* · **entrega:** src/qrecauda/aplicacion/transaccion.py, tests/aplicacion/test_transaccion.py\n\n✔ una transacción simulada se cifra, se descifra y se verifica; la clave sale de Resultado.clave de un pipeline con Origen declarado y la demo con Aer se rotula «validación del pipeline», no «entropía cuántica»\n\n`cubre:` A-caso-de-uso",
+   "color": "4"
+  },
+  {
+   "id": "g_F6",
+   "type": "group",
+   "x": 8340,
+   "y": -124,
+   "width": 740,
+   "height": 968,
+   "label": "F6 · CASO DE USO — AES-GCM y transacción"
+  },
+  {
+   "id": "P.E0",
+   "type": "text",
+   "x": 9800,
+   "y": 0,
+   "width": 620,
+   "height": 364,
+   "text": "### 🟩 P.E0 · Parámetros y aritmética de la cadena, fijados antes de medir\n*decision* · **entrega:** docs/preinscripciones/PARAMETROS.md y declaraciones/PARAMETROS.toml\n\n✔ qubits, shots, bits crudos necesarios (la clave es ≈ 0,3 de lo crudo), semillas, N de secuencias NIST, repeticiones n ≥ 3 por eureka, M2 sobre bloques de 4096 bits (no sobre 256) y el 90B sobre ≥ 10^6 bits; si falta muestra se suben los shots, no se relajan los umbrales\n\n`cubre:` M2",
+   "color": "4"
+  },
+  {
+   "id": "P.E3",
+   "type": "text",
+   "x": 9800,
+   "y": 474,
+   "width": 620,
+   "height": 364,
+   "text": "### 🟩 P.E3 · Preinscripción E3: tasa, latencia y caso de uso\n*preinscripcion* · **entrega:** docs/preinscripciones/E3.md y declaraciones/E3.toml\n\n✔ M6 = bits de clave por segundo de reloj de pared a un hilo; M7 = p95 sobre N ≥ 30 repeticiones tras 3 de calentamiento, extremo a extremo (fuente, mitigación, extracción, validación, cifrado); sin cola ni red de IBM; lote, hilos y máquina fijados antes de medir\n\n`cubre:` E3",
+   "color": "4"
+  },
+  {
+   "id": "P.E1",
+   "type": "text",
+   "x": 9800,
+   "y": 948,
+   "width": 620,
+   "height": 445,
+   "text": "### ⬜ P.E1 · Preinscripción E1: el pipeline entrega claves que cumplen M1–M5 con entrada ruidosa\n*preinscripcion* · **entrega:** docs/preinscripciones/E1.md y declaraciones/E1.toml\n\n✔ criterio fijado ANTES de correr: la muestra cruda sin mitigar FALLA M1 o M3 al nivel de ruido declarado, la mitigada PASA y la clave PASA; controles negativo (un PRNG pasa) y positivo (fuentes malas rechazadas) declarados; regla de reintento sin elegir semilla\n\n`cubre:` E1\n\n🐛 [[INC-003 — Los criterios de éxito de E1 se cumplen por construcción|INC-003]] (en_curso)"
+  },
+  {
+   "id": "P.E2",
+   "type": "text",
+   "x": 9800,
+   "y": 1503,
+   "width": 620,
+   "height": 364,
+   "text": "### 🟩 P.E2 · Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 %\n*preinscripcion* · **entrega:** docs/preinscripciones/E2.md y declaraciones/E2.toml\n\n✔ tres niveles sintéticos más uno realista, factor mínimo de reducción y residuo máximo fijados antes de correr; declara qué técnica puede mover qué fuente de ruido y que «sin efecto esperado» de ZNE/PEC sobre lectura es un veredicto válido\n\n`cubre:` E2",
+   "color": "4"
+  },
+  {
+   "id": "C.E1a",
+   "type": "text",
+   "x": 9800,
+   "y": 1977,
+   "width": 620,
+   "height": 256,
+   "text": "### ⬜ C.E1a · E1a · control: PRNG clásico pasa M1–M5 (la batería no distingue origen)\n*corrida* · **entrega:** registro/corridas/E1a.json\n\n✔ la corrida del PRNG sale con su veredicto en los tres puntos; que pase es el resultado esperado y se declara\n\n`cubre:` E1, M3, M4, M5"
+  },
+  {
+   "id": "C.E2",
+   "type": "text",
+   "x": 9800,
+   "y": 2343,
+   "width": 620,
+   "height": 256,
+   "text": "### 🟨 C.E2 · E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido\n*corrida* · **entrega:** registro/corridas/E2.json\n\n✔ sesgo crudo y residual por técnica y por nivel, con su intervalo\n\n`cubre:` E2, M1",
+   "color": "3"
+  },
+  {
+   "id": "C.E1b",
+   "type": "text",
+   "x": 9800,
+   "y": 2709,
+   "width": 620,
+   "height": 256,
+   "text": "### ⬜ C.E1b · E1b · Aer ruidoso sin mitigar\n*corrida* · **entrega:** registro/corridas/E1b.json\n\n✔ M1, M3, M4 y M5 sobre la muestra cruda ruidosa sin mitigar, y sobre la clave, al menos 3 repeticiones; el veredicto lee la muestra cruda, no sólo la clave\n\n`cubre:` E1, M3, M4, M5"
+  },
+  {
+   "id": "C.E1c",
+   "type": "text",
+   "x": 9800,
+   "y": 3075,
+   "width": 620,
+   "height": 256,
+   "text": "### ⬜ C.E1c · E1c · Aer ruidoso mitigado\n*corrida* · **entrega:** registro/corridas/E1c.json\n\n✔ M1, M3, M4, M5 y la min-entropía de entrada y de salida sobre la muestra mitigada y sobre la clave, al menos 3 repeticiones\n\n`cubre:` E1, M3, M4, M5, M2"
+  },
+  {
+   "id": "C.E1d",
+   "type": "text",
+   "x": 9800,
+   "y": 3441,
+   "width": 620,
+   "height": 310,
+   "text": "### ⬜ C.E1d · E1d · control positivo: fuentes defectuosas rechazadas, fuente ideal aceptada\n*corrida* · **entrega:** registro/corridas/E1d.json\n\n✔ una fuente sesgada, una periódica y una de Markov (permanencia 0,8) son rechazadas por al menos una métrica o por h_min, la Markov por h_min y no por NIST, y la ideal pasa; sin esto un veredicto «pasa» no informa\n\n`cubre:` E1"
+  },
+  {
+   "id": "E2",
+   "type": "text",
+   "x": 9800,
+   "y": 3861,
+   "width": 620,
+   "height": 256,
+   "text": "### ⬜ ⭐ E2 · ¡EUREKA 2! La mitigación mueve el sesgo bajo el umbral M1\n*eureka* · **entrega:** registro/veredictos.jsonl\n\n✔ el residuo cumple M1 en los tres niveles o el veredicto lo dice con el nivel donde deja de cumplir\n\n`cubre:` E2"
+  },
+  {
+   "id": "C.E3",
+   "type": "text",
+   "x": 9800,
+   "y": 4227,
+   "width": 620,
+   "height": 283,
+   "text": "### 🟨 C.E3 · E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado\n*medicion* · **entrega:** registro/corridas/E3.json\n\n✔ bit/s y ms medidos con reloj monotónico sobre el pipeline con Aer, N repeticiones y la máquina registrada, con la definición de M6 y M7 de la preinscripción\n\n`cubre:` E3, M6, M7",
+   "color": "3"
+  },
+  {
+   "id": "E1",
+   "type": "text",
+   "x": 9800,
+   "y": 4620,
+   "width": 620,
+   "height": 283,
+   "text": "### ⬜ ⭐ E1 · ¡EUREKA 1! Pipeline de punta a punta con veredicto M1–M5 y control negativo\n*eureka* · **entrega:** registro/veredictos.jsonl\n\n✔ las cuatro corridas cumplen su preinscripción y el informe dice, sin adornos, qué prueba y qué NO prueba sobre el origen cuántico\n\n`cubre:` E1"
+  },
+  {
+   "id": "E3",
+   "type": "text",
+   "x": 9800,
+   "y": 5013,
+   "width": 620,
+   "height": 256,
+   "text": "### ⬜ ⭐ E3 · ¡EUREKA 3! Tasa y latencia dentro de umbral con la transacción cifrada\n*eureka* · **entrega:** registro/veredictos.jsonl\n\n✔ M6 y M7 cumplen con el pipeline completo, o el veredicto dice cuál no y por cuánto\n\n`cubre:` E3"
+  },
+  {
+   "id": "g_E",
+   "type": "group",
+   "x": 9740,
+   "y": -124,
+   "width": 740,
+   "height": 5453,
+   "label": "EUREKAS — preinscripción → corridas → veredicto"
+  },
+  {
+   "id": "F7.03",
+   "type": "text",
+   "x": 11200,
+   "y": 0,
+   "width": 620,
+   "height": 229,
+   "text": "### 🟩 F7.03 · Modelo de amenazas\n*doc* · **entrega:** docs/AMENAZAS.md\n\n✔ qué ataques cubre un QRNG, cuáles NO (el canal, la implementación, el HSM) y qué certifica y qué no certifica NIST\n\n`cubre:` A-amenazas",
+   "color": "4"
+  },
+  {
+   "id": "F7.05",
+   "type": "text",
+   "x": 11200,
+   "y": 339,
+   "width": 620,
+   "height": 256,
+   "text": "### 🟨 F7.05 · Wiki repo: mapas, bases e incidencias publicados en la bóveda\n*doc* · **entrega:** docs/wiki/wiki.json y docs/wiki/\n\n✔ publicar.py termina sin rechazos, la nota puerta enlaza los índices y el vault_audit no marca huérfanas\n\n`cubre:` W-wiki",
+   "color": "3"
+  },
+  {
+   "id": "F7.06",
+   "type": "text",
+   "x": 11200,
+   "y": 705,
+   "width": 620,
+   "height": 256,
+   "text": "### 🟨 F7.06 · Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado\n*infra* · **entrega:** tests/integracion/test_e2e_aer.py\n\n✔ la cadena completa corre sin red en la CI local y el texto descifrado es igual al original\n\n`cubre:` L-integracion",
+   "color": "3"
+  },
+  {
+   "id": "T.TRL",
+   "type": "text",
+   "x": 11200,
+   "y": 1071,
+   "width": 620,
+   "height": 391,
+   "text": "### ⬜ T.TRL · Matriz de TRL por componente, derivada de la evidencia\n*doc* · **entrega:** docs/TRL.md y tests/arquitectura/test_trl.py\n\n✔ una fila por componente con su evidencia (id de nodo y de corrida), el TRL alcanzado sin hardware y con él; el TRL del sistema es el de la fila más baja; TRL 4 pide repetibilidad n ≥ 3, protocolo preinscrito y que un tercero pueda auditarlo; el test falla si una fila cita un nodo inexistente\n\n`cubre:` A-trl"
+  },
+  {
+   "id": "F7.01",
+   "type": "text",
+   "x": 11200,
+   "y": 1572,
+   "width": 620,
+   "height": 310,
+   "text": "### ⬜ F7.01 · Notebook reproducible con versiones exactas\n*doc* · **entrega:** notebooks/qrecauda.ipynb, src/qrecauda/presentacion/figuras.py, tests/presentacion/test_figuras.py\n\n✔ un clon limpio reproduce las tablas del pitch con dos comandos y los pins de uv.lock; el notebook sólo llama a presentacion/figuras.py, que tiene su test\n\n`cubre:` O7, R5"
+  },
+  {
+   "id": "F7.02",
+   "type": "text",
+   "x": 11200,
+   "y": 1992,
+   "width": 620,
+   "height": 310,
+   "text": "### ⬜ F7.02 · Pitch de 10 slides\n*doc* · **entrega:** docs/pitch/PITCH.md, tests/arquitectura/test_cifras_del_pitch.py\n\n✔ las diez láminas con cada cifra marcada {{corrida:ID.métrica}} y un test que la cruza con registro/corridas/; la lámina de límites dice «validación del pipeline», no «entropía cuántica», con el TRL de T.TRL\n\n`cubre:` R6"
+  },
+  {
+   "id": "F7.04",
+   "type": "text",
+   "x": 11200,
+   "y": 2412,
+   "width": 620,
+   "height": 256,
+   "text": "### ⬜ F7.04 · Roadmap TRL 4 → TRL 5 → piloto → producción\n*doc* · **entrega:** docs/ROADMAP.md\n\n✔ qué evidencia falta para cada salto de TRL, empezando por el hardware real y la certificación formal que NO se hace en la hackatón\n\n`cubre:` A-roadmap"
+  },
+  {
+   "id": "g_F7",
+   "type": "group",
+   "x": 11140,
+   "y": -124,
+   "width": 740,
+   "height": 2852,
+   "label": "F7 · DIFUSIÓN — amenazas, wiki, notebook, pitch, roadmap"
+  },
+  {
+   "id": "R.01",
+   "type": "text",
+   "x": 12600,
+   "y": 0,
+   "width": 620,
+   "height": 337,
+   "text": "### ⬜ R.01 · Revisión adversarial propia previa al release 0.1.0\n*revision* · **entrega:** docs/informes/REVISION_ADVERSARIAL_0.1.0.md\n\n✔ un agente independiente intentó romper las claims con las eurekas y las mediciones ya hechas; cada hallazgo verificado contra el texto y registrado; esta revisión es distinta de R.00\n\n`cubre:` A-honestidad"
+  },
+  {
+   "id": "REL-0.1.0",
+   "type": "text",
+   "x": 12600,
+   "y": 447,
+   "width": 620,
+   "height": 445,
+   "text": "### ⬜ 🏷️ REL-0.1.0 · Release 0.1.0: pipeline QRNG reproducible en simulador (rótulo de TRL según T.TRL)\n*release* · **entrega:** docs/releases/EXPEDIENTE_0.1.0.md, CHANGELOG.md y tests/arquitectura/test_release_sin_dudas.py\n\n✔ expediente con alcance, arquitectura, pruebas, validación contra línea base, despliegue y límites; el título dice lo que T.TRL sostiene; un test falla si queda un ⚠️ sin verificar vigente en FUNDAMENTO o en las decisiones\n\n`cubre:` T-empaquetado\n\n🐛 [[INC-004 — El camino a TRL 4 no está definido y el hardware opcional bloquea el release|INC-004]] (en_curso)"
+  },
+  {
+   "id": "g_R",
+   "type": "group",
+   "x": 12540,
+   "y": -124,
+   "width": 740,
+   "height": 1076,
+   "label": "CIERRE — revisión adversarial y release 0.1.0"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e001",
+   "fromNode": "F0.00",
+   "fromSide": "bottom",
+   "toNode": "F0.01",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e002",
+   "fromNode": "F0.01",
+   "fromSide": "bottom",
+   "toNode": "F0.02",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e003",
+   "fromNode": "F0.02",
+   "fromSide": "bottom",
+   "toNode": "F0.03",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e004",
+   "fromNode": "F0.01",
+   "fromSide": "bottom",
+   "toNode": "F0.04",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e005",
+   "fromNode": "F0.01",
+   "fromSide": "bottom",
+   "toNode": "F0.05",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e006",
+   "fromNode": "F0.05",
+   "fromSide": "bottom",
+   "toNode": "F0.06",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e007",
+   "fromNode": "F0.08",
+   "fromSide": "bottom",
+   "toNode": "F0.07",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e008",
+   "fromNode": "F0.04",
+   "fromSide": "bottom",
+   "toNode": "F0.08",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e009",
+   "fromNode": "F0.05",
+   "fromSide": "bottom",
+   "toNode": "F0.08",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e010",
+   "fromNode": "F0.07",
+   "fromSide": "bottom",
+   "toNode": "F0.09",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e011",
+   "fromNode": "F0.03",
+   "fromSide": "bottom",
+   "toNode": "R.00",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e012",
+   "fromNode": "F0.04",
+   "fromSide": "right",
+   "toNode": "F1.01",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e013",
+   "fromNode": "F1.01",
+   "fromSide": "bottom",
+   "toNode": "F1.02",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e014",
+   "fromNode": "F1.01",
+   "fromSide": "bottom",
+   "toNode": "F1.03",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e015",
+   "fromNode": "F1.03",
+   "fromSide": "right",
+   "toNode": "F2.01",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e016",
+   "fromNode": "F2.01",
+   "fromSide": "bottom",
+   "toNode": "F2.02",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e017",
+   "fromNode": "F1.02",
+   "fromSide": "right",
+   "toNode": "F2.03",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e018",
+   "fromNode": "F2.01",
+   "fromSide": "bottom",
+   "toNode": "F2.03",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e019",
+   "fromNode": "F2.01",
+   "fromSide": "bottom",
+   "toNode": "F2.04",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e020",
+   "fromNode": "F2.03",
+   "fromSide": "bottom",
+   "toNode": "F2.05",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e021",
+   "fromNode": "F2.04",
+   "fromSide": "bottom",
+   "toNode": "F2.05",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e022",
+   "fromNode": "F2.06",
+   "fromSide": "bottom",
+   "toNode": "F2.05",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e023",
+   "fromNode": "F2.01",
+   "fromSide": "bottom",
+   "toNode": "F2.06",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e024",
+   "fromNode": "F2.05",
+   "fromSide": "bottom",
+   "toNode": "F2.07",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e025",
+   "fromNode": "R.00",
+   "fromSide": "right",
+   "toNode": "F2.07",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e026",
+   "fromNode": "R.00",
+   "fromSide": "right",
+   "toNode": "S.01",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e027",
+   "fromNode": "S.01",
+   "fromSide": "bottom",
+   "toNode": "S.02",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e028",
+   "fromNode": "S.01",
+   "fromSide": "bottom",
+   "toNode": "S.03",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e029",
+   "fromNode": "S.01",
+   "fromSide": "bottom",
+   "toNode": "S.04",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e030",
+   "fromNode": "S.03",
+   "fromSide": "bottom",
+   "toNode": "F3.01",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e031",
+   "fromNode": "F2.01",
+   "fromSide": "right",
+   "toNode": "F3.01",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e032",
+   "fromNode": "F3.01",
+   "fromSide": "bottom",
+   "toNode": "F3.02",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e033",
+   "fromNode": "F3.01",
+   "fromSide": "bottom",
+   "toNode": "F3.03",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e034",
+   "fromNode": "F3.03",
+   "fromSide": "bottom",
+   "toNode": "F3.04",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e035",
+   "fromNode": "F2.04",
+   "fromSide": "right",
+   "toNode": "F3.04",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e036",
+   "fromNode": "F3.04",
+   "fromSide": "bottom",
+   "toNode": "F3.06",
+   "toSide": "top"
+  },
+  {
+   "id": "e037",
+   "fromNode": "F4.01",
+   "fromSide": "right",
+   "toNode": "F3.05",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e038",
+   "fromNode": "F5.01",
+   "fromSide": "right",
+   "toNode": "F3.05",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e039",
+   "fromNode": "S.02",
+   "fromSide": "right",
+   "toNode": "F4.01",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e040",
+   "fromNode": "F3.02",
+   "fromSide": "right",
+   "toNode": "F4.01",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e041",
+   "fromNode": "S.02",
+   "fromSide": "right",
+   "toNode": "F4.02",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e042",
+   "fromNode": "F3.02",
+   "fromSide": "right",
+   "toNode": "F4.02",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e043",
+   "fromNode": "F2.02",
+   "fromSide": "right",
+   "toNode": "F5.01",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e044",
+   "fromNode": "S.01",
+   "fromSide": "right",
+   "toNode": "F5.01",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e045",
+   "fromNode": "F1.03",
+   "fromSide": "right",
+   "toNode": "F5.02",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e046",
+   "fromNode": "S.04",
+   "fromSide": "right",
+   "toNode": "F5.02",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e047",
+   "fromNode": "F2.01",
+   "fromSide": "right",
+   "toNode": "F6.01",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e048",
+   "fromNode": "F2.03",
+   "fromSide": "right",
+   "toNode": "F6.02",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e049",
+   "fromNode": "F6.01",
+   "fromSide": "bottom",
+   "toNode": "F6.02",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e050",
+   "fromNode": "F2.03",
+   "fromSide": "right",
+   "toNode": "P.E0",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e051",
+   "fromNode": "R.00",
+   "fromSide": "right",
+   "toNode": "P.E0",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e052",
+   "fromNode": "F2.07",
+   "fromSide": "right",
+   "toNode": "P.E1",
+   "toSide": "left"
+  },
+  {
+   "id": "e053",
+   "fromNode": "P.E0",
+   "fromSide": "bottom",
+   "toNode": "P.E1",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e054",
+   "fromNode": "P.E1",
+   "fromSide": "bottom",
+   "toNode": "C.E1a",
+   "toSide": "top"
+  },
+  {
+   "id": "e055",
+   "fromNode": "F5.01",
+   "fromSide": "right",
+   "toNode": "C.E1a",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e056",
+   "fromNode": "P.E1",
+   "fromSide": "bottom",
+   "toNode": "C.E1b",
+   "toSide": "top"
+  },
+  {
+   "id": "e057",
+   "fromNode": "F3.05",
+   "fromSide": "right",
+   "toNode": "C.E1b",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e058",
+   "fromNode": "P.E1",
+   "fromSide": "bottom",
+   "toNode": "C.E1c",
+   "toSide": "top"
+  },
+  {
+   "id": "e059",
+   "fromNode": "F3.05",
+   "fromSide": "right",
+   "toNode": "C.E1c",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e060",
+   "fromNode": "F5.02",
+   "fromSide": "right",
+   "toNode": "C.E1c",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e061",
+   "fromNode": "P.E1",
+   "fromSide": "bottom",
+   "toNode": "C.E1d",
+   "toSide": "top"
+  },
+  {
+   "id": "e062",
+   "fromNode": "F5.02",
+   "fromSide": "right",
+   "toNode": "C.E1d",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e063",
+   "fromNode": "F3.05",
+   "fromSide": "right",
+   "toNode": "C.E1d",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e064",
+   "fromNode": "C.E1a",
+   "fromSide": "bottom",
+   "toNode": "E1",
+   "toSide": "top"
+  },
+  {
+   "id": "e065",
+   "fromNode": "C.E1b",
+   "fromSide": "bottom",
+   "toNode": "E1",
+   "toSide": "top"
+  },
+  {
+   "id": "e066",
+   "fromNode": "C.E1c",
+   "fromSide": "bottom",
+   "toNode": "E1",
+   "toSide": "top"
+  },
+  {
+   "id": "e067",
+   "fromNode": "C.E1d",
+   "fromSide": "bottom",
+   "toNode": "E1",
+   "toSide": "top"
+  },
+  {
+   "id": "e068",
+   "fromNode": "F3.02",
+   "fromSide": "right",
+   "toNode": "P.E2",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e069",
+   "fromNode": "S.02",
+   "fromSide": "right",
+   "toNode": "P.E2",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e070",
+   "fromNode": "P.E0",
+   "fromSide": "bottom",
+   "toNode": "P.E2",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e071",
+   "fromNode": "P.E2",
+   "fromSide": "bottom",
+   "toNode": "C.E2",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e072",
+   "fromNode": "F4.01",
+   "fromSide": "right",
+   "toNode": "C.E2",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e073",
+   "fromNode": "F4.02",
+   "fromSide": "right",
+   "toNode": "C.E2",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e074",
+   "fromNode": "C.E2",
+   "fromSide": "bottom",
+   "toNode": "E2",
+   "toSide": "top"
+  },
+  {
+   "id": "e075",
+   "fromNode": "F6.02",
+   "fromSide": "right",
+   "toNode": "P.E3",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e076",
+   "fromNode": "F2.04",
+   "fromSide": "right",
+   "toNode": "P.E3",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e077",
+   "fromNode": "P.E0",
+   "fromSide": "bottom",
+   "toNode": "P.E3",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e078",
+   "fromNode": "P.E3",
+   "fromSide": "bottom",
+   "toNode": "C.E3",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e079",
+   "fromNode": "F5.02",
+   "fromSide": "right",
+   "toNode": "C.E3",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e080",
+   "fromNode": "F3.05",
+   "fromSide": "right",
+   "toNode": "C.E3",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e081",
+   "fromNode": "C.E3",
+   "fromSide": "bottom",
+   "toNode": "E3",
+   "toSide": "top"
+  },
+  {
+   "id": "e082",
+   "fromNode": "F0.03",
+   "fromSide": "right",
+   "toNode": "F7.03",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e083",
+   "fromNode": "F6.02",
+   "fromSide": "right",
+   "toNode": "F7.06",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e084",
+   "fromNode": "F3.05",
+   "fromSide": "right",
+   "toNode": "F7.06",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e085",
+   "fromNode": "F3.06",
+   "fromSide": "right",
+   "toNode": "T.TRL",
+   "toSide": "left"
+  },
+  {
+   "id": "e086",
+   "fromNode": "F7.06",
+   "fromSide": "bottom",
+   "toNode": "T.TRL",
+   "toSide": "top"
+  },
+  {
+   "id": "e087",
+   "fromNode": "E1",
+   "fromSide": "right",
+   "toNode": "T.TRL",
+   "toSide": "left"
+  },
+  {
+   "id": "e088",
+   "fromNode": "E2",
+   "fromSide": "right",
+   "toNode": "T.TRL",
+   "toSide": "left"
+  },
+  {
+   "id": "e089",
+   "fromNode": "E3",
+   "fromSide": "right",
+   "toNode": "T.TRL",
+   "toSide": "left"
+  },
+  {
+   "id": "e090",
+   "fromNode": "F0.06",
+   "fromSide": "right",
+   "toNode": "F7.05",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e091",
+   "fromNode": "F2.05",
+   "fromSide": "right",
+   "toNode": "F7.05",
+   "toSide": "left",
+   "color": "4"
+  },
+  {
+   "id": "e092",
+   "fromNode": "E1",
+   "fromSide": "right",
+   "toNode": "F7.01",
+   "toSide": "left"
+  },
+  {
+   "id": "e093",
+   "fromNode": "E2",
+   "fromSide": "right",
+   "toNode": "F7.01",
+   "toSide": "left"
+  },
+  {
+   "id": "e094",
+   "fromNode": "E3",
+   "fromSide": "right",
+   "toNode": "F7.01",
+   "toSide": "left"
+  },
+  {
+   "id": "e095",
+   "fromNode": "F7.03",
+   "fromSide": "bottom",
+   "toNode": "F7.02",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e096",
+   "fromNode": "T.TRL",
+   "fromSide": "bottom",
+   "toNode": "F7.02",
+   "toSide": "top"
+  },
+  {
+   "id": "e097",
+   "fromNode": "F7.03",
+   "fromSide": "bottom",
+   "toNode": "F7.04",
+   "toSide": "top",
+   "color": "4"
+  },
+  {
+   "id": "e098",
+   "fromNode": "T.TRL",
+   "fromSide": "bottom",
+   "toNode": "F7.04",
+   "toSide": "top"
+  },
+  {
+   "id": "e099",
+   "fromNode": "F7.01",
+   "fromSide": "right",
+   "toNode": "R.01",
+   "toSide": "left"
+  },
+  {
+   "id": "e100",
+   "fromNode": "T.TRL",
+   "fromSide": "right",
+   "toNode": "R.01",
+   "toSide": "left"
+  },
+  {
+   "id": "e101",
+   "fromNode": "R.01",
+   "fromSide": "bottom",
+   "toNode": "REL-0.1.0",
+   "toSide": "top"
+  },
+  {
+   "id": "e102",
+   "fromNode": "F7.02",
+   "fromSide": "right",
+   "toNode": "REL-0.1.0",
+   "toSide": "left"
+  },
+  {
+   "id": "e103",
+   "fromNode": "F7.04",
+   "fromSide": "right",
+   "toNode": "REL-0.1.0",
+   "toSide": "left"
+  },
+  {
+   "id": "e104",
+   "fromNode": "F0.09",
+   "fromSide": "right",
+   "toNode": "REL-0.1.0",
+   "toSide": "left"
+  },
+  {
+   "id": "e105",
+   "fromNode": "F7.05",
+   "fromSide": "right",
+   "toNode": "REL-0.1.0",
+   "toSide": "left"
+  }
+ ]
+}

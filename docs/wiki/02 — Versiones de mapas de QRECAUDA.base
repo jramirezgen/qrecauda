@@ -1,0 +1,46 @@
+filters:
+  and:
+    - or:
+        - file.inFolder("QRECAUDA/Mapas/Versiones")
+        - file.inFolder("wiki/QRECAUDA/Mapas/Versiones")
+    - file.hasTag("version")
+properties:
+  mapa_n:
+    displayName: Mapa
+  version:
+    displayName: Versión
+  sellado:
+    displayName: Archivada el
+  issue:
+    displayName: Issue
+  huella:
+    displayName: Huella
+  file.name:
+    displayName: Diseño
+views:
+  - type: table
+    name: Por mapa
+    groupBy:
+      property: mapa_n
+      direction: ASC
+    order:
+      - mapa_n
+      - version
+      - sellado
+      - file.name
+      - issue
+  - type: table
+    name: Línea de tiempo
+    order:
+      - sellado
+      - mapa_n
+      - version
+      - file.name
+      - huella
+  - type: cards
+    name: Fichas
+    order:
+      - file.name
+      - mapa_n
+      - version
+      - sellado

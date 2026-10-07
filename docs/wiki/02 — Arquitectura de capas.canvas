@@ -1,0 +1,173 @@
+{
+ "nodes": [
+  {
+   "id": "leyenda",
+   "type": "text",
+   "x": -1400,
+   "y": 0,
+   "width": 620,
+   "height": 700,
+   "text": "## QRECAUDA — arquitectura de capas\n*generado de `.importlinter`, `src/qrecauda/` y `docs/DISENO.md`*\n\nUna flecha es **«puede importar»**. Cuatro macro-capas: **datos**, **lógica**, **integración** y **transversales**.\n\n**Los 7 contratos que `lint-imports` hace cumplir:**\n- C1: una capa sólo importa las de su derecha (entrada → api → composicion → adaptadores|presentacion → aplicacion → puertos → datos → dominio)\n- C2: los adaptadores no se importan entre sí (cada uno implementa UN puerto)\n- C3: dominio, datos, puertos, aplicación y presentación no importan transversal; les llega por puertos o ya validado\n- C4: el dominio no toca SDKs, IO, reloj ni aleatoriedad global\n- C5: los SDKs cuánticos y de criptografía sólo los importan sus adaptadores\n- C5b: api, composicion, entrada y transversal no importan un SDK DIRECTAMENTE (lo alcanzan por el adaptador que la composición elige)\n- C6: lo transversal es hoja — sólo depende de dominio.errores; entrada, api, composicion y adaptadores lo usan, él no sube",
+   "color": "6"
+  },
+  {
+   "id": "borde",
+   "type": "text",
+   "x": 0,
+   "y": 0,
+   "width": 620,
+   "height": 228,
+   "text": "### BORDE · entrada, api, composición\nCLI → fachada → raíz de composición, el ÚNICO sitio que elige adaptadores\n\n- `entrada/cli`\n- `entrada/codigos`\n- `api`\n- `composicion`",
+   "color": "2"
+  },
+  {
+   "id": "integracion",
+   "type": "text",
+   "x": 1400,
+   "y": 0,
+   "width": 620,
+   "height": 424,
+   "text": "### INTEGRACIÓN · adaptadores\nuno por puerto; el SDK confinado aquí (C5); no se importan entre sí (C2)\n\n- `adaptadores/aer/ruido`\n- `adaptadores/aer/transpilacion`\n- `adaptadores/aes_gcm`\n- `adaptadores/almacen_json`\n- `adaptadores/estadistica`\n- `adaptadores/ibm_runtime`\n- `adaptadores/min_entropia`\n- `adaptadores/mthree`\n- `adaptadores/nist`\n- `adaptadores/prng`\n- `adaptadores/zne_pec`",
+   "color": "5"
+  },
+  {
+   "id": "presentacion",
+   "type": "text",
+   "x": 1400,
+   "y": 534,
+   "width": 620,
+   "height": 160,
+   "text": "### PRESENTACIÓN\nformatea; no orquesta\n\n*(sin módulos con código: sólo el `__init__`)*",
+   "color": "2"
+  },
+  {
+   "id": "aplicacion",
+   "type": "text",
+   "x": 2800,
+   "y": 0,
+   "width": 620,
+   "height": 172,
+   "text": "### LÓGICA · aplicación\ncasos de uso y orquestador; sólo puertos y dominio\n\n- `aplicacion/pipeline`\n- `aplicacion/transaccion`",
+   "color": "4"
+  },
+  {
+   "id": "puertos",
+   "type": "text",
+   "x": 2800,
+   "y": 282,
+   "width": 620,
+   "height": 160,
+   "text": "### PUERTOS\nProtocol: FuenteDeBits, Mitigador, Validador, Cifrador, Almacen, Reloj, Bitacora\n\n*(sin módulos con código: sólo el `__init__`)*",
+   "color": "4"
+  },
+  {
+   "id": "datos",
+   "type": "text",
+   "x": 4200,
+   "y": 0,
+   "width": 620,
+   "height": 172,
+   "text": "### DATOS\nesquema versionado, InformeCorrida, serialización canónica\n\n- `datos/esquema`\n- `datos/informe`",
+   "color": "5"
+  },
+  {
+   "id": "dominio",
+   "type": "text",
+   "x": 4200,
+   "y": 282,
+   "width": 620,
+   "height": 284,
+   "text": "### LÓGICA · dominio puro\nsin I/O, reloj, aleatoriedad global ni SDK (C4)\n\n- `dominio/bits`\n- `dominio/entropia`\n- `dominio/errores`\n- `dominio/extractores`\n- `dominio/metricas`\n- `dominio/muestra`",
+   "color": "4"
+  },
+  {
+   "id": "transversal",
+   "type": "text",
+   "x": 5600,
+   "y": 0,
+   "width": 620,
+   "height": 256,
+   "text": "### TRANSVERSALES\nel núcleo no las importa (C3): le llegan por puertos\n\n- `transversal/concurrencia`\n- `transversal/configuracion`\n- `transversal/observabilidad`\n- `transversal/reproducibilidad`\n- `transversal/seguridad`",
+   "color": "3"
+  },
+  {
+   "id": "g-borde",
+   "type": "group",
+   "x": -60,
+   "y": -124,
+   "width": 740,
+   "height": 412,
+   "label": "ENTRADA"
+  },
+  {
+   "id": "g-integracion",
+   "type": "group",
+   "x": 1340,
+   "y": -124,
+   "width": 740,
+   "height": 878,
+   "label": "INTEGRACIÓN Y PRESENTACIÓN"
+  },
+  {
+   "id": "g-logica",
+   "type": "group",
+   "x": 2740,
+   "y": -124,
+   "width": 740,
+   "height": 626,
+   "label": "LÓGICA (cara externa)"
+  },
+  {
+   "id": "g-base",
+   "type": "group",
+   "x": 4140,
+   "y": -124,
+   "width": 740,
+   "height": 750,
+   "label": "DATOS Y DOMINIO (núcleo)"
+  },
+  {
+   "id": "g-transversal",
+   "type": "group",
+   "x": 5540,
+   "y": -124,
+   "width": 740,
+   "height": 440,
+   "label": "TRANSVERSALES"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e001",
+   "fromNode": "g-borde",
+   "fromSide": "right",
+   "toNode": "g-integracion",
+   "toSide": "left",
+   "label": "compone"
+  },
+  {
+   "id": "e002",
+   "fromNode": "g-integracion",
+   "fromSide": "right",
+   "toNode": "g-logica",
+   "toSide": "left",
+   "label": "implementa puertos"
+  },
+  {
+   "id": "e003",
+   "fromNode": "g-logica",
+   "fromSide": "right",
+   "toNode": "g-base",
+   "toSide": "left",
+   "label": "importa"
+  },
+  {
+   "id": "e004",
+   "fromNode": "g-borde",
+   "fromSide": "top",
+   "toNode": "g-transversal",
+   "toSide": "top",
+   "label": "configura"
+  }
+ ]
+}
