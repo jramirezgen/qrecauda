@@ -8,8 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 26 |
-| pendiente | 33 |
+| hecho | 29 |
+| pendiente | 30 |
 
 ## En curso, bloqueados y pausados
 
@@ -17,9 +17,7 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- **F0.06** RETOMA.md y CLAUDE.md del repo
-- **F0.07** Hooks commit-msg (sin atribución) y pre-push (CI local)
-- **F7.03** Modelo de amenazas
+- **F0.09** Remotos: GitHub privado y espejo bare
 - **F2.04** Transversales: configuración, observabilidad, reproducibilidad, seguridad, concurrencia
 - **F6.02** Transacción de peaje/Metro cifrada con la clave certificada
 - **F4.01** Mitigación de lectura (TREX / mthree) como puerto Mitigador
@@ -36,6 +34,8 @@ Plan v1 · 2026-10-07
 | F0.03 | hecho | `a5bf535` | Decisiones D-001…D-008 |
 | F0.04 | hecho | `564dc94` | Contratos de imports y trinquetes de arquitectura |
 | F0.05 | hecho | `a5bf535` | DAG verificable, registro append-only y ESTADO.md generado |
+| F0.06 | hecho | `d9609a1` | RETOMA.md y CLAUDE.md del repo |
+| F0.07 | hecho | `d9609a1` | Hooks commit-msg (sin atribución) y pre-push (CI local) |
 | F0.08 | hecho | `a5bf535` | CI local: ruff, mypy, lint-imports, pytest y DAG |
 | R.00 | hecho | `564dc94` | Revisión adversarial del diseño, antes de construir |
 | F1.01 | hecho | `0419140` | Bits inmutable y errores con nombre |
@@ -56,3 +56,4 @@ Plan v1 · 2026-10-07
 | F5.02 | hecho | `42b54c9` | Min-entropía SP 800-90B y contraste con la cota MCV del dominio |
 | F6.01 | hecho | `aea23de` | Cifrado AES-256-GCM con clave QRNG |
 | P.E0 | hecho | `f8e21d0` | Parámetros y aritmética de la cadena, fijados antes de medir |
+| F7.03 | hecho | `d9609a1` | Modelo de amenazas |
