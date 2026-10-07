@@ -40,3 +40,28 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 | «certificada» | *supera la batería de pruebas y las cotas de entropía de este repositorio*. **No** es una certificación formal (FIPS/ISO) ni prueba de origen cuántico. |
 | control negativo | corrida cuyo resultado esperado es «pasa» aunque la fuente sea clásica (E1a); demuestra los límites de la batería. |
 | eureka | objetivo cerrado con preinscripción, corridas que descienden de ella y veredicto. |
+
+## Puertos (`puertos/__init__.py`)
+
+| término | definición |
+|---|---|
+| `FuenteDeBits` | puerto: da una `Muestra` de `qubits` × `shots`. Adaptadores: PRNG, Aer, IBM. |
+| `Mitigador` | puerto: reduce el sesgo de lectura y devuelve otra `Muestra`; si remuestrea, el origen se degrada a `PRNG_CLASICO`. |
+| `Validador` | puerto: mide M1, M3, M4, M5 sobre unos bits. |
+| `EstimadorDeEntropia` | puerto: cota de min-entropía por bit. `EstimadorMCV` es la del dominio (ciega a la dependencia); el contraste independiente es el 90B de NIST (S.04). |
+| `EstimadorDeSesgo` | puerto: ⟨Z⟩ con y sin mitigar; ahí vivirían ZNE/PEC. |
+| `FuenteDeSemilla` | puerto: bits uniformes para la semilla de Toeplitz (D-004). |
+| `Cifrador` | puerto: AES-GCM con la clave del pipeline. |
+| `Almacen` | puerto: guardar artefactos canónicos, append-only; devuelve el sha256. |
+| `Reloj`, `Bitacora` | puertos de tiempo monotónico y de registro de eventos. |
+
+## Tipos de dominio, datos y aplicación
+
+| término | definición |
+|---|---|
+| `Procedencia` | backend, `job_id` y versión del SDK de una `Muestra`; `HARDWARE_IBM` sin `job_id` no se construye. |
+| `Metrica`, `Umbral` | M1…M7 y su cota; `Medida` es un valor medido contra su umbral. |
+| `Veredicto` | conjunción de `Medida`; vacío no aprueba. |
+| `ParametrosPipeline`, `Resultado` | entrada y salida del orquestador; `Resultado.etapas` lleva las medidas en la muestra cruda, la mitigada y la clave. |
+| `InformeCorrida` | artefacto versionado de una corrida; lo guarda el `Almacen`. |
+| `ErrorQRecauda` | raíz de los errores; hijas: `EntradaInvalida`, `EntropiaInsuficiente`, `FuenteNoDisponible`, `EsquemaFuturo`, cada una con su código de salida. |
