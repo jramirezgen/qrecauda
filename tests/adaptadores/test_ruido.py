@@ -95,3 +95,15 @@ def test_nivel_realista_desde_backend_falso() -> None:
     assert nm.noise_instructions  # hay errores de puerta y de lectura tomados del backend falso
     assert "measure" in nm.noise_instructions
     FuenteAer(semilla=1, noise_model=nm).generar(2, 100)
+
+
+def test_los_niveles_coinciden_con_la_preinscripcion_p_e0():
+    import tomllib
+    from pathlib import Path
+
+    from qrecauda.adaptadores.aer.ruido import NIVELES
+
+    raiz = Path(__file__).resolve().parents[2]
+    fijados = tomllib.loads((raiz / "declaraciones" / "PARAMETROS.toml").read_text())["ruido_lectura"]
+    for nivel, (p10, p01) in fijados.items():
+        assert (NIVELES[nivel].p1_dado_0, NIVELES[nivel].p0_dado_1) == (p10, p01)

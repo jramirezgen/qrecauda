@@ -41,7 +41,7 @@ class CanalLectura:
 
 
 # Niveles SINTÉTICOS (no medidos en hardware). RUIDO_MEDIO es el canal de S.02 (p(1|0)=0.02, p(0|1)=0.08).
-RUIDO_BAJO = CanalLectura(p1_dado_0=0.005, p0_dado_1=0.01)
+RUIDO_BAJO = CanalLectura(p1_dado_0=0.01, p0_dado_1=0.03)
 RUIDO_MEDIO = CanalLectura(p1_dado_0=0.02, p0_dado_1=0.08)
 RUIDO_ALTO = CanalLectura(p1_dado_0=0.05, p0_dado_1=0.15)
 NIVELES: dict[str, CanalLectura] = {"bajo": RUIDO_BAJO, "medio": RUIDO_MEDIO, "alto": RUIDO_ALTO}
