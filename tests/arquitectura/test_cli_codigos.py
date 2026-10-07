@@ -37,6 +37,23 @@ def test_la_cli_devuelve_el_codigo_de_cada_excepcion(clase, monkeypatch, capsys)
     assert clase.__name__ in salida.err and not salida.out  # el error va a stderr
 
 
+@pytest.mark.parametrize("clase", _todas_las_hijas(), ids=lambda c: c.__name__)
+@pytest.mark.parametrize("orden", [["correr", "declaraciones/E1.toml"], ["juzgar", "E1"]], ids=["correr", "juzgar"])
+def test_correr_y_juzgar_devuelven_el_codigo_de_cada_excepcion(clase, orden, monkeypatch, capsys):
+    def falla(*a, **k):
+        raise clase("provocado")
+
+    monkeypatch.setattr(cli.api, orden[0], falla)
+    assert cli.main(orden) == CODIGOS[clase]
+    salida = capsys.readouterr()
+    assert clase.__name__ in salida.err and not salida.out
+
+
+def test_corrida_invalida_es_el_codigo_9():
+    """Fijo: los scripts y el DAG distinguen «corrida inválida» de «veredicto rechazado» (1) por este número."""
+    assert CODIGOS[errores.CorridaInvalida] == 9 and codigo_de(errores.CorridaInvalida("x")) == 9
+
+
 def _config(tmp_path, texto="backend = 'prng'\nshots = 20000\nqubits = 8\n"):
     ruta = tmp_path / "c.toml"
     ruta.write_text(texto)

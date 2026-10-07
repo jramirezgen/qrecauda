@@ -14,8 +14,12 @@ SRC = Path(__file__).resolve().parents[2] / "src" / "qrecauda"
 
 
 def test_firmas_congeladas():
-    assert sorted(api.__all__) == ["Configuracion", "Resultado", "generar_clave"]
+    assert sorted(api.__all__) == [
+        "Configuracion", "ManifiestoDeCorrida", "Resultado", "VeredictoDeEureka", "correr", "generar_clave", "juzgar",
+    ]  # fmt: skip
     assert str(inspect.signature(api.generar_clave)) == "(cfg: 'Configuracion') -> 'Resultado'"
+    assert str(inspect.signature(api.correr)) == "(declaracion: 'Path', raiz: 'Path') -> 'ManifiestoDeCorrida'"
+    assert str(inspect.signature(api.juzgar)) == "(eureka: 'str', raiz: 'Path') -> 'VeredictoDeEureka'"
 
 
 def test_campos_de_la_configuracion_congelados():
@@ -33,7 +37,7 @@ def test_campos_de_la_configuracion_congelados():
 
 
 def test_firmas_de_presentacion_y_cli_congeladas():
-    assert sorted(presentacion.__all__) == ["json_canonico", "tabla"]
+    assert sorted(presentacion.__all__) == ["json_canonico", "json_de", "resumen_de_corrida", "tabla", "tabla_de_eureka"]
     assert str(inspect.signature(presentacion.tabla)) == "(veredicto: 'Veredicto') -> 'str'"
     assert str(inspect.signature(presentacion.json_canonico)) == "(veredicto: 'Veredicto') -> 'str'"
     assert str(inspect.signature(cli.main)) == "(argv: 'list[str] | None' = None) -> 'int'"
