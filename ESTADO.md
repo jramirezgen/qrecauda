@@ -8,8 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 23 |
-| pendiente | 36 |
+| hecho | 26 |
+| pendiente | 33 |
 
 ## En curso, bloqueados y pausados
 
@@ -21,8 +21,10 @@ Plan v1 · 2026-10-07
 - **F0.07** Hooks commit-msg (sin atribución) y pre-push (CI local)
 - **F7.03** Modelo de amenazas
 - **F2.04** Transversales: configuración, observabilidad, reproducibilidad, seguridad, concurrencia
-- **F3.01** Circuito H⊗n + medición sobre AerSimulator con SamplerV2
 - **F6.02** Transacción de peaje/Metro cifrada con la clave certificada
+- **F4.01** Mitigación de lectura (TREX / mthree) como puerto Mitigador
+- **F4.02** ZNE y PEC/PNA sobre el observable de sesgo ⟨Z⟩
+- **P.E2** Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 %
 
 ## Hechos y juzgados
 
@@ -47,6 +49,9 @@ Plan v1 · 2026-10-07
 | S.02 | hecho | `7856f4e` | Spike de alcance de la mitigación: ¿TREX, ZNE y PEC actúan sobre bitstrings? |
 | S.03 | hecho | `7856f4e` | Spike de honestidad: el muestreo de AerSimulator es pseudoaleatorio |
 | S.04 | hecho | `7856f4e` | Spike del estimador SP 800-90B: qué herramienta, instalable y probada |
+| F3.01 | hecho | `5312674` | Circuito H⊗n + medición sobre AerSimulator con SamplerV2 |
+| F3.02 | hecho | `5312674` | Modelo de ruido del backend: lectura asimétrica, relajación y cross-talk |
+| F3.03 | hecho | `5312674` | Transpilación guiada (AIRouting / StagedPassManager) con salida local |
 | F5.01 | hecho | `42b54c9` | Batería NIST SP 800-22 con nistrng y contraste con el validador propio |
 | F5.02 | hecho | `42b54c9` | Min-entropía SP 800-90B y contraste con la cota MCV del dominio |
 | F6.01 | hecho | `aea23de` | Cifrado AES-256-GCM con clave QRNG |
