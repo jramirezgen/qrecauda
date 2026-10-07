@@ -8,7 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| pendiente | 59 |
+| hecho | 18 |
+| pendiente | 41 |
 
 ## En curso, bloqueados y pausados
 
@@ -16,9 +17,36 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- **F0.00** Repo git con la identidad del usuario
+- **F0.06** RETOMA.md y CLAUDE.md del repo
+- **F0.07** Hooks commit-msg (sin atribución) y pre-push (CI local)
+- **F7.03** Modelo de amenazas
+- **F2.04** Transversales: configuración, observabilidad, reproducibilidad, seguridad, concurrencia
+- **F2.06** Capa de datos: InformeCorrida versionado y Almacén JSON append-only
+- **F6.01** Cifrado AES-256-GCM con clave QRNG
+- **F3.01** Circuito H⊗n + medición sobre AerSimulator con SamplerV2
+- **F5.01** Batería NIST SP 800-22 con nistrng y contraste con el validador propio
+- **F5.02** Min-entropía SP 800-90B y contraste con la cota MCV del dominio
+- **P.E0** Parámetros y aritmética de la cadena, fijados antes de medir
 
 ## Hechos y juzgados
 
 | nodo | estado | evidencia | título |
 |---|---|---|---|
+| F0.00 | hecho | `a5bf535` | Repo git con la identidad del usuario |
+| F0.01 | hecho | `a5bf535` | uv, pyproject y árbol de capas |
+| F0.02 | hecho | `b11f4eb` | FUNDAMENTO, DISENO y GLOSARIO |
+| F0.03 | hecho | `a5bf535` | Decisiones D-001…D-008 |
+| F0.04 | hecho | `564dc94` | Contratos de imports y trinquetes de arquitectura |
+| F0.05 | hecho | `a5bf535` | DAG verificable, registro append-only y ESTADO.md generado |
+| F0.08 | hecho | `a5bf535` | CI local: ruff, mypy, lint-imports, pytest y DAG |
+| R.00 | hecho | `564dc94` | Revisión adversarial del diseño, antes de construir |
+| F1.01 | hecho | `0419140` | Bits inmutable y errores con nombre |
+| F1.02 | hecho | `0419140` | Extractores von Neumann, Peres y Toeplitz con LHL |
+| F1.03 | hecho | `0419140` | Entropía, métricas M1–M7 y Muestra con su origen |
+| F2.01 | hecho | `564dc94` | Puertos (Protocol) y datos con esquema versionado |
+| F2.02 | hecho | `564dc94` | Línea base PRNG y validador estadístico propio |
+| F2.03 | hecho | `564dc94` | Orquestador del pipeline (bala trazadora) |
+| S.01 | hecho | `7856f4e` | Spike de versiones: qiskit, aer, runtime, mthree y nistrng en un mismo entorno |
+| S.02 | hecho | `7856f4e` | Spike de alcance de la mitigación: ¿TREX, ZNE y PEC actúan sobre bitstrings? |
+| S.03 | hecho | `7856f4e` | Spike de honestidad: el muestreo de AerSimulator es pseudoaleatorio |
+| S.04 | hecho | `7856f4e` | Spike del estimador SP 800-90B: qué herramienta, instalable y probada |
