@@ -49,8 +49,9 @@ class TransaccionCifrada:
 
 class ServicioDeTransacciones:
     def __init__(self, resultado: Resultado, cifrador: Cifrador, crear_reserva: Callable[[Bits], ReservaDeClaves]) -> None:
-        if not resultado.veredicto.aprobado:
-            raise EntradaInvalida("la clave no está certificada: el veredicto no aprueba, no se cifra con ella")
+        # Sólo la calidad de la clave (M1–M5). M6/M7 internas se miden hasta Toeplitz y las juzga C.E3 de extremo a extremo (P.E3).
+        if not resultado.veredicto.calidad_de_clave_aprobada:
+            raise EntradaInvalida("la clave no está certificada: M1–M5 no aprueban, no se cifra con ella")
         self._cifrador = cifrador
         self._reserva = crear_reserva(resultado.clave)
         self._rotulo = ROTULO_CUANTICO if resultado.muestra.reclama_origen_cuantico else ROTULO_VALIDACION

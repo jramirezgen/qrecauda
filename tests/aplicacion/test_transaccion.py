@@ -9,7 +9,7 @@ from qrecauda.aplicacion.pipeline import ParametrosPipeline, Resultado, ejecutar
 from qrecauda.aplicacion.transaccion import ROTULO_CUANTICO, ROTULO_VALIDACION, ServicioDeTransacciones, Transaccion
 from qrecauda.dominio.bits import Bits
 from qrecauda.dominio.errores import AutenticacionFallida, EntropiaInsuficiente, ErrorQRecauda, NonceRepetido
-from qrecauda.dominio.metricas import Veredicto
+from qrecauda.dominio.metricas import Metrica, Veredicto, medir
 from qrecauda.dominio.muestra import Muestra, Origen, Procedencia
 from qrecauda.transversal.observabilidad import RelojMonotonico
 
@@ -109,3 +109,34 @@ def _campos(r: Resultado) -> dict[str, object]:
 
 def vars_de(t: object) -> dict[str, object]:
     return {c: getattr(t, c) for c in type(t).__slots__}
+
+
+def _veredicto_con(**valores: float) -> Veredicto:
+    """Un veredicto de clave sana (M1–M5) con las M6/M7 internas puestas a gusto."""
+    sano = {Metrica.SESGO: 0.001, Metrica.MIN_ENTROPIA: 0.99, Metrica.MONOBIT: 0.5, Metrica.RUNS: 0.5, Metrica.CHI2: 0.5}
+    sano.update({Metrica(k): v for k, v in valores.items()})
+    return Veredicto(tuple(medir(m, v) for m, v in sano.items()))
+
+
+def test_el_guard_juzga_la_calidad_de_la_clave_no_la_tasa_ni_la_latencia(resultado):
+    """Decisión delegada (salida A de P.E3): M6/M7 internas sólo se miden hasta Toeplitz; las juzga C.E3 de extremo a extremo."""
+    v = Veredicto((*_veredicto_con().medidas, medir(Metrica.TASA, 1.0), medir(Metrica.LATENCIA, 9_999.0)))
+    assert not v.aprobado and v.calidad_de_clave_aprobada
+    r = Resultado(**{**_campos(resultado), "veredicto": v})
+    s = _servicio(r)
+    assert s.descifrar(s.cifrar(TX)) == TX
+
+
+@pytest.mark.parametrize("m", ["M1_sesgo", "M2_min_entropia", "M3_nist_monobit", "M4_nist_runs", "M5_chi_cuadrado"])
+def test_el_guard_sigue_negando_si_falla_una_metrica_de_calidad(resultado, m):
+    malo = {"M1_sesgo": 0.5, "M2_min_entropia": 0.1}.get(m, 0.0)
+    r = Resultado(**{**_campos(resultado), "veredicto": _veredicto_con(**{m: malo})})
+    with pytest.raises(ErrorQRecauda):
+        _servicio(r)
+
+
+def test_sin_ninguna_metrica_de_calidad_no_se_cifra(resultado):
+    solo_tiempos = Veredicto((medir(Metrica.TASA, 1e6), medir(Metrica.LATENCIA, 1.0)))
+    r = Resultado(**{**_campos(resultado), "veredicto": solo_tiempos})
+    with pytest.raises(ErrorQRecauda):
+        _servicio(r)

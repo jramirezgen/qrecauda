@@ -19,6 +19,10 @@ class Metrica(StrEnum):
     LATENCIA = "M7_latencia_ms"  # < 500 ms
 
 
+# Propiedades de la CLAVE (M1–M5). M6/M7 son de la cadena: las juzga E3 de extremo a extremo (P.E3), no quien cifra.
+METRICAS_DE_CLAVE: frozenset[Metrica] = frozenset({Metrica.SESGO, Metrica.MIN_ENTROPIA, Metrica.MONOBIT, Metrica.RUNS, Metrica.CHI2})
+
+
 @dataclass(frozen=True, slots=True)
 class Umbral:
     valor: float
@@ -62,3 +66,9 @@ class Veredicto:
 
     def fallos(self) -> tuple[Metrica, ...]:
         return tuple(m.metrica for m in self.medidas if not m.cumple)
+
+    @property
+    def calidad_de_clave_aprobada(self) -> bool:
+        """Conjunción sólo de M1–M5: lo que certifica la clave para cifrar. Sin ninguna de ellas no aprueba nada (M6/M7 no cuentan)."""
+        propias = [m for m in self.medidas if m.metrica in METRICAS_DE_CLAVE]
+        return bool(propias) and all(m.cumple for m in propias)

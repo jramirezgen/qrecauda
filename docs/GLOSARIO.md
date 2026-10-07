@@ -68,7 +68,7 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 |---|---|
 | `Procedencia` | backend, `job_id` y versión del SDK de una `Muestra`; `HARDWARE_IBM` sin `job_id` no se construye. |
 | `Metrica`, `Umbral` | M1…M7 y su cota; `Medida` es un valor medido contra su umbral. |
-| `Veredicto` | conjunción de `Medida`; vacío no aprueba. |
+| `Veredicto` | conjunción de `Medida`; vacío no aprueba. `calidad_de_clave_aprobada` juzga sólo M1–M5 (`METRICAS_DE_CLAVE`): es lo que exige cifrar; M6/M7 las juzga E3. |
 | `ParametrosPipeline`, `Resultado` | entrada y salida del orquestador; `Resultado.etapas` lleva las medidas en la muestra cruda, la mitigada y la clave. |
 | `InformeCorrida` | artefacto versionado de una corrida; lo guarda el `Almacen`. |
 | `ExperimentoE2` | una celda de E2: sesgo de lectura antes y después de una técnica, a un nivel de ruido, con su intervalo. |
