@@ -1,0 +1,44 @@
+# Declaración de E2 (nodo P.E2), fijada ANTES de correr. Hereda PARAMETROS.toml; aquí sólo lo propio de E2.
+# Ninguna cifra de este archivo es un resultado. Prosa y justificación: docs/preinscripciones/E2.md
+hereda = "declaraciones/PARAMETROS.toml"        # qubits, shots, semillas y [ruido_lectura] bajo/medio/alto
+
+[experimento]
+id = "E2"
+nodo_corrida = "C.E2"
+metrica = "M1_sesgo"
+estadistico = "media_por_qubit_de_abs_p1_menos_medio"   # igual que S.02 y sesgo_mthree
+
+[niveles]
+sinteticos = ["bajo", "medio", "alto"]           # valores en PARAMETROS.toml [ruido_lectura]
+realista = "FakeSherbrooke"                      # NoiseModel.from_backend; ⚠️ sin verificar con la versión fijada
+realista_en_conjuncion = false                   # veredicto propio, fuera de la conjunción de los tres sintéticos
+
+[tecnicas]
+decide = ["ninguna", "twirling_propio"]
+contraste = ["mthree"]                           # no decide, D-009
+puerta = ["zne", "pec"]                          # sólo control C4: «sin efecto esperado» es veredicto válido
+twirling_bloque = 200                            # por defecto de TwirlingLectura; no se ajusta
+
+[criterios_twirling]                             # conjuntivos, por celda (nivel x semilla)
+k1_sesgo_residual_menor_que = 0.01               # M1 estricto
+k2_limite_superior_ic95_menor_que = 0.01
+k3_residuo_maximo = 0.003
+k4_factor_minimo = 5.0                           # sesgo_crudo / sesgo_residual; sólo si sesgo_crudo >= k4_aplica_desde
+k4_aplica_desde = 0.01
+nulo_factor_menor_que = 1.5                      # desenlace «no mueve el sesgo»
+
+[intervalo]
+metodo = "bootstrap_parametrico_binomial_por_qubit"
+remuestras = 10_000
+semilla = "semilla_de_la_celda + 1"
+nivel = 0.95
+
+[controles]
+c1_tolerancia_crudo_vs_analitico = 0.002         # positivo: el detector ve el sesgo inyectado (medio y alto)
+c2_residuo_sin_ruido_maximo = 0.003              # negativo: twirling sin NoiseModel
+c3_canal_simetrico = [0.05, 0.05]                # negativo: p(1|0), p(0|1); residuo <= k3
+c4_sin_efecto_relativo = 0.1                     # |Δ<Z>| < 0.1·|<Z>_antes| => «sin efecto»
+c5 = "mthree se reporta como contraste; no entra en ningún criterio"
+
+[inconcluso]                                     # IC95 del residuo contiene 0.01
+shots_ampliacion = [800_000, 1_600_000]          # máximo dos duplicaciones, misma semilla, umbrales intactos
