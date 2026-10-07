@@ -8,8 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 39 |
-| pendiente | 20 |
+| hecho | 40 |
+| pendiente | 19 |
 
 ## En curso, bloqueados y pausados
 
@@ -18,8 +18,8 @@ Plan v1 · 2026-10-07
 ## Listos
 
 - **F0.09** Remotos: GitHub privado y espejo bare
-- **F2.07** Correr y juzgar: de la declaración al veredicto
 - **F3.04** SamplerV2 sobre hardware IBM con Batch/Session (opcional)
+- **P.E1** Preinscripción E1: el pipeline entrega claves que cumplen M1–M5 con entrada ruidosa
 - **C.E2** E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido
 - **C.E3** E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado
 
@@ -46,6 +46,7 @@ Plan v1 · 2026-10-07
 | F2.04 | hecho | `a898076` | Transversales: configuración, observabilidad, reproducibilidad, seguridad, concurrencia |
 | F2.05 | hecho | `dc0ab6d` | Presentación, fachada pública y CLI |
 | F2.06 | hecho | `73c4c42` | Capa de datos: InformeCorrida versionado y Almacén JSON append-only |
+| F2.07 | hecho | `44396b5` | Correr y juzgar: de la declaración al veredicto |
 | S.01 | hecho | `7856f4e` | Spike de versiones: qiskit, aer, runtime, mthree y nistrng en un mismo entorno |
 | S.02 | hecho | `7856f4e` | Spike de alcance de la mitigación: ¿TREX, ZNE y PEC actúan sobre bitstrings? |
 | S.03 | hecho | `7856f4e` | Spike de honestidad: el muestreo de AerSimulator es pseudoaleatorio |
