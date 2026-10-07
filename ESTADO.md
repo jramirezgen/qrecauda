@@ -8,8 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 40 |
-| pendiente | 19 |
+| hecho | 41 |
+| pendiente | 18 |
 
 ## En curso, bloqueados y pausados
 
@@ -19,8 +19,11 @@ Plan v1 · 2026-10-07
 
 - **F0.09** Remotos: GitHub privado y espejo bare
 - **F3.04** SamplerV2 sobre hardware IBM con Batch/Session (opcional)
-- **P.E1** Preinscripción E1: el pipeline entrega claves que cumplen M1–M5 con entrada ruidosa
+- **C.E1a** E1a · control: PRNG clásico pasa M1–M5 (la batería no distingue origen)
 - **C.E2** E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido
+- **C.E1b** E1b · Aer ruidoso sin mitigar
+- **C.E1c** E1c · Aer ruidoso mitigado
+- **C.E1d** E1d · control positivo: fuentes defectuosas rechazadas, fuente ideal aceptada
 - **C.E3** E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado
 
 ## Hechos y juzgados
@@ -62,6 +65,7 @@ Plan v1 · 2026-10-07
 | F6.01 | hecho | `aea23de` | Cifrado AES-256-GCM con clave QRNG |
 | F6.02 | hecho | `a7cd133` | Transacción de peaje/Metro cifrada con la clave certificada |
 | P.E0 | hecho | `f8e21d0` | Parámetros y aritmética de la cadena, fijados antes de medir |
+| P.E1 | hecho | `dae22a6` | Preinscripción E1: el pipeline entrega claves que cumplen M1–M5 con entrada ruidosa |
 | P.E2 | hecho | `43e2649` | Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 % |
 | P.E3 | hecho | `d0f062a` | Preinscripción E3: tasa, latencia y caso de uso |
 | F7.03 | hecho | `d9609a1` | Modelo de amenazas |
