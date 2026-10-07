@@ -54,3 +54,4 @@ ignore_missing_imports = true   # sólo los importan sus adaptadores (contrato �
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = ["lento: prueba de integración de varios segundos; ci_local.sh la corre igual"]
