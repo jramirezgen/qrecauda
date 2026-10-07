@@ -72,3 +72,8 @@ class Configuracion:
         if t := os.environ.get("QRECAUDA_IBM_TOKEN_FILE"):
             base.setdefault("ibm_token_ruta", t)
         return cls.desde_mapa(base)
+
+
+def entorno_sin_git() -> dict[str, str]:
+    """El entorno del proceso sin las variables `GIT_*`: dentro de un hook heredarían el repo equivocado al lanzar `git`."""
+    return {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}

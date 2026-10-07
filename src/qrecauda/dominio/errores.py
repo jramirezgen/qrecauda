@@ -31,3 +31,7 @@ class NonceRepetido(ErrorQRecauda):
 
 class CandadoOcupado(ErrorQRecauda):
     """Otra corrida pesada sostiene el candado de máquina y la espera acotada se agotó."""
+
+
+class CorridaInvalida(ErrorQRecauda):
+    """La corrida no es juzgable (falta o falla un control, la preinscripción no la precede o cambió): no hay veredicto, hay incidencia."""

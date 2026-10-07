@@ -8,11 +8,26 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 
+from qrecauda.datos.corrida import Criterio, ManifiestoDeCorrida, Medicion, VeredictoDeEureka
+from qrecauda.datos.declaracion import Declaracion
 from qrecauda.datos.esquema import leer_esquema
 from qrecauda.datos.informe import ESQUEMA_INFORME, ExperimentoE2, ExperimentoE3, InformeCorrida
 from qrecauda.dominio.errores import EntradaInvalida
 
-__all__ = ["ESQUEMA_INFORME", "ExperimentoE2", "ExperimentoE3", "InformeCorrida", "leer_esquema", "leer_informe", "serializar"]
+__all__ = [
+    "ESQUEMA_INFORME",
+    "Criterio",
+    "Declaracion",
+    "ExperimentoE2",
+    "ExperimentoE3",
+    "InformeCorrida",
+    "ManifiestoDeCorrida",
+    "Medicion",
+    "VeredictoDeEureka",
+    "leer_esquema",
+    "leer_informe",
+    "serializar",
+]
 
 
 def serializar(artefacto: Mapping[str, object]) -> str:

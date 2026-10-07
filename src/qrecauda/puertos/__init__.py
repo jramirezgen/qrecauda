@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Protocol
 
+from qrecauda.datos import Declaracion, Medicion
 from qrecauda.dominio.bits import Bits
 from qrecauda.dominio.metricas import Medida
 from qrecauda.dominio.muestra import Muestra
@@ -78,3 +79,27 @@ class Reloj(Protocol):
 
 class Bitacora(Protocol):
     def registrar(self, evento: str, **campos: object) -> None: ...
+
+
+class Ejecutor(Protocol):
+    """Mide UNA semilla de una eureka según su declaración: artefactos tipados y resultado de los controles. No decide nada."""
+
+    def ejecutar(self, declaracion: Declaracion, semilla: int) -> Medicion: ...
+
+
+class Historial(Protocol):
+    """El historial git como testigo de que la preinscripción va ANTES de la corrida."""
+
+    def commit_actual(self) -> str: ...
+
+    def ultimo_commit(self, rutas: tuple[str, ...]) -> str: ...  # el último commit que tocó alguna de esas rutas
+
+    def modificado(self, rutas: tuple[str, ...]) -> bool: ...  # cambios sin commit en esas rutas
+
+    def precede(self, antes: str, despues: str) -> bool: ...  # `git merge-base --is-ancestor antes despues`
+
+
+class LibroDeVeredictos(Protocol):
+    """Registro append-only de veredictos (registro/veredictos.jsonl): una línea por veredicto, nunca se reescribe."""
+
+    def anadir(self, linea: Mapping[str, object]) -> None: ...

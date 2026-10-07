@@ -7,15 +7,20 @@ núcleo corre sin sus extras y un extra ausente se traduce en `FuenteNoDisponibl
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
+from qrecauda.adaptadores.almacen_json import AlmacenJson
 from qrecauda.adaptadores.estadistica import ValidadorEstadistico
+from qrecauda.adaptadores.git import HistorialGit
+from qrecauda.adaptadores.libro_jsonl import LibroJsonl
 from qrecauda.adaptadores.prng import FuentePrng
+from qrecauda.aplicacion.juez import CorrerYJuzgar
 from qrecauda.aplicacion.pipeline import ParametrosPipeline, Resultado
 from qrecauda.aplicacion.pipeline import ejecutar as _ejecutar_pipeline
 from qrecauda.aplicacion.transaccion import ServicioDeTransacciones
 from qrecauda.dominio.errores import FuenteNoDisponible
-from qrecauda.puertos import Bitacora, FuenteDeBits, Mitigador, Validador
+from qrecauda.puertos import Bitacora, Ejecutor, FuenteDeBits, Mitigador, Validador
 from qrecauda.transversal.configuracion import Configuracion
 from qrecauda.transversal.observabilidad import RelojMonotonico
 from qrecauda.transversal.reproducibilidad import entorno, un_hilo, verificar_un_hilo
@@ -78,3 +83,14 @@ def servicio_de(cfg: Configuracion, resultado: Resultado) -> ServicioDeTransacci
     except ImportError as e:
         raise FuenteNoDisponible(f"el cifrado necesita el extra «cifrado»: {e}") from e
     return ServicioDeTransacciones(resultado, CifradorAesGcm(), ReservaDeClave)
+
+
+def juez_de(raiz: Path, ejecutor: Ejecutor) -> CorrerYJuzgar:
+    """F2.07: correr y juzgar sobre el repo en `raiz`; escribe en `registro/corridas/` y `registro/veredictos.jsonl`."""
+    return CorrerYJuzgar(
+        ejecutor,
+        AlmacenJson(raiz / "registro" / "corridas"),
+        HistorialGit(raiz),
+        LibroJsonl(raiz / "registro" / "veredictos.jsonl"),
+        entorno(),
+    )

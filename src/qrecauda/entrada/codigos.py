@@ -5,6 +5,7 @@ from __future__ import annotations
 from qrecauda.dominio.errores import (
     AutenticacionFallida,
     CandadoOcupado,
+    CorridaInvalida,
     EntradaInvalida,
     EntropiaInsuficiente,
     ErrorQRecauda,
@@ -23,6 +24,7 @@ CODIGOS: dict[type[ErrorQRecauda], int] = {
     AutenticacionFallida: 6,
     NonceRepetido: 7,
     CandadoOcupado: 8,
+    CorridaInvalida: 9,
     ErrorQRecauda: 10,
 }
 

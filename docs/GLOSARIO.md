@@ -59,6 +59,9 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 | `FuenteDeSemilla` | puerto: bits uniformes para la semilla de Toeplitz (D-004). |
 | `Cifrador` | puerto: AES-GCM con la clave del pipeline. |
 | `ReservaDeClaves` | puerto: reparte la clave certificada en pares (clave, nonce) de un solo uso; agotada, `EntropiaInsuficiente`. |
+| `Ejecutor` | puerto: mide UNA semilla de una eureka según su `Declaracion` y devuelve una `Medicion`; no decide nada. |
+| `Historial` | puerto: el historial git como testigo de que la preinscripción va antes de la corrida (`ultimo_commit`, `modificado`, `precede`). |
+| `LibroDeVeredictos` | puerto: `registro/veredictos.jsonl`, una línea por veredicto, sólo se añade. |
 | `Almacen` | puerto: guardar artefactos canónicos, append-only; devuelve el sha256. |
 | `Reloj`, `Bitacora` | puertos de tiempo monotónico y de registro de eventos. |
 
@@ -73,5 +76,11 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 | `InformeCorrida` | artefacto versionado de una corrida; lo guarda el `Almacen`. |
 | `ExperimentoE2` | una celda de E2: sesgo de lectura antes y después de una técnica, a un nivel de ruido, con su intervalo. |
 | `ExperimentoE3` | E3: tasa (M6) y latencia (M7) con la máquina en que se midieron. |
-| `ErrorQRecauda` | raíz de los errores; hijas: `EntradaInvalida`, `EntropiaInsuficiente`, `FuenteNoDisponible`, `EsquemaFuturo`, `AutenticacionFallida` (cifrado o datos asociados no autentican), `NonceRepetido` (mismo nonce con la misma clave), `CandadoOcupado` (otra corrida pesada sostiene el candado de máquina), cada una con su código de salida. |
+| `ErrorQRecauda` | raíz de los errores; hijas: `EntradaInvalida`, `EntropiaInsuficiente`, `FuenteNoDisponible`, `EsquemaFuturo`, `AutenticacionFallida` (cifrado o datos asociados no autentican), `NonceRepetido` (mismo nonce con la misma clave), `CorridaInvalida` (ver abajo), `CandadoOcupado` (otra corrida pesada sostiene el candado de máquina), cada una con su código de salida. |
+| `Declaracion` | una eureka fijada antes de correr (`declaraciones/*.toml` fundido con `PARAMETROS.toml`): de ella salen semillas, umbrales y las rutas de su preinscripción. |
+| `Medicion` | lo que el `Ejecutor` entrega por semilla: informes/experimentos tipados y el resultado de los controles. |
+| `ManifiestoDeCorrida` | el registro de una corrida: artefactos con su sha256, commit de la corrida, sha de la preinscripción, entorno y controles. |
+| `Criterio`, `VeredictoDeEureka` | un criterio evaluado (con su detalle, `decide` falso si sólo se reporta) y el desenlace de una eureka (`CUMPLE`, `CUMPLE_PARCIAL`, `NULO`, `INCONCLUSO`, `NO_CUMPLE`). |
+| `CorrerYJuzgar` | F2.07: `correr` escribe por el `Almacen`; `juzgar` se niega si la preinscripción no precede a la corrida, cambió o falta/falla un control. |
+| `CorridaInvalida` | error: la corrida no es juzgable (control faltante o fallido, preinscripción posterior o cambiada); no hay veredicto, hay incidencia. Código 9. |
 | `Transaccion`, `TransaccionCifrada`, `ServicioDeTransacciones` | F6.02: el cobro de peaje/Metro, su cifrado con rótulo de origen («validación del pipeline» salvo hardware IBM con `job_id`) y el caso de uso que lo cifra con `Resultado.clave`. |
