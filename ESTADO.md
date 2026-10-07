@@ -8,8 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 37 |
-| pendiente | 22 |
+| hecho | 38 |
+| pendiente | 21 |
 
 ## En curso, bloqueados y pausados
 
@@ -19,7 +19,6 @@ Plan v1 · 2026-10-07
 
 - **F0.09** Remotos: GitHub privado y espejo bare
 - **F2.07** Correr y juzgar: de la declaración al veredicto
-- **F7.05** Wiki repo: mapas, bases e incidencias publicados en la bóveda
 - **F3.04** SamplerV2 sobre hardware IBM con Batch/Session (opcional)
 - **C.E2** E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido
 - **C.E3** E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado
@@ -66,3 +65,4 @@ Plan v1 · 2026-10-07
 | P.E2 | hecho | `43e2649` | Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 % |
 | P.E3 | hecho | `d0f062a` | Preinscripción E3: tasa, latencia y caso de uso |
 | F7.03 | hecho | `d9609a1` | Modelo de amenazas |
+| F7.05 | hecho | `7db7730` | Wiki repo: mapas, bases e incidencias publicados en la bóveda |
