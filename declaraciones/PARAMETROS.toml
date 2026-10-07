@@ -1,0 +1,24 @@
+# Parámetros de la cadena, fijados ANTES de medir (nodo P.E0). Las declaraciones E1/E2/E3 los heredan; nada se teclea en código.
+[cadena]
+qubits = 8
+shots = 400_000                # 3,2 M de bits crudos: el 90B pide >= 1 M y la clave sale a ~0,30 de lo crudo
+epsilon_log2 = -64             # parámetro de diseño, NO garantía (FUNDAMENTO, discrepancia 8)
+profundidad_peres = 8
+semillas = [20261007, 20261008, 20261009]   # n >= 3 repeticiones por eureka (rúbrica de TRL 4); no se elige entre ellas
+
+[ruido_lectura]                # p(1|0), p(0|1); sesgo analítico de H⊗n = (p01 - p10)/2
+bajo  = [0.01, 0.03]
+medio = [0.02, 0.08]
+alto  = [0.05, 0.15]
+
+[validacion]
+longitud_secuencia_nist = 10_240   # mínimo del χ² de bytes
+secuencias_nist = 93               # clave de ~0,95 M de bits / 10 240; proporción aceptable: 1-alfa ± 3·sqrt(alfa(1-alfa)/N)
+alfa = 0.01
+bloque_m2 = 4096                   # M2 se mide por bloques de 4096 bits (con 256 bits la cota MCV al 99 % no puede pasar de 0,785)
+m2_agregado = "mediana"            # mediana de los bloques; el mínimo se reporta aparte
+muestras_90b = 1_000_000           # mínimo de ea_non_iid; se mide sobre la muestra cruda
+
+[tiempos]
+m6 = "bits de clave por segundo de reloj de pared, un hilo (threadpoolctl), con candado"
+m7 = "p95 de >= 30 repeticiones tras 3 de calentamiento, extremo a extremo; sin cola ni red de IBM"
