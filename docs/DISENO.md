@@ -73,5 +73,5 @@ FuenteDeBits ──▶ [Mitigador] ──▶ Peres ──▶ Toeplitz(LHL) ─�
 ## 5. Contratos de imports (`.importlinter`)
 
 C1 capas · C2 adaptadores independientes (`aer` es un paquete: `ruido` y `transpilacion` son suyos) · C3 el núcleo y la presentación no importan transversal/adaptadores/entrada ·
-C4 dominio puro · C5 SDKs sólo en adaptadores · C6 lo transversal es hoja (sólo depende de `dominio/errores`; lo usan entrada, api, composicion y adaptadores). `tests/arquitectura/test_contratos.py` los ejecuta, comprueba que
+C4 dominio puro · C5 SDKs sólo en adaptadores (el borde —api, composicion, entrada, transversal— los alcanza sólo por el adaptador elegido, C5b) · C6 lo transversal es hoja (sólo depende de `dominio/errores`; lo usan entrada, api, composicion y adaptadores). `tests/arquitectura/test_contratos.py` los ejecuta, comprueba que
 `.importlinter` y `qrecauda.CAPAS` dicen lo mismo y siembra un import prohibido para ver que el contrato muerde.

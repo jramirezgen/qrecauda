@@ -11,6 +11,9 @@ from pathlib import Path
 from qrecauda.dominio.errores import EntradaInvalida
 
 BACKENDS = ("prng", "aer_ruidoso", "ibm")
+MITIGACIONES = ("ninguna", "lectura")  # «lectura» = twirling de lectura propio (D-009)
+NIVELES_RUIDO = ("bajo", "medio", "alto", "realista")  # «realista» = FakeSherbrooke congelado; los demás, canales sintéticos
+VALIDADORES = ("estadistico", "nist")
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,6 +24,9 @@ class Configuracion:
     semilla: int = 20261007
     epsilon_exp: int = 64  # ε = 2^-epsilon_exp
     ibm_token_ruta: str = ""  # RUTA al fichero del token; el valor no vive aquí
+    mitigacion: str = "ninguna"
+    nivel_ruido: str = "medio"  # sólo lo usa el backend aer_ruidoso
+    validador: str = "estadistico"
 
     def __post_init__(self) -> None:
         if self.backend not in BACKENDS:
@@ -31,6 +37,15 @@ class Configuracion:
             raise EntradaInvalida("shots debe ser positivo")
         if not 8 <= self.epsilon_exp <= 128:
             raise EntradaInvalida("epsilon_exp fuera de [8, 128]")
+        for nombre, valor, vocabulario in (
+            ("mitigacion", self.mitigacion, MITIGACIONES),
+            ("nivel_ruido", self.nivel_ruido, NIVELES_RUIDO),
+            ("validador", self.validador, VALIDADORES),
+        ):
+            if valor not in vocabulario:
+                raise EntradaInvalida(f"{nombre} {valor!r} fuera de {vocabulario}")
+        if self.mitigacion == "lectura" and self.backend != "aer_ruidoso":
+            raise EntradaInvalida("la mitigación «lectura» re-ejecuta el circuito: sólo existe sobre backend aer_ruidoso")
         if self.backend == "ibm" and not self.ibm_token_ruta:
             raise EntradaInvalida("backend ibm exige ibm_token_ruta (ruta, nunca el valor)")
 

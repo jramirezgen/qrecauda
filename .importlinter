@@ -76,6 +76,19 @@ source_modules =
     qrecauda.puertos
     qrecauda.aplicacion
     qrecauda.presentacion
+forbidden_modules =
+    qiskit
+    qiskit_aer
+    qiskit_ibm_runtime
+    mthree
+    nistrng
+    cryptography
+
+[importlinter:contract:sdk-solo-en-adaptadores-borde]
+name = C5b: api, composicion, entrada y transversal no importan un SDK DIRECTAMENTE (lo alcanzan por el adaptador que la composición elige)
+type = forbidden
+allow_indirect_imports = True
+source_modules =
     qrecauda.api
     qrecauda.composicion
     qrecauda.entrada
