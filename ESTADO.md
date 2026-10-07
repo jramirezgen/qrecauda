@@ -8,8 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 36 |
-| pendiente | 23 |
+| hecho | 37 |
+| pendiente | 22 |
 
 ## En curso, bloqueados y pausados
 
@@ -21,7 +21,7 @@ Plan v1 · 2026-10-07
 - **F2.07** Correr y juzgar: de la declaración al veredicto
 - **F7.05** Wiki repo: mapas, bases e incidencias publicados en la bóveda
 - **F3.04** SamplerV2 sobre hardware IBM con Batch/Session (opcional)
-- **F4.02** ZNE y PEC/PNA sobre el observable de sesgo ⟨Z⟩
+- **C.E2** E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido
 - **C.E3** E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado
 - **F7.06** Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado
 
@@ -57,6 +57,7 @@ Plan v1 · 2026-10-07
 | F3.03 | hecho | `5312674` | Transpilación guiada (AIRouting / StagedPassManager) con salida local |
 | F3.05 | hecho | `bcd0dd2` | Composición y configuración de la demo con Aer ruidoso y mitigación |
 | F4.01 | hecho | `a9bd306` | Mitigación de lectura (TREX / mthree) como puerto Mitigador |
+| F4.02 | hecho | `ce52c0d` | ZNE y PEC/PNA sobre el observable de sesgo ⟨Z⟩ |
 | F5.01 | hecho | `42b54c9` | Batería NIST SP 800-22 con nistrng y contraste con el validador propio |
 | F5.02 | hecho | `42b54c9` | Min-entropía SP 800-90B y contraste con la cota MCV del dominio |
 | F6.01 | hecho | `aea23de` | Cifrado AES-256-GCM con clave QRNG |
