@@ -54,4 +54,7 @@ u3_casos = 100
 rotulo_esperado = "validación del pipeline"
 
 [prerrequisitos_abiertos]
-guard_f6_02 = "ServicioDeTransacciones exige veredicto.aprobado (incluye M6/M7 internas hasta Toeplitz); decisión pendiente antes de C.E3"
+# Enmienda fechada 2026-10-07 (commit propio, anterior a C.E3; ningún criterio ni umbral cambia): el prerrequisito quedó RESUELTO.
+# Antes decía: guard_f6_02 = "ServicioDeTransacciones exige veredicto.aprobado (incluye M6/M7 internas hasta Toeplitz); decisión pendiente antes de C.E3"
+guard_f6_02 = "resuelto 2026-10-07 (commit 8984147, salida A de docs/preinscripciones/E3.md): el guard de cifrado juzga sólo M1–M5 (calidad_de_clave_aprobada); M6/M7 las juzga C.E3 de extremo a extremo"
+estado = "resuelto"
