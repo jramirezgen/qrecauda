@@ -19,3 +19,11 @@ class FuenteNoDisponible(ErrorQRecauda):
 
 class EsquemaFuturo(ErrorQRecauda):
     """Un artefacto declara un esquema más nuevo que el que este lector entiende."""
+
+
+class AutenticacionFallida(ErrorQRecauda):
+    """El texto cifrado o sus datos asociados no autentican con esa clave y ese nonce."""
+
+
+class NonceRepetido(ErrorQRecauda):
+    """Se pidió cifrar dos veces con la misma clave y el mismo nonce: en GCM rompe confidencialidad y autenticidad."""

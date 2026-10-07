@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from qrecauda.dominio.errores import (
+    AutenticacionFallida,
     EntradaInvalida,
     EntropiaInsuficiente,
     ErrorQRecauda,
     EsquemaFuturo,
     FuenteNoDisponible,
+    NonceRepetido,
 )
 
 OK = 0
@@ -17,6 +19,8 @@ CODIGOS: dict[type[ErrorQRecauda], int] = {
     EntropiaInsuficiente: 3,
     FuenteNoDisponible: 4,
     EsquemaFuturo: 5,
+    AutenticacionFallida: 6,
+    NonceRepetido: 7,
     ErrorQRecauda: 10,
 }
 
