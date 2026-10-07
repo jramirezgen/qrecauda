@@ -38,3 +38,12 @@ def test_como_dict_es_estable_y_no_lleva_valores_de_secreto():
     d = Configuracion(backend="ibm", ibm_token_ruta="/ruta/t.txt").como_dict()
     assert d["ibm_token_ruta"] == "/ruta/t.txt"
     assert list(d) == sorted(d)
+
+
+def test_omp_num_threads_se_lee_aqui_y_solo_aqui(monkeypatch):
+    from qrecauda.transversal.configuracion import omp_num_threads
+
+    monkeypatch.delenv("OMP_NUM_THREADS", raising=False)
+    assert omp_num_threads() is None
+    monkeypatch.setenv("OMP_NUM_THREADS", "1")
+    assert omp_num_threads() == "1"

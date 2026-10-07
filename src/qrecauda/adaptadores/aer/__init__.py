@@ -21,9 +21,12 @@ from qrecauda.dominio.muestra import Muestra, Origen, Procedencia
 class FuenteAer:
     """Implementa `FuenteDeBits`. Con `semilla` explícita es determinista (es un PRNG); con `semilla=None` Aer elige la suya."""
 
-    def __init__(self, semilla: int | None = None, noise_model: Any | None = None) -> None:
+    def __init__(self, semilla: int | None = None, noise_model: Any | None = None, max_parallel_threads: int | None = None) -> None:
+        if max_parallel_threads is not None and max_parallel_threads < 1:
+            raise EntradaInvalida(f"max_parallel_threads debe ser positivo, llegó {max_parallel_threads}")
         self._semilla = semilla
         self._noise_model = noise_model
+        self._hilos = max_parallel_threads  # P.E3: «un hilo» también en el OpenMP propio de Aer
 
     def generar(self, qubits: int, shots: int) -> Muestra:
         if qubits < 1 or shots < 1:
@@ -35,9 +38,17 @@ class FuenteAer:
         proc = Procedencia(backend="AerSimulator", version=qiskit_aer.__version__)
         return Muestra(Bits(bits), Origen.SIMULADOR_AER, qubits, shots, False, proc)
 
+    def _opciones_backend(self) -> dict[str, Any] | None:
+        opciones: dict[str, Any] = {}
+        if self._noise_model is not None:
+            opciones["noise_model"] = self._noise_model
+        if self._hilos is not None:
+            opciones["max_parallel_threads"] = self._hilos
+        return {"backend_options": opciones} if opciones else None
+
     def _muestrear(self, circuito: QuantumCircuit, shots: int) -> NDArray[np.uint8]:
         """Bits en orden QUBIT-MAYOR: todos los disparos del qubit 0, luego los del qubit 1…"""
-        opciones = {"backend_options": {"noise_model": self._noise_model}} if self._noise_model is not None else None
+        opciones = self._opciones_backend()
         try:
             sampler = SamplerV2(default_shots=shots, seed=self._semilla, options=opciones)
             resultado = sampler.run([(circuito,)]).result()

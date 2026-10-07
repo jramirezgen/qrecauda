@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Protocol
 
-from qrecauda.datos import Declaracion, Medicion
+from qrecauda.datos import Declaracion, Medicion, RuidoDeLectura
 from qrecauda.dominio.bits import Bits
 from qrecauda.dominio.metricas import Medida
 from qrecauda.dominio.muestra import Muestra
@@ -63,6 +63,34 @@ class ReservaDeClaves(Protocol):
     def restantes(self) -> int: ...
 
     def siguiente(self) -> tuple[Bits, Bits]: ...
+
+
+class LaboratorioDeLectura(Protocol):
+    """Fabrica, para un ruido de lectura dado, las piezas con que E2 mide el sesgo. La semilla es la de la celda."""
+
+    def fuente(self, ruido: RuidoDeLectura, semilla: int) -> FuenteDeBits: ...
+
+    def twirling(self, ruido: RuidoDeLectura, semilla: int, bloque: int) -> Mitigador: ...
+
+    def zne(self, ruido: RuidoDeLectura, semilla: int) -> EstimadorDeSesgo: ...
+
+    def pec(self, ruido: RuidoDeLectura, semilla: int) -> EstimadorDeSesgo: ...
+
+    def sesgo_mthree(self, ruido: RuidoDeLectura, qubits: int, shots: int, semilla: int) -> tuple[float, float]:
+        """CONTRASTE (D-009): sesgo medio por qubit antes y después de mthree. `FuenteNoDisponible` si el extra no está."""
+        ...
+
+
+class SondaDeMaquina(Protocol):
+    """Lo que E3 necesita saber de la máquina en que mide: carga, tiempo de CPU y quién es."""
+
+    def carga_previa(self) -> float: ...  # carga media de 1 minuto
+
+    def cpu_proceso_ns(self) -> int: ...  # `time.process_time_ns`: CPU de todos los hilos del proceso
+
+    def cpu_con_hijos_ns(self) -> int: ...  # lo anterior más los hijos ya esperados (p. ej. el binario del 90B)
+
+    def maquina(self) -> Mapping[str, str]: ...
 
 
 class Almacen(Protocol):

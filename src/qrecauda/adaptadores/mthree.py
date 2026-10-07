@@ -41,9 +41,14 @@ def _bloques(shots: int, bloque: int) -> list[int]:
 class TwirlingLectura:
     """Implementa `Mitigador` con twirling de lectura propio. Determinista dado `semilla` (máscaras y muestreo de Aer)."""
 
-    def __init__(self, noise_model: Any | None, semilla: int | None = None, bloque: int = 200) -> None:
+    def __init__(
+        self, noise_model: Any | None, semilla: int | None = None, bloque: int = 200, max_parallel_threads: int | None = None
+    ) -> None:
         if bloque < 1:
             raise EntradaInvalida(f"el bloque debe ser positivo, llegó {bloque}")
+        if max_parallel_threads is not None and max_parallel_threads < 1:
+            raise EntradaInvalida(f"max_parallel_threads debe ser positivo, llegó {max_parallel_threads}")
+        self._hilos = max_parallel_threads  # P.E3: «un hilo» también en el OpenMP propio de Aer
         self._noise_model = noise_model
         self._semilla = semilla
         self._bloque = bloque
@@ -61,6 +66,10 @@ class TwirlingLectura:
         proc = Procedencia(backend="AerSimulator", version=qiskit_aer.__version__)
         return Muestra(nueva.bits, nueva.origen, nueva.qubits, nueva.shots, True, proc)
 
+    def _simulador(self) -> AerSimulator:
+        opciones: dict[str, Any] = {} if self._hilos is None else {"max_parallel_threads": self._hilos}
+        return AerSimulator(noise_model=self._noise_model, **opciones) if self._noise_model is not None else AerSimulator(**opciones)
+
     def _muestrear(self, circuito: QuantumCircuit, shots: int) -> NDArray[np.uint8]:
         """Bits QUBIT-MAYOR (como `FuenteAer`) con máscara X por bloque y qubit, deshecha por XOR clásico tras medir."""
         n = circuito.num_qubits
@@ -76,7 +85,7 @@ class TwirlingLectura:
                     c.x(q)
             c.measure_all()
             circuitos.append(c)
-        simulador = AerSimulator(noise_model=self._noise_model) if self._noise_model is not None else AerSimulator()
+        simulador = self._simulador()
         partes: list[NDArray[np.uint8]] = []
         try:
             for c, tam, fila in zip(circuitos, tamanos, mascaras, strict=True):

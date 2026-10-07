@@ -77,3 +77,8 @@ class Configuracion:
 def entorno_sin_git() -> dict[str, str]:
     """El entorno del proceso sin las variables `GIT_*`: dentro de un hook heredarían el repo equivocado al lanzar `git`."""
     return {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+
+
+def omp_num_threads() -> str | None:
+    """`OMP_NUM_THREADS` tal cual está en el proceso (P.E3 lo exige a «1» ANTES de importar numpy/Aer). Única lectora, como el resto."""
+    return os.environ.get("OMP_NUM_THREADS")

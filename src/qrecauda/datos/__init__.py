@@ -12,6 +12,7 @@ from qrecauda.datos.corrida import Criterio, ManifiestoDeCorrida, Medicion, Vere
 from qrecauda.datos.declaracion import Declaracion
 from qrecauda.datos.esquema import leer_esquema
 from qrecauda.datos.informe import ESQUEMA_INFORME, ExperimentoE2, ExperimentoE3, InformeCorrida
+from qrecauda.datos.ruido import RuidoDeLectura
 from qrecauda.dominio.errores import EntradaInvalida
 
 __all__ = [
@@ -23,6 +24,7 @@ __all__ = [
     "InformeCorrida",
     "ManifiestoDeCorrida",
     "Medicion",
+    "RuidoDeLectura",
     "VeredictoDeEureka",
     "leer_esquema",
     "leer_informe",

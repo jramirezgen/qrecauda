@@ -8,7 +8,7 @@ import subprocess
 
 import pytest
 
-from qrecauda.dominio.errores import CorridaInvalida, EntradaInvalida, FuenteNoDisponible
+from qrecauda.dominio.errores import CorridaInvalida, EntradaInvalida
 from qrecauda.entrada import cli
 from qrecauda.entrada.codigos import CODIGOS, OK
 from qrecauda.transversal.configuracion import entorno_sin_git
@@ -97,10 +97,11 @@ def test_declaracion_sin_preinscripcion_o_id_ilegal_es_entrada_invalida(repo):
     assert _cli(repo, "juzgar", "../etc") == CODIGOS[EntradaInvalida]
 
 
-def test_e2_y_e3_sin_ejecutor_se_niegan_no_se_simulan(repo):
+def test_e2_con_declaracion_incompleta_se_niega_no_se_simula(repo):
+    """E2 ya tiene ejecutor real: una declaración sin sus tablas es corrida inválida (9), nunca una simulación."""
     (repo / "docs" / "preinscripciones" / "E2.md").write_text("# E2\n")
     (repo / "declaraciones" / "E2.toml").write_text(TOML.replace("X1", "E2"))
-    assert _cli(repo, "correr", "declaraciones/E2.toml") == CODIGOS[FuenteNoDisponible]
+    assert _cli(repo, "correr", "declaraciones/E2.toml") == 9
 
 
 def test_un_control_exigido_y_no_medido_es_corrida_invalida(repo, capsys):

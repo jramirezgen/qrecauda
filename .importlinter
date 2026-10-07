@@ -34,6 +34,7 @@ modules =
     qrecauda.adaptadores.declaracion_toml
     qrecauda.adaptadores.git
     qrecauda.adaptadores.libro_jsonl
+    qrecauda.adaptadores.sonda_local
 
 [importlinter:contract:nucleo-sin-transversal]
 name = C3: dominio, datos, puertos, aplicación y presentación no importan transversal; les llega por puertos o ya validado

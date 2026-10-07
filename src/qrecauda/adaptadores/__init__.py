@@ -15,4 +15,5 @@
 | min_entropia  | Validador     | numpy          | DAG F5.02 (contrasta con dominio/MCV)   |
 | almacen_json  | Almacen       | stdlib         | DAG F2.06                               |
 | aes_gcm       | Cifrador      | cryptography   | DAG F6.01                               |
+| sonda_local   | SondaDeMaquina | stdlib        | DAG C.E3 (carga, CPU, máquina)          |
 """

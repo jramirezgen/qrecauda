@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -18,14 +19,18 @@ from qrecauda.adaptadores.estadistica import ValidadorEstadistico
 from qrecauda.adaptadores.git import HistorialGit
 from qrecauda.adaptadores.libro_jsonl import LibroJsonl
 from qrecauda.adaptadores.prng import FuentePrng
+from qrecauda.adaptadores.sonda_local import SondaLocal
+from qrecauda.aplicacion.ejecutor_e2 import EjecutorE2
+from qrecauda.aplicacion.ejecutor_e3 import EjecutorE3
 from qrecauda.aplicacion.juez import CorrerYJuzgar
 from qrecauda.aplicacion.pipeline import ParametrosPipeline, Resultado
 from qrecauda.aplicacion.pipeline import ejecutar as _ejecutar_pipeline
 from qrecauda.aplicacion.transaccion import ServicioDeTransacciones
-from qrecauda.datos import Declaracion, InformeCorrida, ManifiestoDeCorrida, Medicion, VeredictoDeEureka
-from qrecauda.dominio.errores import EntradaInvalida, FuenteNoDisponible
-from qrecauda.puertos import Bitacora, Ejecutor, FuenteDeBits, Historial, Mitigador, Validador
-from qrecauda.transversal.configuracion import Configuracion
+from qrecauda.datos import Declaracion, InformeCorrida, ManifiestoDeCorrida, Medicion, RuidoDeLectura, VeredictoDeEureka
+from qrecauda.dominio.errores import CorridaInvalida, EntradaInvalida, FuenteNoDisponible
+from qrecauda.puertos import Bitacora, Ejecutor, EstimadorDeSesgo, FuenteDeBits, Historial, Mitigador, Validador
+from qrecauda.transversal.concurrencia import candado
+from qrecauda.transversal.configuracion import Configuracion, omp_num_threads
 from qrecauda.transversal.observabilidad import RelojMonotonico
 from qrecauda.transversal.reproducibilidad import entorno, un_hilo, verificar_un_hilo
 
@@ -150,10 +155,127 @@ def _configuracion_de(decl: Declaracion, semilla: int) -> Configuracion:
     return Configuracion.desde_mapa(mapa)
 
 
+# ------------------------------------------------------------------ C.E2 y C.E3: los ejecutores reales
+
+
+class _LaboratorioAer:
+    """Implementa `LaboratorioDeLectura` con Aer, el twirling propio, ZNE/PEC y mthree (los adaptadores, importados al usarlos)."""
+
+    def __init__(self, max_parallel_threads: int | None = None) -> None:
+        self._realista: Any = None
+        self._hilos = max_parallel_threads  # E3: «un hilo» también en el OpenMP de Aer
+
+    def _modelo(self, ruido: RuidoDeLectura) -> Any:
+        try:
+            from qrecauda.adaptadores.aer.ruido import CanalLectura, modelo_de_ruido, modelo_realista
+        except ImportError as e:
+            raise FuenteNoDisponible(f"E2 necesita el extra «cuantico»: {e}") from e
+        if ruido.realista:
+            if self._realista is None:  # construirlo cuesta; la calibración es congelada, así que es el mismo en toda la corrida
+                self._realista = modelo_realista()
+            return self._realista
+        return None if ruido.canal is None else modelo_de_ruido(CanalLectura(*ruido.canal))
+
+    def fuente(self, ruido: RuidoDeLectura, semilla: int) -> FuenteDeBits:
+        try:
+            from qrecauda.adaptadores.aer import FuenteAer
+        except ImportError as e:
+            raise FuenteNoDisponible(f"E2 necesita el extra «cuantico»: {e}") from e
+        return FuenteAer(semilla, self._modelo(ruido), self._hilos)
+
+    def twirling(self, ruido: RuidoDeLectura, semilla: int, bloque: int) -> Mitigador:
+        try:
+            from qrecauda.adaptadores.mthree import TwirlingLectura
+        except ImportError as e:
+            raise FuenteNoDisponible(f"el twirling necesita el extra «cuantico»: {e}") from e
+        return TwirlingLectura(self._modelo(ruido), semilla, bloque, self._hilos)
+
+    def zne(self, ruido: RuidoDeLectura, semilla: int) -> EstimadorDeSesgo:
+        from qrecauda.adaptadores.zne_pec import ZneSobreZ
+
+        return ZneSobreZ(self._modelo(ruido), semilla)
+
+    def pec(self, ruido: RuidoDeLectura, semilla: int) -> EstimadorDeSesgo:
+        from qrecauda.adaptadores.zne_pec import PecSobreZ
+
+        return PecSobreZ(self._modelo(ruido), None, semilla)  # sin relajación de puerta que invertir: E2 sólo inyecta lectura
+
+    def sesgo_mthree(self, ruido: RuidoDeLectura, qubits: int, shots: int, semilla: int) -> tuple[float, float]:
+        from qrecauda.adaptadores.mthree import sesgo_mthree
+
+        return sesgo_mthree(self._modelo(ruido), qubits=qubits, shots=shots, semilla=semilla)
+
+
+def _alinear_niveles_con_el_toml(decl: Declaracion) -> None:
+    """P.E2, «Niveles: discrepancia declarada»: manda PARAMETROS.toml; si la constante del adaptador no coincide, C.E2 ABORTA."""
+    try:
+        from qrecauda.adaptadores.aer.ruido import NIVELES
+    except ImportError as e:
+        raise FuenteNoDisponible(f"E2 necesita el extra «cuantico»: {e}") from e
+    tabla = decl.tabla("ruido_lectura")
+    for nivel in decl.lista("niveles", "sinteticos"):
+        canal = NIVELES[nivel]
+        declarado = tuple(float(x) for x in tabla[nivel])  # type: ignore[attr-defined]
+        if declarado != (canal.p1_dado_0, canal.p0_dado_1):
+            raise CorridaInvalida(
+                f"el nivel {nivel!r} de PARAMETROS.toml {declarado} no coincide con la constante del adaptador "
+                f"{(canal.p1_dado_0, canal.p0_dado_1)}: se alinea antes de correr (P.E2)"
+            )
+
+
+class _EnMaquina:
+    """Aplica lo transversal a cada semilla: comprobación previa, candado de máquina y BLAS a un hilo (forzado y comprobado)."""
+
+    def __init__(self, interior: Ejecutor, ruta_candado: Path, previo: Callable[[Declaracion], None], espera_s: float | None) -> None:
+        self._interior, self._ruta, self._previo, self._espera = interior, ruta_candado, previo, espera_s
+
+    def ejecutar(self, declaracion: Declaracion, semilla: int) -> Medicion:
+        self._previo(declaracion)
+        with candado(self._ruta, self._espera), un_hilo():
+            verificar_un_hilo()
+            return self._interior.ejecutar(declaracion, semilla)
+
+
+def candado_de_maquina(raiz: Path) -> Path:
+    return raiz / "salidas" / "candado_maquina.lock"  # salidas/ está en .gitignore
+
+
+def ejecutor_e2_de(raiz: Path, bitacora: Bitacora | None = None) -> Ejecutor:
+    """C.E2: el ejecutor de E2 sobre Aer, bajo el candado de máquina (espera) y con BLAS a un hilo."""
+    return _EnMaquina(EjecutorE2(_LaboratorioAer(), bitacora), candado_de_maquina(raiz), _alinear_niveles_con_el_toml, None)
+
+
+def _exigir_omp_un_hilo(decl: Declaracion) -> None:
+    """P.E3: `OMP_NUM_THREADS=1` ANTES de importar numpy/Aer. Desde dentro ya no se puede arreglar: si no está, se aborta."""
+    esperado = str(int(decl.numero("configuracion", "omp_num_threads")))
+    if omp_num_threads() != esperado:
+        raise CorridaInvalida(
+            f"OMP_NUM_THREADS={omp_num_threads()!r}: E3 exige {esperado!r} antes de importar; relanza con OMP_NUM_THREADS={esperado}"
+        )
+
+
+def ejecutor_e3_de(raiz: Path, bitacora: Bitacora | None = None) -> Ejecutor:
+    """C.E3: el ejecutor de E3 sobre la cadena REAL (Aer ruidoso + twirling, NIST, 90B, AES-GCM), a un hilo y con candado.
+
+    El candado no espera (`CandadoOcupado` si otra corrida pesada lo tiene): P.E3 pide máquina libre, no una cola."""
+    try:
+        from qrecauda.adaptadores.aes_gcm import CifradorAesGcm, ReservaDeClave
+        from qrecauda.adaptadores.min_entropia import EstimadorNist90B
+    except ImportError as e:
+        raise FuenteNoDisponible(f"E3 necesita el extra «cifrado»: {e}") from e
+    ejecutor = EjecutorE3(
+        _LaboratorioAer(max_parallel_threads=1), validador_de(Configuracion(validador="nist")), EstimadorNist90B(),
+        CifradorAesGcm, ReservaDeClave, RelojMonotonico(), SondaLocal(), bitacora,
+    )  # fmt: skip
+    return _EnMaquina(ejecutor, candado_de_maquina(raiz), _exigir_omp_un_hilo, 0.0)
+
+
 def ejecutor_de(raiz: Path, decl: Declaracion) -> Ejecutor:
-    """E2 y E3 tendrán el suyo con sus nodos de corrida (C.E2, C.E3); hasta entonces se niegan, no se simulan."""
-    if decl.eureka in ("E2", "E3"):
-        raise FuenteNoDisponible(f"{decl.eureka} aún no tiene ejecutor (nodo {decl.nodo_corrida} del DAG)")
+    """E2 → C.E2 sobre Aer; E3 → C.E3 sobre la cadena completa; el resto, el pipeline real por semilla (informes)."""
+    if decl.eureka == "E2":
+        return ejecutor_e2_de(raiz)
+    if decl.eureka == "E3":
+        return ejecutor_e3_de(raiz)
     return _EjecutorDeInformes(HistorialGit(raiz))
 
 

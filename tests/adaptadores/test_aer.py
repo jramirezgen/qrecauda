@@ -52,3 +52,15 @@ def test_h_da_aproximadamente_uniforme() -> None:
 def test_entradas_invalidas(q: int, s: int) -> None:
     with pytest.raises(EntradaInvalida):
         FuenteAer(semilla=1).generar(q, s)
+
+
+def test_max_parallel_threads_llega_a_las_opciones_de_aer_y_no_cambia_los_bits() -> None:
+    """P.E3 / T4: `max_parallel_threads=1` es parte de «un hilo». Sin pedirlo no se añade ninguna opción (comportamiento previo)."""
+    assert FuenteAer(semilla=1)._opciones_backend() is None
+    assert FuenteAer(semilla=1, max_parallel_threads=1)._opciones_backend() == {"backend_options": {"max_parallel_threads": 1}}
+    assert FuenteAer(semilla=1, noise_model=None, max_parallel_threads=1).generar(3, 128).bits == FuenteAer(semilla=1).generar(3, 128).bits
+
+
+def test_hilos_invalidos_se_rechazan() -> None:
+    with pytest.raises(EntradaInvalida):
+        FuenteAer(semilla=1, max_parallel_threads=0)

@@ -60,6 +60,8 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 | `Cifrador` | puerto: AES-GCM con la clave del pipeline. |
 | `ReservaDeClaves` | puerto: reparte la clave certificada en pares (clave, nonce) de un solo uso; agotada, `EntropiaInsuficiente`. |
 | `Ejecutor` | puerto: mide UNA semilla de una eureka según su `Declaracion` y devuelve una `Medicion`; no decide nada. |
+| `LaboratorioDeLectura` | puerto de E2: fabrica, para un `RuidoDeLectura` y la semilla de la celda, la fuente, el twirling, ZNE, PEC y el contraste mthree. Lo implementa la raíz de composición sobre Aer. |
+| `SondaDeMaquina` | puerto de E3: carga previa, CPU del proceso (y con hijos) y descripción de la máquina. `adaptadores/sonda_local.py`. |
 | `Historial` | puerto: el historial git como testigo de que la preinscripción va antes de la corrida (`ultimo_commit`, `modificado`, `precede`). |
 | `LibroDeVeredictos` | puerto: `registro/veredictos.jsonl`, una línea por veredicto, sólo se añade. |
 | `Almacen` | puerto: guardar artefactos canónicos, append-only; devuelve el sha256. |
@@ -74,8 +76,10 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 | `Veredicto` | conjunción de `Medida`; vacío no aprueba. `calidad_de_clave_aprobada` juzga sólo M1–M5 (`METRICAS_DE_CLAVE`): es lo que exige cifrar; M6/M7 las juzga E3. |
 | `ParametrosPipeline`, `Resultado` | entrada y salida del orquestador; `Resultado.etapas` lleva las medidas en la muestra cruda, la mitigada y la clave. |
 | `InformeCorrida` | artefacto versionado de una corrida; lo guarda el `Almacen`. |
-| `ExperimentoE2` | una celda de E2: sesgo de lectura antes y después de una técnica, a un nivel de ruido, con su intervalo. |
-| `ExperimentoE3` | E3: tasa (M6) y latencia (M7) con la máquina en que se midieron. |
+| `ExperimentoE2` | una celda de E2: sesgo de lectura antes y después de una técnica, a un nivel de ruido, con su intervalo. Opcional: `sesgo_maximo_por_qubit` (P.E2, nivel realista). |
+| `ExperimentoE3` | E3: tasa (M6) y latencia (M7) con la máquina en que se midieron. Opcional: `reporte` (lo que P.E3 manda reportar sin decidir: t_rep por repetición, etapas, CPU/pared, perfil B). |
+| `RuidoDeLectura` | qué ruido de lectura pide un experimento: canal sintético `(p(1\|0), p(0\|1))`, ninguno (`sin_ruido`) o el realista. Sus valores salen de `PARAMETROS.toml`, no de constantes. |
+| `EjecutorE2`, `EjecutorE3` | implementan el puerto `Ejecutor` para E2 (celdas por semilla y nivel, IC por bootstrap, controles C1–C5) y E3 (perfil A que decide, perfil B que no, controles U1–U5 y T4). Miden; el juez decide. |
 | `ErrorQRecauda` | raíz de los errores; hijas: `EntradaInvalida`, `EntropiaInsuficiente`, `FuenteNoDisponible`, `EsquemaFuturo`, `AutenticacionFallida` (cifrado o datos asociados no autentican), `NonceRepetido` (mismo nonce con la misma clave), `CorridaInvalida` (ver abajo), `CandadoOcupado` (otra corrida pesada sostiene el candado de máquina), cada una con su código de salida. |
 | `Declaracion` | una eureka fijada antes de correr (`declaraciones/*.toml` fundido con `PARAMETROS.toml`): de ella salen semillas, umbrales y las rutas de su preinscripción. |
 | `Medicion` | lo que el `Ejecutor` entrega por semilla: informes/experimentos tipados y el resultado de los controles. |

@@ -105,3 +105,17 @@ def test_mthree_de_contraste_tambien_baja_el_sesgo() -> None:
     antes, despues = sesgo_mthree(modelo_de_ruido(RUIDO_MEDIO), qubits=4, shots=20_000, semilla=11)
     assert antes > 0.025
     assert despues < 0.01
+
+
+def test_twirling_pasa_max_parallel_threads_al_simulador() -> None:
+    from qrecauda.adaptadores.mthree import TwirlingLectura
+
+    assert TwirlingLectura(None, 1, max_parallel_threads=1)._simulador().options.max_parallel_threads == 1
+
+
+def test_twirling_con_un_hilo_da_los_mismos_bits() -> None:
+    from qrecauda.adaptadores.aer import FuenteAer
+    from qrecauda.adaptadores.mthree import TwirlingLectura
+
+    m = FuenteAer(semilla=3).generar(2, 400)
+    assert TwirlingLectura(None, 5).mitigar(m).bits == TwirlingLectura(None, 5, max_parallel_threads=1).mitigar(m).bits

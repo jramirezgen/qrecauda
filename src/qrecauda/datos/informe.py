@@ -127,21 +127,27 @@ class ExperimentoE2:
     sesgo_residual: float
     intervalo_residual: tuple[float, float]  # IC al 95 % del sesgo residual
     esquema: int = 1
+    sesgo_maximo_por_qubit: float | None = None  # máx. por qubit de |p̂_q − ½| del residuo (P.E2, nivel realista); opcional
 
     def a_mapa(self) -> dict[str, object]:
-        return {
+        mapa: dict[str, object] = {
             "esquema": self.esquema, "corrida": self.corrida, "semilla": self.semilla, "nivel": self.nivel,
             "tecnica": self.tecnica, "shots": self.shots, "sesgo_crudo": self.sesgo_crudo,
             "sesgo_residual": self.sesgo_residual, "intervalo_residual": list(self.intervalo_residual),
         }  # fmt: skip
+        if self.sesgo_maximo_por_qubit is not None:
+            mapa["sesgo_maximo_por_qubit"] = self.sesgo_maximo_por_qubit
+        return mapa
 
     @classmethod
     def desde_mapa(cls, d: Mapping[str, object]) -> ExperimentoE2:
         v = leer_esquema(d, 1, que="experimento E2")
         try:
             lo, hi = d["intervalo_residual"]  # type: ignore[misc]  # fmt: skip
+            maximo = d.get("sesgo_maximo_por_qubit")
             return cls(str(d["corrida"]), int(d["semilla"]), str(d["nivel"]), str(d["tecnica"]),  # type: ignore[call-overload]
-                       int(d["shots"]), float(d["sesgo_crudo"]), float(d["sesgo_residual"]), (float(lo), float(hi)), v)  # type: ignore[arg-type,call-overload,has-type]  # fmt: skip
+                       int(d["shots"]), float(d["sesgo_crudo"]), float(d["sesgo_residual"]), (float(lo), float(hi)), v,  # type: ignore[arg-type,call-overload,has-type]
+                       None if maximo is None else float(maximo))  # type: ignore[arg-type]  # fmt: skip
         except (KeyError, ValueError, TypeError) as exc:
             raise EntradaInvalida(f"experimento E2 malformado: {exc}") from exc
 
@@ -159,19 +165,24 @@ class ExperimentoE3:
     m7_max_ms: float
     maquina: Mapping[str, str]
     esquema: int = 1
+    reporte: Mapping[str, object] = field(default_factory=dict)  # lo que P.E3 manda reportar sin decidir (JSON puro); opcional
 
     def a_mapa(self) -> dict[str, object]:
-        return {
+        mapa: dict[str, object] = {
             "esquema": self.esquema, "corrida": self.corrida, "semilla": self.semilla, "repeticiones": self.repeticiones,
             "calentamiento": self.calentamiento, "m6_bits_por_s": self.m6_bits_por_s, "m7_p95_ms": self.m7_p95_ms,
             "m7_max_ms": self.m7_max_ms, "maquina": dict(self.maquina),
         }  # fmt: skip
+        if self.reporte:
+            mapa["reporte"] = dict(self.reporte)
+        return mapa
 
     @classmethod
     def desde_mapa(cls, d: Mapping[str, object]) -> ExperimentoE3:
         v = leer_esquema(d, 1, que="experimento E3")
         try:
             return cls(str(d["corrida"]), int(d["semilla"]), int(d["repeticiones"]), int(d["calentamiento"]),  # type: ignore[call-overload]
-                       float(d["m6_bits_por_s"]), float(d["m7_p95_ms"]), float(d["m7_max_ms"]), dict(d["maquina"]), v)  # type: ignore[arg-type,call-overload]  # fmt: skip
+                       float(d["m6_bits_por_s"]), float(d["m7_p95_ms"]), float(d["m7_max_ms"]), dict(d["maquina"]), v,  # type: ignore[arg-type,call-overload]
+                       dict(d.get("reporte", {})))  # type: ignore[call-overload]  # fmt: skip
         except (KeyError, ValueError, TypeError) as exc:
             raise EntradaInvalida(f"experimento E3 malformado: {exc}") from exc
