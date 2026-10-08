@@ -1,0 +1,52 @@
+# Declaración de E4 (nodo P.E4), fijada ANTES de medir. Hereda PARAMETROS.toml. Ninguna cifra de este archivo es un resultado.
+# Prosa y justificación: docs/preinscripciones/E4.md
+hereda = "declaraciones/PARAMETROS.toml"        # qubits, semillas (3 = 3 trabajos), epsilon, profundidad de Peres, [validacion]
+
+[experimento]
+id = "E4"
+nodo_corrida = "C.E4"                            # un solo manifiesto para las cinco corridas (como C.E1); ver [corridas]
+metricas = ["M1_sesgo", "M2_min_entropia", "M3_nist_monobit", "M4_nist_runs", "M5_chi_cuadrado"]   # M6/M7 se reportan, no deciden
+pregunta = "el hardware real de IBM se comporta como predice su calibración (sesgo crudo por qubit) y, tras el twirling, entrega una clave que pasa M1-M5"
+
+[cadena]
+shots = 100_000                                  # POR TRABAJO: 8 PUBs x 12 500 (1 cruda + 7 con máscara). Protege la cuota del plan abierto. Sustituye los 400 000 de P.E0
+
+[hardware]
+mascaras = 7                                     # PUBs con máscara por trabajo; la cruda es una más, sin máscara (100 000 / (7 + 1) = 12 500)
+modo = "trabajo"                                 # trabajo suelto: el plan abierto no admite Batch ni Session (⚠️ sin verificar; ver E4.md)
+backend = "el menos ocupado con >= 8 qubits operativos, o el que pida --backend"
+transpilacion = "forma ISA con generate_preset_pass_manager (optimization_level = 1); enrutado con IA sólo si se pide --ia, y entonces se registra"
+espera_max_s = 7200                              # cola + ejecución máximas por trabajo; si se agota, el error cita el job_id para recuperarlo
+tope_qpu_por_omision_s = 120                     # `--max-segundos-qpu` por omisión, de TODA la corrida; aborta ANTES de enviar. Analítico: 3 trabajos de 100 000 disparos estiman ≈ 85 s. ⚠️ sin verificar contra el cargo real
+
+[corridas]                                       # cada informe cita su corrida en `corrida`; por semilla = por trabajo
+ids = ["C.E4a", "C.E4b", "C.E4c", "C.E4d", "C.E4e"]
+c_e4a = "control_negativo_prng"                  # PRNG clásico: la batería lo acepta (no distingue origen)
+c_e4b = "gemelo_aer_sin_mitigar"                 # los MISMOS circuitos ISA, qubits físicos y disparos que C.E4d, en Aer con el ruido de la calibración del backend
+c_e4c = "gemelo_aer_con_twirling"                # idem con las mismas máscaras que C.E4e
+c_e4d = "hardware_crudo"                         # la PUB sin máscara del trabajo
+c_e4e = "hardware_con_twirling"                  # las 7 PUBs con máscara del MISMO trabajo, deshechas por XOR
+
+[criterios.h1]                                   # decide, por trabajo
+tolerancia_sesgo_por_qubit = 0.03                # max sobre qubits de |sesgo_hw_q - sesgo_gemelo_q|, sesgo_q = p(1) - 1/2. ⚠️ ARBITRARIA, fijada antes de ver datos (ver E4.md)
+
+[criterios.h2]                                   # decide, por trabajo
+clave_pasa = ["M1", "M2", "M3", "M4", "M5"]      # la clave del hardware CON twirling (C.E4e)
+
+[informativo]                                    # se reporta, no decide
+se_reporta = ["sesgo medio por qubit", "twirling del hardware (crudo vs mitigado)", "M6 y M7 de la cadena local (sin cola)", "cola_s, ejecucion_s, uso_qpu_s, profundidad ISA, calibración por qubit"]
+m6_m7_decide = false                             # la cola y la espera del dispositivo no son latencia de la cadena
+
+[controles]                                      # los que exige el juez antes de emitir veredicto (validez del instrumento)
+requeridos = ["N1", "S1", "V1"]
+n1 = "C.E4a: la batería acepta un PRNG ideal (cruda: M1, M3, M4, M5; clave: M1-M5)"
+s1 = "el gemelo corrió la misma declaración que el hardware: mismos qubits y mismos disparos (cruda y twirling) en cada trabajo"
+v1 = "hay >= 3 trabajos DISTINTOS (job_id), todos con origen hardware_ibm y en un backend que no es un falso (fake_*)"
+
+[desenlaces]
+validos = ["CUMPLE", "CUMPLE_PARCIAL", "NO_CUMPLE"]   # INVALIDA no es desenlace: es CorridaInvalida (código 9)
+
+[reintento]
+otra_semilla = false                             # selección de semilla prohibida (P.E0 regla 3)
+ampliar_shots = false
+repetir_trabajo = false                          # un trabajo que falla por cola o error de IBM no se re-pide hasta ver la causa; se registra
