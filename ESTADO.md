@@ -4,13 +4,13 @@
 
 Plan v1 · 2026-10-07
 
-## Nodos del plan (65)
+## Nodos del plan (70)
 
 | estado | nodos |
 |---|---|
-| hecho | 59 |
+| hecho | 60 |
 | juzgado | 4 |
-| pendiente | 2 |
+| pendiente | 6 |
 
 ## En curso, bloqueados y pausados
 
@@ -18,7 +18,7 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- **R.02** Revisión adversarial propia previa al release 0.2.0
+- **P.E5** Preinscripción E5: el control negativo del pipeline completo con fuentes defectuosas
 
 ## Hechos y juzgados
 
@@ -59,6 +59,7 @@ Plan v1 · 2026-10-07
 | F4.02 | hecho | `ce52c0d` | ZNE y PEC/PNA sobre el observable de sesgo ⟨Z⟩ |
 | F5.01 | hecho | `42b54c9` | Batería NIST SP 800-22 con nistrng y contraste con el validador propio |
 | F5.02 | hecho | `42b54c9` | Min-entropía SP 800-90B y contraste con la cota MCV del dominio |
+| F5.05 | hecho | `01b3a7d` | Dimensionado conservador: el mínimo entre MCV, 90B y la contabilidad de entropía de la fuente |
 | F6.01 | hecho | `aea23de` | Cifrado AES-256-GCM con clave QRNG |
 | F6.02 | hecho | `a7cd133` | Transacción de peaje/Metro cifrada con la clave certificada |
 | F6.03 | hecho | `e5c5aaa` | Reserva asíncrona de claves: productor en otro proceso y consumidor con registro de consumo |
