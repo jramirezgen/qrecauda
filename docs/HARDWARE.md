@@ -1,5 +1,7 @@
 # Del simulador al hardware de IBM
 
+> Manual paso a paso de lo que falta (token → ensayo → corrida → juicio → cierre del DAG → release 0.3.0): [`PENDIENTE_HARDWARE.md`](PENDIENTE_HARDWARE.md).
+
 Cómo pasar QRECAUDA del simulador (Aer) a un ordenador cuántico de IBM, qué esperar y qué NO afirmar. Todo lo que dice «⚠️ sin verificar»
 no se ha comprobado contra un dispositivo real: este repositorio todavía no tiene una sola ejecución en hardware (nodos C.E4 y E4 abiertos,
 causa «sin credencial IBM»).
