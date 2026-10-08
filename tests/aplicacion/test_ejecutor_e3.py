@@ -43,6 +43,9 @@ class SondaFalsa:
     def __init__(self, reloj: RelojFalso, *, factor_cpu: float = 1.0, carga: float = 0.1, factor_hijos: float = 1.0) -> None:
         self.reloj, self.factor, self.carga, self.fh = reloj, factor_cpu, carga, factor_hijos
 
+    def esperar_reposo(self, maximo: float, tope_s: float) -> None:
+        return None
+
     def carga_previa(self) -> float:
         return self.carga
 

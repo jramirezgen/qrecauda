@@ -86,6 +86,8 @@ class SondaDeMaquina(Protocol):
 
     def carga_previa(self) -> float: ...  # carga media de 1 minuto
 
+    def esperar_reposo(self, maximo: float, tope_s: float) -> None: ...  # espera (con tope) a que la carga baje de `maximo`
+
     def cpu_proceso_ns(self) -> int: ...  # `time.process_time_ns`: CPU de todos los hilos del proceso
 
     def cpu_con_hijos_ns(self) -> int: ...  # lo anterior más los hijos ya esperados (p. ej. el binario del 90B)

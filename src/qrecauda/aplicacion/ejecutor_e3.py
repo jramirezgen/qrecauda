@@ -10,7 +10,8 @@ El perfil B (complementario, NO decide) y los controles U1–U5 salen de una res
 Convenciones que la preinscripción no fija con este detalle (⚠️ declaradas, no decididas en silencio):
 - el 90B se corre sobre los primeros `muestras_90b` bits de la muestra CRUDA (antes de mitigar), una vez por repetición, dentro de t_rep;
 - las etapas reparten t_rep sin hueco: extracción = pipeline − (fuente + mitigación + validación de M1–M5) y cuenta también el MCV;
-- una clave que no pasa M1–M5 se regenera con una semilla derivada (hasta 5 intentos); el tiempo del intento rechazado suma a t_rep y se cuenta en `claves_rechazadas`; agotados los intentos, `CorridaInvalida`;
+- una clave que no pasa M1–M5 se regenera con otra semilla derivada (hasta 5 intentos); su tiempo suma a t_rep y se cuenta en
+  `claves_rechazadas`; agotados los intentos, `CorridaInvalida`;
 - una reserva corta en el perfil B (`EntropiaInsuficiente`) es resultado: se anota y U1 queda en falso, no se baja n_tx.
 """
 
@@ -43,6 +44,7 @@ from qrecauda.puertos import (
 )
 
 REGLA_SEMILLA = "semilla * 100 + i"
+ESPERA_MAXIMA_S = 900.0  # tope de la espera entre semillas a que la carga baje del máximo
 MAX_INTENTOS = 5  # claves rechazadas por M1–M5 antes de declarar la corrida inválida
 SALTO_REINTENTO = 10**9  # semilla del reintento k = semilla_i + k·SALTO (no choca con semilla·100 + i)
 ETAPAS = ("fuente", "mitigacion", "extraccion", "validacion", "cifrado")
@@ -133,7 +135,9 @@ class EjecutorE3:
             raise EntradaInvalida(f"[configuracion].semilla_repeticion debe ser {REGLA_SEMILLA!r}, no {cfg.get('semilla_repeticion')!r}")
         if cfg.get("backend") != "aer_ruidoso" or cfg.get("mitigacion") != "twirling_propio":
             raise EntradaInvalida("E3 mide aer_ruidoso con twirling_propio; la declaración pide otra cosa")
-        carga, maximo = self._sonda.carga_previa(), decl.numero("configuracion", "carga_previa_maxima")
+        maximo = decl.numero("configuracion", "carga_previa_maxima")
+        self._sonda.esperar_reposo(maximo, ESPERA_MAXIMA_S)  # la semilla anterior deja su propia carga en el promedio de 1 min
+        carga = self._sonda.carga_previa()
         if not carga < maximo:
             raise CorridaInvalida(f"carga previa {carga:.2f} ≥ {maximo}: la máquina no está libre; semilla {semilla} no se mide (P.E3)")
         n, calent = int(decl.numero("configuracion", "repeticiones")), int(decl.numero("configuracion", "calentamiento"))

@@ -32,6 +32,12 @@ class SondaLocal:
     def carga_previa(self) -> float:
         return float(os.getloadavg()[0])
 
+    def esperar_reposo(self, maximo: float, tope_s: float) -> None:
+        """Deja decaer la carga que dejó la semilla anterior (la propia medición suma ≈ 1): espera hasta `tope_s` a que baje de `maximo`."""
+        limite = time.monotonic() + tope_s
+        while os.getloadavg()[0] >= maximo and time.monotonic() < limite:
+            time.sleep(5)
+
     def cpu_proceso_ns(self) -> int:
         return time.process_time_ns()
 
