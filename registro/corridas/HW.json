@@ -1,0 +1,1 @@
+{"esquema":1,"tipo":"constancia_de_no_acceso","nodo":"F3.06","fecha":"2026-10-08","hardware_real":false,"job_id":null,"backend":null,"motivo":"no se aportó ninguna credencial de IBM Quantum; el adaptador FuenteIbm sólo se ha probado con dobles","decision":"docs/decisiones/D-010.md"}
