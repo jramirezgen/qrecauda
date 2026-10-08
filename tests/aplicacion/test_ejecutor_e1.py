@@ -190,6 +190,16 @@ def test_p1_falla_si_el_90b_deja_pasar_a_la_markov(e1):
     assert _ejecutor(est=Ciego()).ejecutar(e1, 20261007).controles["P1"] is False
 
 
+def test_p1_acepta_una_ideal_que_el_90b_mide_conservadora(e1):
+    """Calibración 2026-10-07: la ideal da 0,82–0,90 con 1 M de bits; P1 usa el piso de la declaración, no 0,9."""
+
+    class Conservador(Estimador90bFalso):
+        def estimar(self, bits):
+            return 0.85 if super().estimar(bits) > 0.9 else 0.17
+
+    assert _ejecutor(est=Conservador()).ejecutar(e1, 20261007).controles["P1"] is True
+
+
 def test_se_niega_a_medir_otra_eureka_o_una_declaracion_sin_el_nivel(e1):
     with pytest.raises(EntradaInvalida, match="E1"):
         _ejecutor().ejecutar(replace(e1, eureka="E2"), 1)

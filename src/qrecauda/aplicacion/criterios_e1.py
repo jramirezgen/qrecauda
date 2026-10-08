@@ -16,7 +16,7 @@ from qrecauda.dominio.metricas import UMBRALES, Medida, Metrica
 M1, M2, M3, M4, M5 = Metrica.SESGO, Metrica.MIN_ENTROPIA, Metrica.MONOBIT, Metrica.RUNS, Metrica.CHI2
 ESTRUCTURA = (M1, M3, M4, M5)  # lo que se mide en los tres puntos
 CLAVE = (M1, M2, M3, M4, M5)
-UMBRAL_90B = UMBRALES[Metrica.MIN_ENTROPIA].valor  # 0,9: el de M2
+UMBRAL_90B = UMBRALES[Metrica.MIN_ENTROPIA].valor  # 0,9: el de M2 (clave); en P1 sólo fija la ceguera del MCV, no el piso del 90B
 FUENTES_E1D = ("sesgada", "periodica", "markov", "ideal")
 
 
@@ -55,22 +55,38 @@ def d1_cumple(b: InformeCorrida, analitico: float, tolerancia: float) -> bool:
     return abs(medida(etapa(b, "cruda"), M1).valor - analitico) <= tolerancia
 
 
-def p1_detalle(fuentes: Mapping[str, MedidaDeFuente]) -> dict[str, bool]:
-    """P1 (C.E1d): por fuente, si el instrumento hizo lo que se le exige. Las cuatro deben estar."""
+def p1_detalle(fuentes: Mapping[str, MedidaDeFuente], piso_ideal: float, techo_rechazo: float) -> dict[str, bool]:
+    """P1 (C.E1d, enmienda 2026-10-07 (2)): por fuente, si el instrumento SEPARA lo bueno de lo malo. Las cuatro deben estar.
+
+    `piso_ideal` y `techo_rechazo` salen de `declaraciones/E1.toml [criterios.c_e1d]` (calibrados con 11 medidas del 90B de la
+    ideal, spikes/S04_90b/calibracion_p1.json); aquí no se teclean. El piso es inclusivo y el techo estricto.
+    """
+    if not piso_ideal > techo_rechazo:
+        raise EntradaInvalida(
+            f"P1: el piso de la ideal ({piso_ideal}) debe superar el techo ({techo_rechazo}): sin hueco no hay separación"
+        )
     falta = [f for f in FUENTES_E1D if f not in fuentes]
     if falta:
         raise EntradaInvalida(f"C.E1d: faltan las fuentes {falta}")
     s, p, k, i = (fuentes[f] for f in FUENTES_E1D)
     return {
         "sesgada": not medida(s.medidas, M1).cumple and not medida(s.medidas, M3).cumple,
-        "periodica": not pasan(p.medidas, ESTRUCTURA) or p.h_90b < UMBRAL_90B,
-        "markov": k.h_90b < UMBRAL_90B and k.mcv >= UMBRAL_90B,  # el MCV la deja pasar, el 90B la rechaza (discrepancia 8)
-        "ideal": pasan(i.medidas, ESTRUCTURA) and i.h_90b > UMBRAL_90B,
+        "periodica": not pasan(p.medidas, ESTRUCTURA) or p.h_90b < techo_rechazo,
+        "markov": k.h_90b < techo_rechazo and k.mcv >= UMBRAL_90B,  # el MCV la deja pasar, el 90B la rechaza (discrepancia 8)
+        "ideal": pasan(i.medidas, ESTRUCTURA) and i.h_90b >= piso_ideal,
     }
 
 
-def p1_cumple(fuentes: Mapping[str, MedidaDeFuente]) -> bool:
-    return all(p1_detalle(fuentes).values())
+def p1_cumple(fuentes: Mapping[str, MedidaDeFuente], piso_ideal: float, techo_rechazo: float) -> bool:
+    return all(p1_detalle(fuentes, piso_ideal, techo_rechazo).values())
+
+
+def umbrales_p1(decl_c_e1d: Mapping[str, object]) -> tuple[float, float]:
+    """(piso_ideal_90b, techo_rechazo_90b) de `[criterios.c_e1d]`: una sola lectura para el ejecutor y el juez."""
+    try:
+        return float(decl_c_e1d["piso_ideal_90b"]), float(decl_c_e1d["techo_rechazo_90b"])  # type: ignore[arg-type]
+    except KeyError as e:
+        raise EntradaInvalida(f"[criterios.c_e1d] no declara {e}: P1 no se juzga sin su piso y su techo") from e
 
 
 # ------------------------------------------------------------------ criterios que deciden

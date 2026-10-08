@@ -57,9 +57,20 @@ def test_una_metrica_ausente_es_un_error_no_un_cumple():
         c.pasan(informe("C.E1a", 1, cruda=BUENA).etapas["cruda"][:2], (Metrica.RUNS,))
 
 
+PISO, TECHO = 0.8, 0.5  # declaraciones/E1.toml [criterios.c_e1d], enmienda 2026-10-07 (2)
+
+
 def test_p1_acepta_las_cuatro_fuentes_bien_discriminadas():
     f = {x.fuente: x for x in fuentes_ok(7)}
-    assert c.p1_cumple(f) and all(c.p1_detalle(f).values())
+    assert c.p1_cumple(f, PISO, TECHO) and all(c.p1_detalle(f, PISO, TECHO).values())
+
+
+def test_p1_acepta_una_ideal_conservadora_del_90b_como_las_medidas():
+    """Las 11 medidas reales de la ideal (0,821–0,903) no superan todas 0,9: el 90B de 1 M de bits es conservador, no la fuente."""
+    for h in (0.821003, 0.832199, 0.902247):
+        f = {x.fuente: x for x in fuentes_ok(7)}
+        f["ideal"] = fuente("C.E1d", 7, "ideal", cruda=BUENA, mcv=0.99, h90=h)
+        assert c.p1_cumple(f, PISO, TECHO), h
 
 
 @pytest.mark.parametrize(
@@ -69,7 +80,9 @@ def test_p1_acepta_las_cuatro_fuentes_bien_discriminadas():
         ("periodica", {"cruda": BUENA, "h90": 0.95}),  # nada la rechaza
         ("markov", {"cruda": BUENA, "h90": 0.95}),  # el 90B no la rechaza
         ("markov", {"cruda": BUENA, "mcv": 0.5, "h90": 0.17}),  # el MCV ya la rechazaba: no es el hallazgo de la discrepancia 8
-        ("ideal", {"cruda": BUENA, "h90": 0.9}),  # 90B > 0,9 estricto
+        ("ideal", {"cruda": BUENA, "h90": 0.79}),  # bajo el piso calibrado (0,8)
+        ("markov", {"cruda": BUENA, "h90": 0.5}),  # techo estricto: 90B < 0,5
+        ("periodica", {"cruda": BUENA, "h90": 0.5}),
         ("ideal", {"cruda": {**BUENA, "m5": 0.001}, "h90": 0.95}),
     ],
 )
@@ -78,17 +91,30 @@ def test_p1_falla_si_una_fuente_no_se_comporta(nombre, cambio):
     base = f[nombre]
     cruda = cambio.get("cruda")
     f[nombre] = fuente("C.E1d", 7, nombre, cruda=cruda, mcv=cambio.get("mcv", base.mcv), h90=cambio.get("h90", base.h_90b))
-    assert not c.p1_cumple(f) and not c.p1_detalle(f)[nombre]
+    assert not c.p1_cumple(f, PISO, TECHO) and not c.p1_detalle(f, PISO, TECHO)[nombre]
 
 
 def test_p1_periodica_basta_con_el_90b_aunque_la_batería_la_deje_pasar():
     f = {x.fuente: x for x in fuentes_ok(7)}
     f["periodica"] = fuente("C.E1d", 7, "periodica", cruda=BUENA, mcv=0.99, h90=0.0)
-    assert c.p1_cumple(f)
+    assert c.p1_cumple(f, PISO, TECHO)
+
+
+def test_p1_el_piso_es_inclusivo_y_el_techo_estricto():
+    f = {x.fuente: x for x in fuentes_ok(7)}
+    f["ideal"] = fuente("C.E1d", 7, "ideal", cruda=BUENA, mcv=0.99, h90=PISO)
+    f["markov"] = fuente("C.E1d", 7, "markov", cruda=BUENA, mcv=0.99, h90=0.4999)
+    assert c.p1_cumple(f, PISO, TECHO)
+
+
+def test_p1_exige_un_piso_por_encima_del_techo():
+    f = {x.fuente: x for x in fuentes_ok(7)}
+    with pytest.raises(EntradaInvalida, match="piso"):
+        c.p1_cumple(f, 0.4, 0.5)  # sin hueco no hay separación que medir
 
 
 def test_p1_exige_las_cuatro_fuentes():
     f = {x.fuente: x for x in fuentes_ok(7)}
     del f["markov"]
     with pytest.raises(EntradaInvalida, match="markov"):
-        c.p1_cumple(f)
+        c.p1_cumple(f, PISO, TECHO)

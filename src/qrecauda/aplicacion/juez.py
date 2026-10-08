@@ -251,6 +251,7 @@ def _juzgar_e1(
     analitico = decl.numero("ruido", "sesgo_analitico")
     tolerancia = float(decl.tabla("criterios")["c_e1b"]["sesgo_cruda_vs_analitico_tolerancia"])  # type: ignore[index]
     minimo_nist = decl.numero("informativo", "proporcion_nist_minimo")
+    piso90, techo90 = e1.umbrales_p1(decl.tabla("criterios")["c_e1d"])  # type: ignore[arg-type]
     cs: list[Criterio] = []
     b1_mal: list[int] = []
     m1_mal: list[tuple[int, str]] = []
@@ -266,8 +267,10 @@ def _juzgar_e1(
             )
         if not e1.d1_cumple(b, analitico, tolerancia):
             raise CorridaInvalida(f"D1 falla en la semilla {s}: el sesgo medido de la cruda no coincide con el inyectado ({b_id})")
-        if not e1.p1_cumple(f):
-            raise CorridaInvalida(f"P1 falla en la semilla {s}: {[k for k, ok in e1.p1_detalle(f).items() if not ok]} ({d_id})")
+        if not e1.p1_cumple(f, piso90, techo90):
+            raise CorridaInvalida(
+                f"P1 falla en la semilla {s}: {[k for k, ok in e1.p1_detalle(f, piso90, techo90).items() if not ok]} ({d_id})"
+            )
         cruda_b = e1.etapa(b, "cruda")
         cs.append(
             Criterio(f"{a_id}/{s}", True, "la cruda pasa M1, M3, M4, M5 y la clave M1–M5 (esperado: no prueba origen cuántico, D-007)")
@@ -275,7 +278,13 @@ def _juzgar_e1(
         cs.append(
             Criterio(f"D1/{s}", True, f"|M1 cruda − {analitico}| = {abs(e1.medida(cruda_b, e1.M1).valor - analitico):.4g} ≤ {tolerancia}")
         )
-        cs.append(Criterio(f"P1/{s}", True, "sesgada, periódica y Markov rechazadas; ideal aceptada; MCV de la Markov ≥ 0,9"))
+        cs.append(
+            Criterio(
+                f"P1/{s}",
+                True,
+                f"sesgada, periódica y Markov rechazadas (90B < {techo90}); ideal con 90B ≥ {piso90}; MCV de la Markov ≥ 0,9",
+            )
+        )
         b1 = e1.b1_cumple(b)
         if not b1:
             b1_mal.append(s)

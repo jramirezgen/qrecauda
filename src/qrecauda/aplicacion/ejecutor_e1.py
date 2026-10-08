@@ -144,7 +144,7 @@ class EjecutorE1:
         controles = {
             "N1": c.n1_cumple(informe_a),
             "D1": c.d1_cumple(informe_b, decl.numero("ruido", "sesgo_analitico"), self._tolerancia(decl)),
-            "P1": c.p1_cumple({f.fuente: f for f in fuentes}),
+            "P1": c.p1_cumple({f.fuente: f for f in fuentes}, *c.umbrales_p1(decl.tabla("criterios")["c_e1d"])),  # type: ignore[arg-type]
         }
         if self._bit is not None:
             self._bit.registrar("semilla_e1", semilla=semilla, controles=controles)
