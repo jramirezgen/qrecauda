@@ -16,20 +16,29 @@ Nada de aquí imprime, escribe ni registra una clave: la bitácora y los informe
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 
 from qrecauda.aplicacion.ejecutor_e3 import MAX_INTENTOS, SALTO_REINTENTO
 from qrecauda.aplicacion.pipeline import ParametrosPipeline
 from qrecauda.aplicacion.pipeline import ejecutar as ejecutar_pipeline
-from qrecauda.aplicacion.transaccion import ROTULO_CUANTICO, ROTULO_VALIDACION, Transaccion, TransaccionCifrada
+from qrecauda.aplicacion.transaccion import (
+    CONTEXTO_VALIDACION,
+    ROTULO_CUANTICO,
+    ROTULO_VALIDACION,
+    Transaccion,
+    TransaccionCifrada,
+    exigir_uso_permitido,
+)
 from qrecauda.datos import ClaveEntregada, MetaClave, RuidoDeLectura
 from qrecauda.dominio.bits import Bits
-from qrecauda.dominio.errores import CorridaInvalida, EntropiaInsuficiente
+from qrecauda.dominio.errores import CorridaInvalida, EntradaInvalida, EntropiaInsuficiente
 from qrecauda.dominio.metricas import METRICAS_DE_CLAVE
 from qrecauda.dominio.muestra import Muestra
 from qrecauda.puertos import Cifrador, EstimadorDeEntropia, LaboratorioDeLectura, ProductorDeClaves, Reloj, ReservaDeClaves, Validador
 
 BITS_POR_TRANSACCION = 352  # clave 256 + nonce 96
+PASO_SEMILLA_HEREDADO = 100  # la regla de E3 y de la declaración de E3b: «semilla * 100 + i». Choca: (s, i=100) = (s+1, i=0).
+PASO_SEMILLA = 10**6  # por omisión en lo nuevo: semillas consecutivas no comparten ninguna clave mientras haya < 10⁶ claves por semilla
 HUELLA_HEX = 12  # lo único de una clave que puede salir del proceso
 
 
@@ -64,20 +73,33 @@ class GeneradorDeClaveAprobada:
         bloque_twirling: int,
         muestras_90b: int,
         semilla: int,
+        paso_semilla: int = PASO_SEMILLA,
+        estimadores: Mapping[str, EstimadorDeEntropia] | None = None,
     ) -> None:
+        """`paso_semilla` es el factor de «semilla · paso + i». Por omisión 10⁶ (semillas consecutivas no colisionan); E3b pasa 100 porque
+        así lo declara y así se midió C.E3b (R.02: sus claves no cambian). `estimadores` (opcional) son los argumentos
+        `estimador`/`estimador_de_fuente`/`estimador_de_salida` del pipeline, p. ej. los del dimensionado conservador; None = como hoy."""
+        if paso_semilla < 1:
+            raise EntradaInvalida(f"el paso de semilla debe ser positivo, llegó {paso_semilla}")
         self._lab, self._validador, self._est90, self._reloj = laboratorio, validador, estimador_90b, reloj
         self._ruido, self._p, self._bloque, self._muestras90b, self._semilla = ruido, parametros, bloque_twirling, muestras_90b, semilla
+        self._paso, self._estimadores = paso_semilla, dict(estimadores or {})
 
     def generar(self, indice: int) -> ClaveEntregada:
-        semilla_i = self._semilla * 100 + indice  # la regla de E3: «semilla * 100 + i»
+        if indice < 0 or (indice >= self._paso and self._paso != PASO_SEMILLA_HEREDADO):
+            raise EntradaInvalida(
+                f"el índice de clave {indice} no cabe en el paso de semilla {self._paso}: reutilizaría la semilla de otra"
+            )
+        semilla_i = self._semilla * self._paso + indice  # E3 y E3b declaran «semilla * 100 + i» (paso heredado); lo nuevo, 10⁶
         t0 = self._reloj.ahora_ns()  # incluye armar la fuente y el mitigador: lo paga quien produce
         malas: list[str] = []
         for intento in range(MAX_INTENTOS):
             semilla_k = semilla_i + intento * SALTO_REINTENTO
             fuente = _FuenteQueRecuerda(self._lab.fuente(self._ruido, semilla_k))
             mit = self._lab.twirling(self._ruido, semilla_k, self._bloque)
-            r = ejecutar_pipeline(fuente, self._validador, self._reloj, self._p, mitigador=mit)
-            assert fuente.ultima is not None  # el pipeline llamó a la fuente
+            r = ejecutar_pipeline(fuente, self._validador, self._reloj, self._p, mitigador=mit, **self._estimadores)
+            if fuente.ultima is None:  # el pipeline siempre llama a la fuente: si no, hay un bug en el pipeline o en el doble
+                raise CorridaInvalida(f"clave {indice}: el pipeline no pidió muestra a la fuente")
             h90 = self._est90.estimar(fuente.ultima.bits[: self._muestras90b])
             if r.veredicto.calidad_de_clave_aprobada:
                 fin = self._reloj.ahora_ns()
@@ -163,8 +185,8 @@ class ReservaAsincrona:
 class ServicioDeTransaccionesAsincrono:
     """Cifra y descifra una transacción con el siguiente trozo de la reserva. Guarda huellas de pares, nunca claves."""
 
-    def __init__(self, reserva: ReservaAsincrona, cifrador: Cifrador) -> None:
-        self._reserva, self._cifrador = reserva, cifrador
+    def __init__(self, reserva: ReservaAsincrona, cifrador: Cifrador, *, contexto: str = CONTEXTO_VALIDACION) -> None:
+        self._reserva, self._cifrador, self._contexto = reserva, cifrador, contexto
         self._pares: set[bytes] = set()
         self._nonces: set[bytes] = set()
         self.pares_repetidos = 0
@@ -175,6 +197,7 @@ class ServicioDeTransaccionesAsincrono:
     def ciclo(self, tx: Transaccion) -> TransaccionCifrada:
         """Una transacción completa: cifra con un trozo nuevo, descifra y comprueba que vuelve igual."""
         clave, nonce = self._reserva.siguiente()
+        exigir_uso_permitido(origen_cuantico=self._origen_cuantico(), contexto=self._contexto)  # tras `siguiente`: ya hay clave y rótulos
         k, n = clave.a_bytes(), nonce.a_bytes()
         asociado = tx.estacion.encode()
         cifrado = self._cifrador.cifrar(clave, nonce, tx.a_bytes(), asociado)
@@ -186,5 +209,10 @@ class ServicioDeTransaccionesAsincrono:
         self._nonces.add(n)
         self.realizadas += 1
         self.ida_y_vuelta &= vuelta == tx
-        rotulo = ROTULO_VALIDACION if self._reserva.rotulos <= {ROTULO_VALIDACION} else ROTULO_CUANTICO
+        rotulo = ROTULO_CUANTICO if self._origen_cuantico() else ROTULO_VALIDACION
         return TransaccionCifrada(cifrado, nonce, asociado, rotulo)
+
+    def _origen_cuantico(self) -> bool:
+        """Sólo si TODAS las claves tomadas lo son: una mezcla con una clave simulada no puede reclamar origen cuántico."""
+        rotulos = self._reserva.rotulos
+        return bool(rotulos) and rotulos <= {ROTULO_CUANTICO}

@@ -18,6 +18,22 @@ from qrecauda.puertos import Cifrador, ReservaDeClaves
 
 ROTULO_VALIDACION = "validación del pipeline"
 ROTULO_CUANTICO = "entropía cuántica (hardware IBM)"
+CONTEXTO_VALIDACION = "validacion"  # demo, E3, E3b: claves que sólo prueban el pipeline
+CONTEXTO_PRODUCCION = "produccion"  # claves que protegerían datos reales: D-011 dice qué falta para llegar ahí
+CONTEXTOS = (CONTEXTO_VALIDACION, CONTEXTO_PRODUCCION)
+
+
+def exigir_uso_permitido(*, origen_cuantico: bool, contexto: str) -> None:
+    """D-011: una clave de Aer sembrada (o de un PRNG) es REPRODUCIBLE, dada la semilla: sólo vale para validar el pipeline.
+    Fuera del contexto de validación se rechaza antes de cifrar nada. Con hardware real no basta con la fuente (hace falta además
+    mezclar entropía del SO y un cursor de consumo persistente): eso lo dice D-011 y todavía NO lo impone este código."""
+    if contexto not in CONTEXTOS:
+        raise EntradaInvalida(f"contexto de uso {contexto!r} fuera de {CONTEXTOS}")
+    if contexto != CONTEXTO_VALIDACION and not origen_cuantico:
+        raise EntradaInvalida(
+            f"las claves de Aer sembrada o de un PRNG son reproducibles dada la semilla y sólo valen para «{ROTULO_VALIDACION}»: "
+            f"no se usan en el contexto {contexto!r} (D-011: hace falta fuente real, entropía del SO y cursor persistente)"
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,7 +64,15 @@ class TransaccionCifrada:
 
 
 class ServicioDeTransacciones:
-    def __init__(self, resultado: Resultado, cifrador: Cifrador, crear_reserva: Callable[[Bits], ReservaDeClaves]) -> None:
+    def __init__(
+        self,
+        resultado: Resultado,
+        cifrador: Cifrador,
+        crear_reserva: Callable[[Bits], ReservaDeClaves],
+        *,
+        contexto: str = CONTEXTO_VALIDACION,
+    ) -> None:
+        exigir_uso_permitido(origen_cuantico=resultado.muestra.reclama_origen_cuantico, contexto=contexto)
         # Sólo la calidad de la clave (M1–M5). M6/M7 internas se miden hasta Toeplitz y las juzga C.E3 de extremo a extremo (P.E3).
         if not resultado.veredicto.calidad_de_clave_aprobada:
             raise EntradaInvalida("la clave no está certificada: M1–M5 no aprueban, no se cifra con ella")

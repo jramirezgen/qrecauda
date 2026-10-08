@@ -35,7 +35,7 @@ from qrecauda.aplicacion.ejecutor_e5 import EjecutorE5
 from qrecauda.aplicacion.juez import CorrerYJuzgar
 from qrecauda.aplicacion.pipeline import ParametrosPipeline, Resultado
 from qrecauda.aplicacion.pipeline import ejecutar as _ejecutar_pipeline
-from qrecauda.aplicacion.reserva_asincrona import GeneradorDeClaveAprobada
+from qrecauda.aplicacion.reserva_asincrona import PASO_SEMILLA, PASO_SEMILLA_HEREDADO, GeneradorDeClaveAprobada
 from qrecauda.aplicacion.transaccion import ServicioDeTransacciones
 from qrecauda.datos import Declaracion, InformeCorrida, ManifiestoDeCorrida, Medicion, RuidoDeLectura, VeredictoDeEureka
 from qrecauda.dominio.bits import Bits
@@ -384,15 +384,23 @@ class _EspecificacionDeProductor:
     bloque_twirling: int
     muestras_90b: int
     permitidos: tuple[int, ...]  # los núcleos de la máquina ANTES de fijar al consumidor: el hijo hereda esa fijación
+    paso_semilla: int  # factor de «semilla · paso + i», sacado de la regla que DECLARA la declaración (C.E3b se midió con 100)
+
+
+_PASO_DE_REGLA = {"semilla * 100 + i": PASO_SEMILLA_HEREDADO, f"semilla * {PASO_SEMILLA} + i": PASO_SEMILLA}
 
 
 def _especificacion_de(decl: Declaracion, semilla: int, permitidos: tuple[int, ...]) -> _EspecificacionDeProductor:
+    regla = str(decl.tabla("configuracion")["semilla_clave"])
+    if regla not in _PASO_DE_REGLA:
+        raise EntradaInvalida(f"[configuracion].semilla_clave {regla!r} fuera de {sorted(_PASO_DE_REGLA)}")
     nivel = str(decl.tabla("configuracion")["nivel_ruido"])
     par = decl.tabla("ruido_lectura")[nivel]
     return _EspecificacionDeProductor(
         semilla, int(decl.numero("configuracion", "nucleo_productor")), nivel, (float(par[0]), float(par[1])),  # type: ignore[index]
         decl.qubits, decl.shots, int(decl.numero("cadena", "epsilon_log2")), int(decl.numero("cadena", "profundidad_peres")),
         int(decl.numero("configuracion", "twirling_bloque")), int(decl.numero("validacion", "muestras_90b")), permitidos,
+        _PASO_DE_REGLA[regla],
     )  # fmt: skip
 
 
@@ -418,6 +426,7 @@ def _generador_en_hijo(esp: _EspecificacionDeProductor) -> GeneradorDeClaves:
         esp.bloque_twirling,
         esp.muestras_90b,
         esp.semilla,
+        paso_semilla=esp.paso_semilla,
     )
 
 
