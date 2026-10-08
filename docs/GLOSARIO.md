@@ -56,6 +56,8 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 | `Mitigador` | puerto: reduce el sesgo de lectura y devuelve otra `Muestra`; si remuestrea, el origen se degrada a `PRNG_CLASICO`. |
 | `Validador` | puerto: mide M1, M3, M4, M5 sobre unos bits. |
 | `EstimadorDeEntropia` | puerto: cota de min-entropía por bit. `EstimadorMCV` es la del dominio (ciega a la dependencia); el contraste independiente es el 90B de NIST (S.04). |
+| `CotaDeEntropia` | firma mínima de una cota de min-entropía (la del puerto `EstimadorDeEntropia`, que el dominio no importa); lo que `EstimadorMinimo` combina. |
+| `EstimadorMinimo` | dimensionado conservador (F5.05): el mínimo de varias cotas, cada una sobre un prefijo declarado (MCV sobre todo el pool, 90B sobre 10⁶ bits). Con `h_contable` acota además la entropía total por la de la muestra cruda. |
 | `EstimadorDeSesgo` | puerto: ⟨Z⟩ con y sin mitigar; ahí vivirían ZNE/PEC. |
 | `FuenteDeSemilla` | puerto: bits uniformes para la semilla de Toeplitz (D-004). |
 | `Cifrador` | puerto: AES-GCM con la clave del pipeline. |

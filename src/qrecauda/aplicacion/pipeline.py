@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from qrecauda.dominio.bits import Bits
-from qrecauda.dominio.entropia import EstimadorMCV
+from qrecauda.dominio.entropia import EstimadorMCV, h_contable
 from qrecauda.dominio.errores import EntropiaInsuficiente
 from qrecauda.dominio.extractores import longitud_segura, peres, toeplitz
 from qrecauda.dominio.metricas import Medida, Metrica, Veredicto, medir
@@ -38,6 +38,7 @@ class Resultado:
     bits_crudos: int
     bits_extraidos: int
     segundos: float
+    h_fuente: float | None = None  # min-entropía por bit de la muestra cruda que dimensionó (None: no se estimó, como en 0.1.0)
 
     def medidas_de(self, etapa: str) -> tuple[Medida, ...]:
         return dict(self.etapas)[etapa]
@@ -50,7 +51,12 @@ def ejecutar(
     p: ParametrosPipeline,
     mitigador: Mitigador | None = None,
     estimador: EstimadorDeEntropia | None = None,
+    estimador_de_fuente: EstimadorDeEntropia | None = None,
+    estimador_de_salida: EstimadorDeEntropia | None = None,
 ) -> Resultado:
+    """`estimador` dimensiona sobre el pool (MCV por omisión, como en 0.1.0). Dimensionado conservador (F5.05): un `EstimadorMinimo`
+    como `estimador` y, además, `estimador_de_fuente` sobre la muestra que entra a Peres: `h` pasa por `h_contable`.
+    `estimador_de_salida` mide M2 sobre la clave (por omisión `estimador`; el 90B no puede: la clave suele quedar bajo 10⁶ bits)."""
     est = estimador if estimador is not None else EstimadorMCV()
     t0 = reloj.ahora_ns()
     muestra = fuente.generar(p.qubits, p.shots)
@@ -60,6 +66,10 @@ def ejecutar(
         etapas.append(("mitigada", validador.evaluar(muestra.bits)))
     pool = peres(muestra.bits, p.profundidad_peres)
     h = est.estimar(pool)
+    h_fuente = None
+    if estimador_de_fuente is not None and len(pool) > 0:
+        h_fuente = estimador_de_fuente.estimar(muestra.bits)
+        h = h_contable(h, len(pool), h_fuente, len(muestra.bits))
     # n·(2+h) ≤ |pool|: caben n bits de datos y la semilla de n+m−1 ≤ n·(1+h) bits, ambas del mismo pool.
     n = int((len(pool) + 1) // (2 + h))
     if n < 2:
@@ -68,7 +78,7 @@ def ejecutar(
     datos, semilla = pool[:n], pool[n : n + n + m - 1]
     clave = toeplitz(datos, semilla, m)
     dt = (reloj.ahora_ns() - t0) / 1e9
-    h_salida = est.estimar(clave)
+    h_salida = (estimador_de_salida if estimador_de_salida is not None else est).estimar(clave)
     en_clave = validador.evaluar(clave)
     etapas.append(("clave", en_clave))
     medidas: tuple[Medida, ...] = (
@@ -77,4 +87,4 @@ def ejecutar(
         medir(Metrica.TASA, len(clave) / dt if dt > 0 else float("inf")),
         medir(Metrica.LATENCIA, dt * 1000),
     )
-    return Resultado(clave, muestra, h, h_salida, Veredicto(medidas), tuple(etapas), len(muestra.bits), len(pool), dt)
+    return Resultado(clave, muestra, h, h_salida, Veredicto(medidas), tuple(etapas), len(muestra.bits), len(pool), dt, h_fuente)
