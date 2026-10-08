@@ -189,7 +189,13 @@ class EjecutorE3:
             )
         rechazos = intento
         cifrador = self._crear_cifrador()
-        servicio = ServicioDeTransacciones(r, cifrador, self._crear_reserva)
+        grabadora: list[_ReservaGrabadora] = []
+
+        def reserva_a(clave: Bits) -> ReservaDeClaves:
+            grabadora.append(_ReservaGrabadora(self._crear_reserva(clave)))
+            return grabadora[0]
+
+        servicio = ServicioDeTransacciones(r, cifrador, reserva_a)
         tc = servicio.cifrar(TX_A)
         servicio.descifrar(tc)
         cpu1, hijos1 = self._sonda.cpu_proceso_ns(), self._sonda.cpu_con_hijos_ns()
@@ -207,7 +213,7 @@ class EjecutorE3:
             self._bit.registrar("repeticion_e3", i=i, semilla=semilla_i, t_rep_ms=pared / 1e6, longitud_bits=len(r.clave), h90b=h90)
         return _Rep(
             r, pared, etapas, (cpu1 - cpu0) / pared if pared else float("inf"), (hijos1 - hijos0) / pared if pared else float("inf"),
-            h90, tc.rotulo, rechazos,
+            h90, tc.rotulo, rechazos, grabadora[0].pares,
         )  # fmt: skip
 
     # ------------------------------------------------------------------ estadísticas
@@ -289,7 +295,7 @@ class EjecutorE3:
             "U1": ida_y_vuelta and hechas == total and not insuficiente,
             "U2": self._u2(servicio, cifradas, rng, u2_n),
             "U3": self._u3(cifrador, cifradas, pares, rng, u3_n),
-            "U4": len({(c.a_bytes(), n.a_bytes()) for c, n in pares}) == len(pares),
+            "U4": self._sin_repetidos([*ultima.pares_tx_a, *pares]),
             "U5": self._u5(decl, ultima, cifradas),
         }
         ciclos = np.array(ciclos_ns, dtype=np.float64) / 1e3
@@ -309,6 +315,11 @@ class EjecutorE3:
             "tx_por_s": float(hechas / (ciclos.sum() / 1e6)) if hechas and ciclos.sum() > 0 else 0.0,
         }
         return controles
+
+    @staticmethod
+    def _sin_repetidos(pares: list[tuple[Bits, Bits]]) -> bool:
+        """U4 sobre TODO lo que se cifró con la clave de la repetición: el trozo de TX_A y los del perfil B."""
+        return len({(c.a_bytes(), n.a_bytes()) for c, n in pares}) == len(pares)
 
     @staticmethod
     def _falla(servicio: ServicioDeTransacciones, t: TransaccionCifrada) -> bool:
@@ -362,7 +373,7 @@ class EjecutorE3:
 class _Rep:
     """Una repetición del perfil A ya medida."""
 
-    __slots__ = ("cpu_hijos_pared", "cpu_pared", "etapas", "h90", "pared_ns", "rechazos", "resultado", "rotulo")
+    __slots__ = ("cpu_hijos_pared", "cpu_pared", "etapas", "h90", "pared_ns", "pares_tx_a", "rechazos", "resultado", "rotulo")
 
     def __init__(
         self,
@@ -374,9 +385,11 @@ class _Rep:
         h90: float,
         rotulo: str,
         rechazos: int = 0,
+        pares_tx_a: list[tuple[Bits, Bits]] | None = None,
     ) -> None:
         self.resultado, self.pared_ns, self.etapas = resultado, pared_ns, etapas
         self.cpu_pared, self.cpu_hijos_pared, self.h90, self.rotulo, self.rechazos = cpu_pared, cpu_hijos_pared, h90, rotulo, rechazos
+        self.pares_tx_a = pares_tx_a if pares_tx_a is not None else []  # los (clave, nonce) que gastó TX_A en esta repetición
 
 
 __all__ = ["EjecutorE3", "FuenteDeBits", "Mitigador"]

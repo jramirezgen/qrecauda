@@ -307,10 +307,14 @@ def test_u3_falla_si_descifrar_con_otra_clave_funciona(decl):
 
 def test_u4_falla_si_la_reserva_repite_un_par_clave_nonce(decl):
     class Repetidora(ReservaDeClave):
+        _primero = None
+
         def siguiente(self):
             par = super().siguiente()
             if self.restantes > 5:  # devuelve el primero otra vez a mitad de reserva
-                self._cursor = 0
+                if Repetidora._primero is None:
+                    Repetidora._primero = par
+                return Repetidora._primero
             return par
 
     # el cifrador real se niega a repetir (NonceRepetido): el control mira la reserva, así que se relaja el cifrador
@@ -321,6 +325,38 @@ def test_u4_falla_si_la_reserva_repite_un_par_clave_nonce(decl):
 
     m = _ejecutor(decl, reserva=Repetidora, cifrador=Permisivo)[0].ejecutar(decl, decl.semillas[0])
     assert m.controles["U4"] is False
+
+
+def test_u4_incluye_el_trozo_que_uso_tx_a_en_la_repeticion(decl):
+    """B-1: una reserva que empiece otra vez en el trozo 0 de la misma clave repite el par de TX_A; U4 debe verlo."""
+
+    class Aislada:
+        """Reserva sin memoria entre instancias: el defecto que el registro por clave evita."""
+
+        def __init__(self, bits):
+            self._bits, self._i = bits, 0
+
+        @property
+        def restantes(self):
+            return (len(self._bits) - self._i) // 352
+
+        def siguiente(self):
+            j = self._i
+            self._i += 352
+            return self._bits[j : j + 256], self._bits[j + 256 : j + 352]
+
+    class Permisivo(CifradorAesGcm):
+        def cifrar(self, clave, nonce, texto, asociado):
+            self._usados.clear()
+            return super().cifrar(clave, nonce, texto, asociado)
+
+    m = _ejecutor(decl, reserva=Aislada, cifrador=Permisivo)[0].ejecutar(decl, decl.semillas[0])
+    assert m.controles["U4"] is False
+
+
+def test_u4_pasa_con_la_reserva_real_porque_el_perfil_b_sigue_tras_tx_a(decl):
+    m = _ejecutor(decl)[0].ejecutar(decl, decl.semillas[0])
+    assert m.controles["U4"] is True
 
 
 def test_u5_falla_si_el_origen_reclamara_ser_cuantico(decl):

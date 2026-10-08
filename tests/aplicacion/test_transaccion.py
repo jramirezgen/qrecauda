@@ -35,9 +35,17 @@ def test_se_cifra_se_descifra_y_se_verifica(resultado):
 def test_la_clave_sale_de_resultado_clave(resultado):
     s = _servicio(resultado)
     t = s.cifrar(TX)
-    esperada, nonce = ReservaDeClave(resultado.clave).siguiente()
+    esperada, nonce = resultado.clave[:256], resultado.clave[256:352]  # el primer trozo de una clave aún sin consumir
     assert t.nonce == nonce
     assert CifradorAesGcm().descifrar(esperada, nonce, t.cifrado, t.asociado) == TX.a_bytes()
+
+
+def test_dos_servicios_sobre_el_mismo_resultado_nunca_comparten_clave_y_nonce(resultado):
+    """B-1: servicio_de se puede llamar dos veces con el mismo Resultado; (clave, nonce) no puede repetirse entre ellos."""
+    s1, s2 = _servicio(resultado), _servicio(resultado)
+    t1, t2 = s1.cifrar(TX), s2.cifrar(TX)
+    assert t1.nonce != t2.nonce
+    assert s1.restantes == s2.restantes
 
 
 def test_cada_transaccion_usa_un_nonce_distinto(resultado):

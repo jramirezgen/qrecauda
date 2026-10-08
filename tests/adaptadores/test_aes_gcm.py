@@ -1,3 +1,6 @@
+import sys
+import threading
+
 import numpy as np
 import pytest
 
@@ -91,3 +94,61 @@ def test_reserva_corta_trozos_consecutivos():
     k, n = r.siguiente()
     k2, n2 = r.siguiente()
     assert k.concatenar(n).concatenar(k2).concatenar(n2) == b
+
+
+def test_dos_reservas_sobre_la_misma_clave_no_repiten_trozo():
+    """B-1: el consumo es de la CLAVE (por hash), no de la instancia: una segunda reserva sigue donde dejó la primera."""
+    b = _aleatorios(352 * 3, 21)
+    r1, r2 = ReservaDeClave(b), ReservaDeClave(b)
+    visto = [r1.siguiente(), r2.siguiente(), r1.siguiente()]
+    assert len({(k, n) for k, n in visto}) == 3
+    assert r1.restantes == r2.restantes == 0
+    with pytest.raises(EntropiaInsuficiente):
+        r2.siguiente()
+
+
+def test_reserva_con_hilos_reparte_cada_trozo_una_sola_vez():
+    antes = sys.getswitchinterval()
+    sys.setswitchinterval(1e-6)
+    try:
+        for ensayo in range(30):
+            r = ReservaDeClave(_aleatorios(352 * 64, 100 + ensayo))
+            salida: list[tuple[Bits, Bits]] = []
+            barrera = threading.Barrier(8)
+
+            def trabajo(r=r, salida=salida, barrera=barrera) -> None:
+                barrera.wait()
+                for _ in range(8):
+                    salida.append(r.siguiente())
+
+            hilos = [threading.Thread(target=trabajo) for _ in range(8)]
+            [h.start() for h in hilos]
+            [h.join() for h in hilos]
+            assert len({(k, n) for k, n in salida}) == 64
+    finally:
+        sys.setswitchinterval(antes)
+
+
+def test_cifrar_con_hilos_el_mismo_par_solo_lo_gana_uno():
+    antes = sys.getswitchinterval()
+    sys.setswitchinterval(1e-6)
+    try:
+        for ensayo in range(30):
+            c, (k, n) = CifradorAesGcm(), _par(200 + ensayo)
+            ganadores, perdedores = [], []
+            barrera = threading.Barrier(8)
+
+            def trabajo(c=c, k=k, n=n, barrera=barrera, ganadores=ganadores, perdedores=perdedores) -> None:
+                barrera.wait()
+                try:
+                    c.cifrar(k, n, b"x", b"")
+                    ganadores.append(1)
+                except NonceRepetido:
+                    perdedores.append(1)
+
+            hilos = [threading.Thread(target=trabajo) for _ in range(8)]
+            [h.start() for h in hilos]
+            [h.join() for h in hilos]
+            assert (len(ganadores), len(perdedores)) == (1, 7)
+    finally:
+        sys.setswitchinterval(antes)
