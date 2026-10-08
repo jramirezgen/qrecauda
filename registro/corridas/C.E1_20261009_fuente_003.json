@@ -1,0 +1,1 @@
+{"bits":1000000,"corrida":"C.E1d","esquema":1,"fuente":"ideal","h_90b":0.832199,"mcv":0.9944910275670049,"medidas":[["M1_sesgo",0.0006249999999999867,0.01,true],["M3_nist_monobit",0.21129954733371056,0.01,true],["M4_nist_runs",0.8199860992757192,0.01,true],["M5_chi_cuadrado",0.029281147759145393,0.01,true]],"semilla":20261009}
