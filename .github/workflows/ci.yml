@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # tests de atribución e historial recorren git log
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Instalar dependencias (todos los extras)
+        run: uv sync --frozen --group dev --extra cuantico --extra mitigacion --extra validacion --extra cifrado --extra informe
+
+      - name: Poner el venv en el PATH
+        run: echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Hooks del repo (un test comprueba core.hooksPath)
+        run: scripts/instalar_hooks.sh
+
+      # Los tests de tests/integracion/test_e2_e3_reales.py usan el binario ea_non_iid sin saltarse.
+      # Se compila una vez (build_nist.sh) y se cachea en la ruta que busca el código.
+      - name: Cachear el estimador SP 800-90B
+        id: cache-90b
+        uses: actions/cache@v4
+        with:
+          path: /tmp/qrecauda_nist90b
+          key: nist90b-v1.1.8-${{ runner.os }}-${{ hashFiles('spikes/S04_90b/build_nist.sh') }}
+
+      - name: Compilar el estimador SP 800-90B
+        if: steps.cache-90b.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev g++
+          bash spikes/S04_90b/build_nist.sh
+
+      - name: ruff (lint)
+        run: ruff check src tests
+
+      - name: ruff (formato)
+        run: ruff format --check src tests
+
+      - name: mypy
+        run: mypy
+
+      - name: Contratos de capas
+        run: lint-imports
+
+      - name: Comprobación del DAG
+        run: |
+          python plan/construir_dag.py --comprobar
+          python plan/dag.py validar
+          python plan/dag.py estado --comprobar
+
+      - name: pytest
+        env:
+          OMP_NUM_THREADS: "1"
+        run: pytest

@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "Si usas este software, cítalo con estos metadatos."
+title: "QRecauda: pipeline QRNG reproducible en simulador para recaudación"
+type: software
+version: 0.1.0
+date-released: 2026-10-08
+license: Apache-2.0
+repository-code: "https://github.com/jramirezgen/qrecauda"
+url: "https://github.com/jramirezgen/qrecauda"
+abstract: >-
+  Pipeline reproducible de generación de claves a partir de un circuito QRNG simulado:
+  mitigación de lectura, extractores de Peres y Toeplitz, validación NIST y cifrado AES-GCM.
+  TRL 3. El simulador no aporta entropía cuántica y no hay corrida en hardware.
+keywords:
+  - QRNG
+  - generación de números aleatorios
+  - extractores de aleatoriedad
+  - Qiskit
+  - reproducibilidad
+authors:
+  - alias: kaitokid

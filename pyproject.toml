@@ -3,6 +3,20 @@ name = "qrecauda"
 version = "0.1.0"
 description = "Pipeline QRNG reproducible en simulador para recaudación (TRL 3, validación de pipeline; sin origen cuántico afirmado): Hadamard → mitigación → extractores → validación → clave"
 license = "Apache-2.0"
+readme = "README.md"
+authors = [{ name = "kaitokid" }]
+keywords = ["qrng", "random-number-generation", "randomness-extraction", "qiskit", "nist", "aes-gcm", "reproducibility"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Security :: Cryptography",
+]
 requires-python = ">=3.11"
 dependencies = [
     "numpy>=2.0",
@@ -17,6 +31,12 @@ mitigacion = ["mthree>=2.7"]                                                  # 
 validacion = ["nistrng>=1.2"]                                                 # adaptadores/nist
 cifrado = ["cryptography>=43"]                                                # adaptadores/aes_gcm
 informe = ["matplotlib>=3.9", "plotly>=5.24", "jupyter>=1.1"]                 # presentacion/ y notebooks/
+
+[project.urls]
+Homepage = "https://github.com/jramirezgen/qrecauda"
+Repository = "https://github.com/jramirezgen/qrecauda"
+Issues = "https://github.com/jramirezgen/qrecauda/issues"
+Changelog = "https://github.com/jramirezgen/qrecauda/blob/main/CHANGELOG.md"
 
 [project.scripts]
 qrecauda = "qrecauda.entrada.cli:main"
