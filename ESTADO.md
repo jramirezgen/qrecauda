@@ -8,9 +8,9 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 60 |
+| hecho | 61 |
 | juzgado | 4 |
-| pendiente | 6 |
+| pendiente | 5 |
 
 ## En curso, bloqueados y pausados
 
@@ -18,7 +18,7 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- **P.E5** Preinscripción E5: el control negativo del pipeline completo con fuentes defectuosas
+- **F5.06** Ejecutor de E5: defectos sobre Aer con twirling real y el juez del control negativo
 
 ## Hechos y juzgados
 
@@ -80,6 +80,7 @@ Plan v1 · 2026-10-07
 | P.E3b | hecho | `88d1d45` | Preinscripción E3b: la latencia de transacción con la clave de una reserva generada aparte |
 | C.E3b | hecho | `e1f47ce` | E3b · latencia y sostenibilidad con la clave de una reserva generada aparte |
 | E3b | juzgado | `e1f47ce` | ¡EUREKA 3b! La latencia de transacción cumple M7 con la clave de una reserva generada aparte |
+| P.E5 | hecho | `7a05bea` | Preinscripción E5: el control negativo del pipeline completo con fuentes defectuosas |
 | F7.06 | hecho | `013fd62` | Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado |
 | T.TRL | hecho | `8039a6d` | Matriz de TRL por componente, derivada de la evidencia |
 | F7.05 | hecho | `7db7730` | Wiki repo: mapas, bases e incidencias publicados en la bóveda |
