@@ -8,9 +8,9 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 47 |
+| hecho | 48 |
 | juzgado | 2 |
-| pendiente | 10 |
+| pendiente | 9 |
 
 ## En curso, bloqueados y pausados
 
@@ -18,7 +18,7 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- **F3.04** SamplerV2 sobre hardware IBM con Batch/Session (opcional)
+- **F3.06** Acceso a hardware IBM: corrida real o constancia de no acceso
 - **C.E3** E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado
 
 ## Hechos y juzgados
@@ -53,6 +53,7 @@ Plan v1 · 2026-10-07
 | F3.01 | hecho | `5312674` | Circuito H⊗n + medición sobre AerSimulator con SamplerV2 |
 | F3.02 | hecho | `5312674` | Modelo de ruido del backend: lectura asimétrica, relajación y cross-talk |
 | F3.03 | hecho | `5312674` | Transpilación guiada (AIRouting / StagedPassManager) con salida local |
+| F3.04 | hecho | `80d6cc5` | SamplerV2 sobre hardware IBM con Batch/Session (opcional) |
 | F3.05 | hecho | `bcd0dd2` | Composición y configuración de la demo con Aer ruidoso y mitigación |
 | F4.01 | hecho | `a9bd306` | Mitigación de lectura (TREX / mthree) como puerto Mitigador |
 | F4.02 | hecho | `ce52c0d` | ZNE y PEC/PNA sobre el observable de sesgo ⟨Z⟩ |
