@@ -253,7 +253,7 @@ def test_t4_usa_la_cpu_del_proceso_y_reporta_aparte_la_de_los_hijos(decl):
 
 
 def test_carga_previa_alta_invalida_la_semilla_antes_de_medir(decl):
-    ej, lab, _, _ = _ejecutor(decl, carga=1.0)  # debe ser < 1,0
+    ej, lab, _, _ = _ejecutor(decl, carga=2.0)  # debe ser < 2,0 (enmienda 2026-10-08)
     with pytest.raises(CorridaInvalida, match="carga"):
         ej.ejecutar(decl, decl.semillas[0])
     assert lab.semillas_fuente == []
@@ -335,7 +335,21 @@ def test_una_reserva_corta_es_el_resultado_no_se_baja_n_tx(decl):
     assert m.controles["U1"] is False  # no se confirmó ida y vuelta de las 2000
 
 
-def test_la_clave_que_no_pasa_m1_a_m5_aborta_la_corrida_no_se_cifra(decl):
+def test_una_clave_rechazada_se_regenera_y_su_tiempo_cuenta(decl):
+    class RechazaLaPrimera:
+        def __init__(self):
+            self.n = 0
+
+        def evaluar(self, bits):
+            self.n += 1
+            return (medir(Metrica.MONOBIT, 0.0 if self.n <= 3 else 1.0),)
+
+    ej = _ejecutor(decl, validador=RechazaLaPrimera())[0]
+    m = ej.ejecutar(decl, decl.semillas[0])
+    assert max(m.e3[0].reporte["claves_rechazadas"]) >= 1
+
+
+def test_la_clave_que_no_pasa_m1_a_m5_tras_los_reintentos_aborta_la_corrida(decl):
     class Rechaza:
         def evaluar(self, bits):
             return (medir(Metrica.MONOBIT, 0.0),)

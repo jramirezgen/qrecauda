@@ -10,7 +10,7 @@ El perfil B (complementario, NO decide) y los controles U1–U5 salen de una res
 Convenciones que la preinscripción no fija con este detalle (⚠️ declaradas, no decididas en silencio):
 - el 90B se corre sobre los primeros `muestras_90b` bits de la muestra CRUDA (antes de mitigar), una vez por repetición, dentro de t_rep;
 - las etapas reparten t_rep sin hueco: extracción = pipeline − (fuente + mitigación + validación de M1–M5) y cuenta también el MCV;
-- una clave que no pasa M1–M5 aborta la corrida (`CorridaInvalida`): sin ella no hay transacción que cifrar y E3 no tiene dónde anotarlo;
+- una clave que no pasa M1–M5 se regenera con una semilla derivada (hasta 5 intentos); el tiempo del intento rechazado suma a t_rep y se cuenta en `claves_rechazadas`; agotados los intentos, `CorridaInvalida`;
 - una reserva corta en el perfil B (`EntropiaInsuficiente`) es resultado: se anota y U1 queda en falso, no se baja n_tx.
 """
 
@@ -27,7 +27,7 @@ from qrecauda.aplicacion.transaccion import ServicioDeTransacciones, Transaccion
 from qrecauda.datos import Declaracion, ExperimentoE3, Medicion, RuidoDeLectura
 from qrecauda.dominio.bits import Bits
 from qrecauda.dominio.errores import AutenticacionFallida, CorridaInvalida, EntradaInvalida, EntropiaInsuficiente
-from qrecauda.dominio.metricas import Medida
+from qrecauda.dominio.metricas import METRICAS_DE_CLAVE, Medida
 from qrecauda.dominio.muestra import Muestra, Origen
 from qrecauda.puertos import (
     Bitacora,
@@ -43,6 +43,8 @@ from qrecauda.puertos import (
 )
 
 REGLA_SEMILLA = "semilla * 100 + i"
+MAX_INTENTOS = 5  # claves rechazadas por M1–M5 antes de declarar la corrida inválida
+SALTO_REINTENTO = 10**9  # semilla del reintento k = semilla_i + k·SALTO (no choca con semilla·100 + i)
 ETAPAS = ("fuente", "mitigacion", "extraccion", "validacion", "cifrado")
 TX_A = Transaccion("Peaje de prueba", 1250, "T-pseudonimo-0000")  # sintética: ningún dato personal
 ESTACIONES = {
@@ -156,40 +158,52 @@ class EjecutorE3:
     # ------------------------------------------------------------------ una repetición del perfil A
 
     def _repeticion(self, decl: Declaracion, ruido: RuidoDeLectura, p: ParametrosPipeline, semilla_i: int, i: int) -> _Rep:
+        """Una clave rechazada por M1–M5 se regenera con una semilla derivada; el intento perdido cuenta en t_rep."""
         bloque = int(decl.numero("configuracion", "twirling_bloque"))
-        fuente = _FuenteCronometrada(self._lab.fuente(ruido, semilla_i), self._reloj)
-        mit = _MitigadorCronometrado(self._lab.twirling(ruido, semilla_i, bloque), self._reloj)
-        val = _ValidadorCronometrado(self._validador, self._reloj)
         muestras_90b = int(decl.numero("validacion", "muestras_90b"))
-        t0 = self._reloj.ahora_ns()
+        perdido_ns = 0
         cpu0, hijos0 = self._sonda.cpu_proceso_ns(), self._sonda.cpu_con_hijos_ns()  # la ventana de CPU cabe dentro de la de pared
-        r = ejecutar_pipeline(fuente, val, self._reloj, p, mitigador=mit)
-        t_pipe = self._reloj.ahora_ns()
-        assert fuente.ultima is not None  # el pipeline llamó a la fuente
-        h90 = self._est90.estimar(fuente.ultima.bits[:muestras_90b])
-        t_90 = self._reloj.ahora_ns()
-        if not r.veredicto.calidad_de_clave_aprobada:
-            raise CorridaInvalida(f"repetición {i}: la clave no pasa M1–M5, no se cifra con ella: no hay ciclo de cifrado que medir")
+        malas: list[str] = []
+        for intento in range(MAX_INTENTOS):
+            semilla_k = semilla_i + intento * SALTO_REINTENTO
+            fuente = _FuenteCronometrada(self._lab.fuente(ruido, semilla_k), self._reloj)
+            mit = _MitigadorCronometrado(self._lab.twirling(ruido, semilla_k, bloque), self._reloj)
+            val = _ValidadorCronometrado(self._validador, self._reloj)
+            t0 = self._reloj.ahora_ns()
+            r = ejecutar_pipeline(fuente, val, self._reloj, p, mitigador=mit)
+            t_pipe = self._reloj.ahora_ns()
+            assert fuente.ultima is not None  # el pipeline llamó a la fuente
+            h90 = self._est90.estimar(fuente.ultima.bits[:muestras_90b])
+            t_90 = self._reloj.ahora_ns()
+            if r.veredicto.calidad_de_clave_aprobada:
+                break
+            perdido_ns += t_90 - t0
+            malas = [f"{m.metrica.name}={m.valor:.4g}" for m in r.veredicto.medidas if not m.cumple and m.metrica in METRICAS_DE_CLAVE]
+        else:
+            raise CorridaInvalida(
+                f"repetición {i}: la clave no pasa M1–M5 en {MAX_INTENTOS} intentos ({', '.join(malas)}): no hay ciclo de cifrado que medir"
+            )
+        rechazos = intento
         cifrador = self._crear_cifrador()
         servicio = ServicioDeTransacciones(r, cifrador, self._crear_reserva)
         tc = servicio.cifrar(TX_A)
         servicio.descifrar(tc)
         cpu1, hijos1 = self._sonda.cpu_proceso_ns(), self._sonda.cpu_con_hijos_ns()
         t1 = self._reloj.ahora_ns()
-        pared = t1 - t0
+        pared = (t1 - t0) + perdido_ns
         validacion_pipe = val.ns
         etapas = {
             "fuente": fuente.ns,
             "mitigacion": mit.ns,
             "extraccion": (t_pipe - t0) - fuente.ns - mit.ns - validacion_pipe,
-            "validacion": validacion_pipe + (t_90 - t_pipe),
+            "validacion": validacion_pipe + (t_90 - t_pipe) + perdido_ns,  # incluye los intentos rechazados
             "cifrado": t1 - t_90,
         }
         if self._bit is not None:
             self._bit.registrar("repeticion_e3", i=i, semilla=semilla_i, t_rep_ms=pared / 1e6, longitud_bits=len(r.clave), h90b=h90)
         return _Rep(
             r, pared, etapas, (cpu1 - cpu0) / pared if pared else float("inf"), (hijos1 - hijos0) / pared if pared else float("inf"),
-            h90, tc.rotulo,
+            h90, tc.rotulo, rechazos,
         )  # fmt: skip
 
     # ------------------------------------------------------------------ estadísticas
@@ -219,6 +233,7 @@ class EjecutorE3:
             "cpu_sobre_pared": [r.cpu_pared for r in todas],
             "cpu_con_hijos_sobre_pared": [r.cpu_hijos_pared for r in todas],
             "h_min_90b": [r.h90 for r in medidas],
+            "claves_rechazadas": [r.rechazos for r in todas],
             "validacion": [{k: _medidas(v) for k, v in r.resultado.etapas} for r in medidas],
         }
         maquina = {str(k): str(v) for k, v in self._sonda.maquina().items()}
@@ -343,13 +358,21 @@ class EjecutorE3:
 class _Rep:
     """Una repetición del perfil A ya medida."""
 
-    __slots__ = ("cpu_hijos_pared", "cpu_pared", "etapas", "h90", "pared_ns", "resultado", "rotulo")
+    __slots__ = ("cpu_hijos_pared", "cpu_pared", "etapas", "h90", "pared_ns", "rechazos", "resultado", "rotulo")
 
     def __init__(
-        self, resultado: Resultado, pared_ns: int, etapas: dict[str, int], cpu_pared: float, cpu_hijos_pared: float, h90: float, rotulo: str
+        self,
+        resultado: Resultado,
+        pared_ns: int,
+        etapas: dict[str, int],
+        cpu_pared: float,
+        cpu_hijos_pared: float,
+        h90: float,
+        rotulo: str,
+        rechazos: int = 0,
     ) -> None:
         self.resultado, self.pared_ns, self.etapas = resultado, pared_ns, etapas
-        self.cpu_pared, self.cpu_hijos_pared, self.h90, self.rotulo = cpu_pared, cpu_hijos_pared, h90, rotulo
+        self.cpu_pared, self.cpu_hijos_pared, self.h90, self.rotulo, self.rechazos = cpu_pared, cpu_hijos_pared, h90, rotulo, rechazos
 
 
 __all__ = ["EjecutorE3", "FuenteDeBits", "Mitigador"]
