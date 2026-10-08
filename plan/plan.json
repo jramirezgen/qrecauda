@@ -598,6 +598,22 @@
    "estado": "pendiente"
   },
   {
+   "id": "F6.03",
+   "fase": "F6",
+   "tipo": "adaptador",
+   "titulo": "Reserva asíncrona de claves: productor en otro proceso y consumidor con registro de consumo",
+   "depende_de": [
+    "F6.02",
+    "F2.07"
+   ],
+   "entrega": "src/qrecauda/aplicacion/reserva_asincrona.py, src/qrecauda/aplicacion/ejecutor_e3b.py, src/qrecauda/adaptadores/productor_en_proceso.py, src/qrecauda/adaptadores/temporizador_local.py, tests/aplicacion/test_ejecutor_e3b.py, tests/adaptadores/test_productor_en_proceso.py y tests/integracion/test_e3b_real.py",
+   "hecho_cuando": "un proceso spawn fijado a su núcleo genera claves aprobadas por M1–M5 con la cadena de E3 y las entrega por una cola acotada; el consumidor toma trozos de 352 bits sin repetir (clave, nonce), cifra y descifra, cuenta las esperas y declara la reserva agotada; la clave cruza en memoria y nunca se imprime ni se escribe; el ejecutor de E3b y su juez se prueban con dobles y con la cadena real a demanda diminuta",
+   "cubre": [
+    "L-integracion"
+   ],
+   "estado": "pendiente"
+  },
+  {
    "id": "P.E0",
    "fase": "E",
    "tipo": "decision",
@@ -848,6 +864,59 @@
    "estado": "pendiente"
   },
   {
+   "id": "P.E3b",
+   "fase": "E",
+   "tipo": "preinscripcion",
+   "titulo": "Preinscripción E3b: la latencia de transacción con la clave de una reserva generada aparte",
+   "depende_de": [
+    "E3",
+    "F6.03",
+    "P.E0"
+   ],
+   "entrega": "docs/preinscripciones/E3b.md y declaraciones/E3b.toml",
+   "hecho_cuando": "arquitectura productor/consumidor, perfiles R1 (arranque, informativo) y R2 (régimen, decide), λ y duración, definiciones de tasa neta, latencia y espera, criterios T1–T3 con sus umbrales de M6/M7, controles U1–U5 y T4, núcleos y candado, limitaciones e hipótesis marcada, todo fijado antes de medir; E3 NO se reabre",
+   "cubre": [
+    "E3b"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "C.E3b",
+   "fase": "E",
+   "tipo": "medicion",
+   "titulo": "E3b · latencia y sostenibilidad con la clave de una reserva generada aparte",
+   "depende_de": [
+    "P.E3b",
+    "F6.03",
+    "F5.02",
+    "F3.05",
+    "F5.01"
+   ],
+   "entrega": "registro/corridas/C.E3b.json",
+   "hecho_cuando": "tasa neta del productor, p95 de las latencias, esperas y CPU/pared de cada proceso medidos con reloj monotónico a λ tx/s durante la duración declarada, en tres semillas, con la máquina registrada y los dos procesos en sus núcleos",
+   "cubre": [
+    "E3b",
+    "M6",
+    "M7"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "E3b",
+   "fase": "E",
+   "tipo": "eureka",
+   "titulo": "¡EUREKA 3b! La latencia de transacción cumple M7 con la clave de una reserva generada aparte",
+   "depende_de": [
+    "C.E3b"
+   ],
+   "entrega": "registro/veredictos.jsonl",
+   "hecho_cuando": "T1 (la tasa neta del productor supera M6 y el consumo), T2 (p95 < 500 ms) y T3 (cero esperas) cumplen en las tres semillas, o el veredicto dice cuál no y por cuánto",
+   "cubre": [
+    "E3b"
+   ],
+   "estado": "pendiente"
+  },
+  {
    "id": "F7.06",
    "fase": "F7",
    "tipo": "infra",
@@ -990,6 +1059,41 @@
    ],
    "entrega": "docs/releases/EXPEDIENTE_0.1.0.md, CHANGELOG.md y tests/arquitectura/test_release_sin_dudas.py",
    "hecho_cuando": "expediente con alcance, arquitectura, pruebas, validación contra línea base, despliegue y límites; el título dice lo que T.TRL sostiene; un test falla si queda un ⚠️ sin verificar vigente en FUNDAMENTO o en las decisiones",
+   "cubre": [
+    "T-empaquetado"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "R.02",
+   "fase": "R",
+   "tipo": "revision",
+   "titulo": "Revisión adversarial propia previa al release 0.2.0",
+   "depende_de": [
+    "E3b",
+    "F6.03",
+    "T.TRL"
+   ],
+   "entrega": "docs/informes/REVISION_ADVERSARIAL_0.2.0.md",
+   "hecho_cuando": "un agente independiente intentó romper E3b y la reserva asíncrona con la medición ya hecha; cada hallazgo verificado contra el texto y registrado; es distinta de R.01",
+   "cubre": [
+    "A-honestidad"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "REL-0.2.0",
+   "fase": "R",
+   "tipo": "release",
+   "titulo": "Release 0.2.0: la reserva asíncrona de claves y la latencia de E3b",
+   "depende_de": [
+    "REL-0.1.0",
+    "R.02",
+    "E3b",
+    "T.TRL"
+   ],
+   "entrega": "docs/releases/EXPEDIENTE_0.2.0.md y CHANGELOG.md",
+   "hecho_cuando": "expediente con el alcance añadido a 0.1.0, el veredicto de E3b tal como salió (CUMPLE o NO_CUMPLE), la arquitectura de la reserva, las pruebas, el rótulo de TRL que T.TRL sostiene y los límites; E3 sigue como la dejó su veredicto",
    "cubre": [
     "T-empaquetado"
    ],

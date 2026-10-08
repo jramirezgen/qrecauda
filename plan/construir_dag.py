@@ -119,6 +119,9 @@ n("F6.01", "F6", "adaptador", "Cifrado AES-256-GCM con clave QRNG", ["F2.01"], "
   "clave de 256 bits y nonce de 96 bits cortados de bloques consecutivos distintos de la clave certificada; un cursor de consumo impide entregar dos veces el mismo trozo; ida y vuelta, rechazo de un texto alterado y de un nonce repetido con la misma clave", ["O6"])
 n("F6.02", "F6", "aplicacion", "Transacción de peaje/Metro cifrada con la clave certificada", ["F2.03", "F6.01"], "src/qrecauda/aplicacion/transaccion.py, tests/aplicacion/test_transaccion.py",
   "una transacción simulada se cifra, se descifra y se verifica; la clave sale de Resultado.clave de un pipeline con Origen declarado y la demo con Aer se rotula «validación del pipeline», no «entropía cuántica»", ["A-caso-de-uso"])
+n("F6.03", "F6", "adaptador", "Reserva asíncrona de claves: productor en otro proceso y consumidor con registro de consumo", ["F6.02", "F2.07"],
+  "src/qrecauda/aplicacion/reserva_asincrona.py, src/qrecauda/aplicacion/ejecutor_e3b.py, src/qrecauda/adaptadores/productor_en_proceso.py, src/qrecauda/adaptadores/temporizador_local.py, tests/aplicacion/test_ejecutor_e3b.py, tests/adaptadores/test_productor_en_proceso.py y tests/integracion/test_e3b_real.py",
+  "un proceso spawn fijado a su núcleo genera claves aprobadas por M1–M5 con la cadena de E3 y las entrega por una cola acotada; el consumidor toma trozos de 352 bits sin repetir (clave, nonce), cifra y descifra, cuenta las esperas y declara la reserva agotada; la clave cruza en memoria y nunca se imprime ni se escribe; el ejecutor de E3b y su juez se prueban con dobles y con la cadena real a demanda diminuta", ["L-integracion"])
 
 # ───────────── Eurekas ─────────────
 n("P.E0", "E", "decision", "Parámetros y aritmética de la cadena, fijados antes de medir", ["F2.03", "R.00"], "docs/preinscripciones/PARAMETROS.md y declaraciones/PARAMETROS.toml",
@@ -151,6 +154,12 @@ n("E3", "E", "eureka", "¡EUREKA 3! Tasa y latencia dentro de umbral con la tran
 # ───────────── F7 · Documentación, wiki y pitch ─────────────
 n("F7.03", "F7", "doc", "Modelo de amenazas", ["F0.02", "F0.03"], "docs/AMENAZAS.md",
   "qué ataques cubre un QRNG, cuáles NO (el canal, la implementación, el HSM) y qué certifica y qué no certifica NIST", ["A-amenazas"])
+n("P.E3b", "E", "preinscripcion", "Preinscripción E3b: la latencia de transacción con la clave de una reserva generada aparte", ["E3", "F6.03", "P.E0"], "docs/preinscripciones/E3b.md y declaraciones/E3b.toml",
+  "arquitectura productor/consumidor, perfiles R1 (arranque, informativo) y R2 (régimen, decide), λ y duración, definiciones de tasa neta, latencia y espera, criterios T1–T3 con sus umbrales de M6/M7, controles U1–U5 y T4, núcleos y candado, limitaciones e hipótesis marcada, todo fijado antes de medir; E3 NO se reabre", ["E3b"])
+n("C.E3b", "E", "medicion", "E3b · latencia y sostenibilidad con la clave de una reserva generada aparte", ["P.E3b", "F6.03", "F5.02", "F3.05", "F5.01"], "registro/corridas/C.E3b.json",
+  "tasa neta del productor, p95 de las latencias, esperas y CPU/pared de cada proceso medidos con reloj monotónico a λ tx/s durante la duración declarada, en tres semillas, con la máquina registrada y los dos procesos en sus núcleos", ["E3b", "M6", "M7"])
+n("E3b", "E", "eureka", "¡EUREKA 3b! La latencia de transacción cumple M7 con la clave de una reserva generada aparte", ["C.E3b"], "registro/veredictos.jsonl",
+  "T1 (la tasa neta del productor supera M6 y el consumo), T2 (p95 < 500 ms) y T3 (cero esperas) cumplen en las tres semillas, o el veredicto dice cuál no y por cuánto", ["E3b"])
 n("F7.06", "F7", "infra", "Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado", ["F6.02", "F3.05"], "tests/integracion/test_e2e_aer.py",
   "la cadena completa corre sin red en la CI local y el texto descifrado es igual al original", ["L-integracion"])
 n("T.TRL", "F7", "doc", "Matriz de TRL por componente, derivada de la evidencia", ["F0.02", "F3.06", "F7.06", "E1", "E2", "E3"], "docs/TRL.md y tests/arquitectura/test_trl.py",
@@ -169,6 +178,10 @@ n("R.01", "R", "revision", "Revisión adversarial propia previa al release 0.1.0
   "un agente independiente intentó romper las claims con las eurekas y las mediciones ya hechas; cada hallazgo verificado contra el texto y registrado; esta revisión es distinta de R.00", ["A-honestidad"])
 n("REL-0.1.0", "R", "release", "Release 0.1.0: pipeline QRNG reproducible en simulador (rótulo de TRL según T.TRL)", ["R.01", "F7.02", "F7.04", "F0.09", "F7.05"], "docs/releases/EXPEDIENTE_0.1.0.md, CHANGELOG.md y tests/arquitectura/test_release_sin_dudas.py",
   "expediente con alcance, arquitectura, pruebas, validación contra línea base, despliegue y límites; el título dice lo que T.TRL sostiene; un test falla si queda un ⚠️ sin verificar vigente en FUNDAMENTO o en las decisiones", ["T-empaquetado"])
+n("R.02", "R", "revision", "Revisión adversarial propia previa al release 0.2.0", ["E3b", "F6.03", "T.TRL"], "docs/informes/REVISION_ADVERSARIAL_0.2.0.md",
+  "un agente independiente intentó romper E3b y la reserva asíncrona con la medición ya hecha; cada hallazgo verificado contra el texto y registrado; es distinta de R.01", ["A-honestidad"])
+n("REL-0.2.0", "R", "release", "Release 0.2.0: la reserva asíncrona de claves y la latencia de E3b", ["REL-0.1.0", "R.02", "E3b", "T.TRL"], "docs/releases/EXPEDIENTE_0.2.0.md y CHANGELOG.md",
+  "expediente con el alcance añadido a 0.1.0, el veredicto de E3b tal como salió (CUMPLE o NO_CUMPLE), la arquitectura de la reserva, las pruebas, el rótulo de TRL que T.TRL sostiene y los límites; E3 sigue como la dejó su veredicto", ["T-empaquetado"])
 
 
 def construir() -> dict:
