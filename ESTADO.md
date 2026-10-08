@@ -8,8 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 41 |
-| pendiente | 18 |
+| hecho | 42 |
+| pendiente | 17 |
 
 ## En curso, bloqueados y pausados
 
@@ -17,7 +17,6 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- **F0.09** Remotos: GitHub privado y espejo bare
 - **F3.04** SamplerV2 sobre hardware IBM con Batch/Session (opcional)
 - **C.E1a** E1a · control: PRNG clásico pasa M1–M5 (la batería no distingue origen)
 - **C.E2** E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido
@@ -39,6 +38,7 @@ Plan v1 · 2026-10-07
 | F0.06 | hecho | `d9609a1` | RETOMA.md y CLAUDE.md del repo |
 | F0.07 | hecho | `d9609a1` | Hooks commit-msg (sin atribución) y pre-push (CI local) |
 | F0.08 | hecho | `a5bf535` | CI local: ruff, mypy, lint-imports, pytest y DAG |
+| F0.09 | hecho | `1e8c1a9` | Remotos: GitHub privado y espejo bare |
 | R.00 | hecho | `564dc94` | Revisión adversarial del diseño, antes de construir |
 | F1.01 | hecho | `0419140` | Bits inmutable y errores con nombre |
 | F1.02 | hecho | `0419140` | Extractores von Neumann, Peres y Toeplitz con LHL |
