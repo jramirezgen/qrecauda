@@ -24,6 +24,3 @@ uv sync --extra cuantico --extra mitigacion --extra validacion --extra cifrado  
 | decisiones | `docs/decisiones/` |
 | plan verificable | `plan/` + `registro/` |
 | wiki (se lee y se edita en Obsidian) | `docs/wiki/` → bóveda `wiki/QRECAUDA/` |
-
-> ⚠️ Honestidad por diseño: el muestreo de AerSimulator es pseudoaleatorio. Sólo el hardware IBM puede reclamar origen
-> cuántico, y «certificada» aquí significa «supera la batería de este repositorio», no una certificación formal.
