@@ -49,3 +49,94 @@ def test_markov_con_permanencia_08_da_h_menor_o_igual_04_y_mcv_no_la_ve():
 def test_periodica_da_cero():
     b = Bits((np.arange(N) % 8 < 4).astype(np.uint8))
     assert EstimadorNist90B().estimar(b) == pytest.approx(0.0, abs=1e-6)
+
+
+# ------------------------------------------------------------------ R.02: dónde vive el binario y la muestra
+
+
+def test_el_binario_por_defecto_ya_no_esta_en_tmp_salvo_que_solo_exista_el_heredado():
+    from qrecauda.adaptadores import min_entropia as m
+
+    if not m.BINARIO_EN_CACHE.is_file() and m.BINARIO_HEREDADO.is_file():
+        assert m.ubicar_binario() == m.BINARIO_HEREDADO  # compatibilidad con 0.1.0 y la caché antigua
+    else:
+        assert m.ubicar_binario() == m.BINARIO_EN_CACHE and not str(m.BINARIO_EN_CACHE).startswith("/tmp")
+
+
+def test_ubicar_binario_prefiere_la_cache_y_cae_al_heredado(tmp_path, monkeypatch):
+    from qrecauda.adaptadores import min_entropia as m
+
+    nuevo, viejo = tmp_path / "n" / "ea", tmp_path / "v" / "ea"
+    monkeypatch.setattr(m, "BINARIO_EN_CACHE", nuevo)
+    monkeypatch.setattr(m, "BINARIO_HEREDADO", viejo)
+    assert m.ubicar_binario() == nuevo  # ninguno existe: se indica el nuevo
+    viejo.parent.mkdir()
+    viejo.write_text("x")
+    assert m.ubicar_binario() == viejo
+    nuevo.parent.mkdir()
+    nuevo.write_text("x")
+    assert m.ubicar_binario() == nuevo
+
+
+def test_un_binario_escribible_por_otros_no_se_ejecuta(tmp_path):
+    from qrecauda.adaptadores.min_entropia import verificar_propietario
+
+    b = tmp_path / "ea"
+    b.write_text("#!/bin/sh\n")
+    b.chmod(0o755)
+    verificar_propietario(b)
+    b.chmod(0o777)
+    with pytest.raises(FuenteNoDisponible, match="escribible"):
+        verificar_propietario(b)
+
+
+def test_un_binario_de_otro_usuario_no_se_ejecuta(tmp_path, monkeypatch):
+    import os
+
+    from qrecauda.adaptadores.min_entropia import verificar_propietario
+
+    b = tmp_path / "ea"
+    b.write_text("x")
+    monkeypatch.setattr(os, "getuid", lambda: 12345)
+    if b.stat().st_uid in (12345, 0):
+        pytest.skip("el propietario coincide con el uid simulado")
+    with pytest.raises(FuenteNoDisponible, match="uid"):
+        verificar_propietario(b)
+
+
+def test_la_muestra_vive_en_un_directorio_0700_y_se_trunca_y_borra(tmp_path, monkeypatch):
+    import stat
+
+    from qrecauda.adaptadores import min_entropia as m
+
+    monkeypatch.setattr(m, "DIR_MUESTRA_RAPIDO", tmp_path)
+    try:
+        with m._muestra_temporal() as f:
+            assert f.parent.parent == tmp_path and stat.S_IMODE(f.parent.stat().st_mode) == 0o700
+            f.write_bytes(b"secreto")
+            guardado = f
+            raise RuntimeError("fallo en medio")
+    except RuntimeError:
+        pass
+    assert not guardado.exists() and not guardado.parent.exists()
+
+
+def test_el_estimador_deja_su_muestra_borrada_y_corre_el_binario_en_su_grupo(tmp_path, monkeypatch):
+    """Binario falso: comprueba la ruta de la muestra y que se ejecuta; luego ni el fichero ni el directorio existen."""
+    from qrecauda.adaptadores import min_entropia as m
+
+    monkeypatch.setattr(m, "DIR_MUESTRA_RAPIDO", tmp_path / "shm")
+    (tmp_path / "shm").mkdir()
+    falso = tmp_path / "ea_falso"
+    falso.write_text('#!/bin/sh\necho "H_original: 0.75"\n')
+    falso.chmod(0o755)
+    h = EstimadorNist90B(binario=falso).estimar(Bits(np.zeros(N, dtype=np.uint8)))
+    assert h == 0.75 and list((tmp_path / "shm").iterdir()) == []
+
+
+def test_si_se_agota_el_tiempo_se_mata_el_grupo_y_se_avisa(tmp_path):
+    falso = tmp_path / "ea_lento"
+    falso.write_text("#!/bin/sh\nsleep 30\n")
+    falso.chmod(0o755)
+    with pytest.raises(FuenteNoDisponible, match="no pudo ejecutarse"):
+        EstimadorNist90B(binario=falso, tiempo_max_s=0.5).estimar(Bits(np.zeros(N, dtype=np.uint8)))

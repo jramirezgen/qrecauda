@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -41,8 +41,8 @@ jobs:
         id: cache-90b
         uses: actions/cache@v4
         with:
-          path: /tmp/qrecauda_nist90b
-          key: nist90b-v1.1.8-${{ runner.os }}-${{ hashFiles('spikes/S04_90b/build_nist.sh') }}
+          path: ~/.cache/qrecauda/nist90b
+          key: nist90b-v2-v1.1.8-${{ runner.os }}-${{ hashFiles('spikes/S04_90b/build_nist.sh') }}
 
       - name: Compilar el estimador SP 800-90B
         if: steps.cache-90b.outputs.cache-hit != 'true'
