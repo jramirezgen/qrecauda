@@ -16,12 +16,14 @@ import numpy as np
 
 from qrecauda.aplicacion import criterios_e1 as e1
 from qrecauda.aplicacion.ejecutor_e3b import p_latencia, tasa_neta_bps
+from qrecauda.aplicacion.juez_e5 import juzgar_e5
 from qrecauda.datos import (
     Criterio,
     Declaracion,
     ExperimentoE2,
     ExperimentoE3,
     ExperimentoE3b,
+    ExperimentoE5,
     InformeCorrida,
     ManifiestoDeCorrida,
     MedidaDeFuente,
@@ -35,7 +37,7 @@ from qrecauda.puertos import Almacen, Ejecutor, Historial, LibroDeVeredictos
 CONTROLES_E2 = ("C1", "C2", "C3")  # C4 (puerta ZNE/PEC) y C5 (contraste) se reportan, no invalidan (P.E2)
 
 
-Artefacto = InformeCorrida | ExperimentoE2 | ExperimentoE3 | ExperimentoE3b | MedidaDeFuente
+Artefacto = InformeCorrida | ExperimentoE2 | ExperimentoE3 | ExperimentoE3b | ExperimentoE5 | MedidaDeFuente
 
 
 def _corridas_hijas(decl: Declaracion) -> tuple[str, ...]:
@@ -86,6 +88,7 @@ class CorrerYJuzgar:
                 ("e2", med.e2),
                 ("e3", med.e3),
                 ("e3b", med.e3b),
+                ("e5", med.e5),
                 ("fuente", med.fuentes),
             )
             for tipo, lote in lotes:
@@ -128,6 +131,10 @@ class CorrerYJuzgar:
                 raise CorridaInvalida(f"falta el control {k}: sin él no hay veredicto")
             if not m.controles[k]:
                 raise CorridaInvalida(f"el control {k} falla: corrida inválida, no es un veredicto (incidencia)")
+        if decl.eureka == "E5":
+            v = juzgar_e5(decl, m, self._leer_e5(m))
+            self._libro.anadir(v.a_mapa())
+            return v
         e2, e3, e3b, informes, fuentes = self._leer(m)
         if decl.eureka == "E1":
             v = _juzgar_e1(decl, m, informes, fuentes)
@@ -141,6 +148,17 @@ class CorrerYJuzgar:
             v = _juzgar_informes(decl, m, informes)
         self._libro.anadir(v.a_mapa())
         return v
+
+    def _leer_e5(self, m: ManifiestoDeCorrida) -> list[ExperimentoE5]:
+        out: list[ExperimentoE5] = []
+        for nombre, tipo, sha in m.artefactos:
+            crudo = self._almacen.leer(nombre)
+            if hashlib.sha256(serializar(crudo).encode()).hexdigest() != sha:
+                raise CorridaInvalida(f"{nombre}: el sha256 no coincide con el del manifiesto: el artefacto cambió")
+            if tipo != "e5":
+                raise CorridaInvalida(f"{nombre}: E5 sólo admite artefactos «e5», llegó {tipo!r}")
+            out.append(ExperimentoE5.desde_mapa(crudo))
+        return out
 
     def _leer(
         self, m: ManifiestoDeCorrida

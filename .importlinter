@@ -31,6 +31,7 @@ modules =
     qrecauda.adaptadores.almacen_json
     qrecauda.adaptadores.zne_pec
     qrecauda.adaptadores.min_entropia
+    qrecauda.adaptadores.defectos
     qrecauda.adaptadores.declaracion_toml
     qrecauda.adaptadores.git
     qrecauda.adaptadores.libro_jsonl

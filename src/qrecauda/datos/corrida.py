@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from qrecauda.datos.esquema import leer_esquema
-from qrecauda.datos.informe import ExperimentoE2, ExperimentoE3, ExperimentoE3b, InformeCorrida, MedidaDeFuente
+from qrecauda.datos.informe import ExperimentoE2, ExperimentoE3, ExperimentoE3b, ExperimentoE5, InformeCorrida, MedidaDeFuente
 from qrecauda.dominio.errores import EntradaInvalida
 
 
@@ -20,6 +20,7 @@ class Medicion:
     fuentes: tuple[MedidaDeFuente, ...] = ()
     controles: Mapping[str, bool] = field(default_factory=dict)
     e3b: tuple[ExperimentoE3b, ...] = ()
+    e5: tuple[ExperimentoE5, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,7 +32,7 @@ class ManifiestoDeCorrida:
     preinscripcion_sha: str
     commit: str
     entorno: Mapping[str, str]
-    artefactos: tuple[tuple[str, str, str], ...]  # (nombre en el Almacén, «informe»|«e2»|«e3»|«e3b»|«fuente», sha256)
+    artefactos: tuple[tuple[str, str, str], ...]  # (nombre en el Almacén, «informe»|«e2»|«e3»|«e3b»|«e5»|«fuente», sha256)
     controles: Mapping[str, bool]
     esquema: int = 1
 

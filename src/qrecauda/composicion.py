@@ -28,6 +28,7 @@ from qrecauda.aplicacion.ejecutor_e1 import EjecutorE1
 from qrecauda.aplicacion.ejecutor_e2 import EjecutorE2
 from qrecauda.aplicacion.ejecutor_e3 import EjecutorE3
 from qrecauda.aplicacion.ejecutor_e3b import EjecutorE3b
+from qrecauda.aplicacion.ejecutor_e5 import EjecutorE5
 from qrecauda.aplicacion.juez import CorrerYJuzgar
 from qrecauda.aplicacion.pipeline import ParametrosPipeline, Resultado
 from qrecauda.aplicacion.pipeline import ejecutar as _ejecutar_pipeline
@@ -489,6 +490,60 @@ def ejecutor_e1_de(
     return _EnMaquina(ejecutor, candado_de_maquina(raiz), previo, None)
 
 
+# ------------------------------------------------------------------ C.E5: el control negativo de la cadena completa
+
+
+def _defecto_de(decl: Declaracion, nombre: str, semilla: int) -> Callable[[Bits], Bits]:
+    """El defecto declarado en [defectos.<nombre>], con la semilla del defecto = semilla + desplazamiento (independiente de la de Aer)."""
+    from qrecauda.adaptadores.defectos import patron, persistencia
+
+    d = decl.tabla("defectos").get(nombre)
+    if not isinstance(d, dict):
+        raise EntradaInvalida(f"E5: la fuente {nombre!r} no tiene [defectos.{nombre}]")
+    s = semilla + int(decl.numero("defectos", "desplazamiento_semilla"))
+    if d["tipo"] == "persistencia":
+        return persistencia(float(d["peso"]), s)
+    if d["tipo"] == "patron":
+        return patron(float(d["peso"]), str(d["patron"]), s)
+    raise EntradaInvalida(f"E5: tipo de defecto desconocido {d['tipo']!r} en [defectos.{nombre}]")
+
+
+def _fabrica_e5(laboratorio: _LaboratorioAer) -> Callable[[Declaracion, str, int], tuple[FuenteDeBits, Mitigador]]:
+    def fabrica(decl: Declaracion, nombre: str, semilla: int) -> tuple[FuenteDeBits, Mitigador]:
+        nivel = str(decl.tabla("ruido")["nivel"])
+        par = decl.tabla("ruido_lectura").get(nivel)
+        if not isinstance(par, list) or len(par) != 2:
+            raise EntradaInvalida(f"el nivel {nivel!r} de [ruido] no está en [ruido_lectura] de PARAMETROS.toml")
+        ruido = RuidoDeLectura(nivel, (float(par[0]), float(par[1])))
+        fuente = laboratorio.fuente(ruido, semilla)
+        mitigador = laboratorio.twirling(ruido, semilla, int(decl.numero("ruido", "twirling_bloque")))
+        if nombre == "buena":
+            return fuente, mitigador
+        from qrecauda.adaptadores.defectos import MitigadorConDefecto
+
+        return fuente, MitigadorConDefecto(mitigador, _defecto_de(decl, nombre, semilla))
+
+    return fabrica
+
+
+def ejecutor_e5_de(raiz: Path, bitacora: Bitacora | None = None, estimador_90b: EstimadorDeEntropia | None = None) -> Ejecutor:
+    """C.E5: cada fuente (buena y tres con defecto) por los tres dimensionados, la cadena REAL de punta a punta, bajo el candado.
+
+    `estimador_90b` sólo se pasa en las pruebas (el 90B real exige ≥ 1 M de bits)."""
+    previo = (lambda decl: None) if estimador_90b is not None else _comprobar_e1
+    if estimador_90b is None:
+        try:
+            from qrecauda.adaptadores.min_entropia import EstimadorNist90B
+        except ImportError as e:  # pragma: no cover
+            raise FuenteNoDisponible(f"E5 necesita el 90B: {e}") from e
+        estimador_90b = EstimadorNist90B()
+    ejecutor = EjecutorE5(
+        _fabrica_e5(_LaboratorioAer(max_parallel_threads=1)), validador_de(Configuracion(validador="nist")),
+        estimador_90b, RelojMonotonico(), SondaLocal(), bitacora,
+    )  # fmt: skip
+    return _EnMaquina(ejecutor, candado_de_maquina(raiz), previo, None)
+
+
 def ejecutor_de(raiz: Path, decl: Declaracion) -> Ejecutor:
     """E1 → C.E1 (cuatro); E2 → C.E2 sobre Aer; E3 → C.E3 (cadena completa); E3b → C.E3b (reserva aparte); el resto, el pipeline."""
     if decl.eureka == "E1":
@@ -499,6 +554,8 @@ def ejecutor_de(raiz: Path, decl: Declaracion) -> Ejecutor:
         return ejecutor_e3_de(raiz)
     if decl.eureka == "E3b":
         return ejecutor_e3b_de(raiz)
+    if decl.eureka == "E5":
+        return ejecutor_e5_de(raiz)
     return _EjecutorDeInformes(HistorialGit(raiz))
 
 

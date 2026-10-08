@@ -267,3 +267,38 @@ class MedidaDeFuente:
                        _medidas_desde_lista(d["medidas"]), float(d["mcv"]), float(d["h_90b"]), v)  # type: ignore[arg-type]  # fmt: skip
         except (KeyError, ValueError, TypeError) as exc:
             raise EntradaInvalida(f"medida de fuente malformada: {exc}") from exc
+
+
+@dataclass(frozen=True, slots=True)
+class ExperimentoE5:
+    """E5, una semilla y una fuente: la cadena completa con cada dimensionado sobre la MISMA muestra (control negativo del pipeline).
+
+    `resultados` lleva un mapa JSON-puro por dimensionado (`dimensionado`, `estado` «entregada»|«rechazada», `motivo`, `sha256_muestra`,
+    `bits_pool`, `h_mcv_pool`, `h_90b_pool`, `h_90b_fuente`, `h_efectiva`, `bits_clave`, `medidas`, `segundos`, `tasa_bps`): el juez
+    recalcula de ahí el techo, las fracciones y los controles, no de un resumen.
+    """
+
+    corrida: str
+    semilla: int
+    fuente: str  # «buena» | «markov» | «markov_fuerte» | «periodica»
+    bits_crudos: int
+    h_90b_fuente: float  # 90B sobre el prefijo de la muestra mitigada que entra a Peres (control D5)
+    parametros: Mapping[str, object]  # lo declarado y aplicado: tipo, peso, patrón, p_fresca_max, prefijo del 90B
+    resultados: tuple[Mapping[str, object], ...]
+    esquema: int = 1
+
+    def a_mapa(self) -> dict[str, object]:
+        return {
+            "esquema": self.esquema, "corrida": self.corrida, "semilla": self.semilla, "fuente": self.fuente,
+            "bits_crudos": self.bits_crudos, "h_90b_fuente": self.h_90b_fuente, "parametros": dict(self.parametros),
+            "resultados": [dict(r) for r in self.resultados],
+        }  # fmt: skip
+
+    @classmethod
+    def desde_mapa(cls, d: Mapping[str, object]) -> ExperimentoE5:
+        v = leer_esquema(d, 1, que="experimento E5")
+        try:
+            return cls(str(d["corrida"]), int(d["semilla"]), str(d["fuente"]), int(d["bits_crudos"]),  # type: ignore[call-overload]
+                       float(d["h_90b_fuente"]), dict(d["parametros"]), tuple(dict(r) for r in d["resultados"]), v)  # type: ignore[arg-type,call-overload,attr-defined]  # fmt: skip
+        except (KeyError, ValueError, TypeError) as exc:
+            raise EntradaInvalida(f"experimento E5 malformado: {exc}") from exc
