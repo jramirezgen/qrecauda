@@ -55,25 +55,25 @@ Fuente de bits -> Mitigación -> Peres -> Toeplitz -> Validación -> Clave -> AE
 
 # Lámina 5 · Validación
 
-**Cinco experimentos preinscritos, un NO CUMPLE publicado.**
+**Cinco juzgados, un NO CUMPLE publicado.** E4, preinscrito, bloqueado: sin credencial.
 
 | experimento | veredicto | qué dice |
 |-----|-----|-------------|
 | E1, calidad | CUMPLE, condicionado | la clave mide al menos 956,6{{corrida:C.E1c.bits_clave:min/1000}} mil bits; condicionado a dos enmiendas |
 | E2, sesgo | CUMPLE | el twirling baja el sesgo de 0,030{{corrida:C.E2[nivel=medio,tecnica=ninguna].sesgo_crudo:max}} a casi cero |
 | E3, latencia | **NO CUMPLE** | M6 cumple (de 180{{corrida:C.E3.m6_bits_por_s:min/1000}} a 195{{corrida:C.E3.m6_bits_por_s:max/1000}} kbit/s); M7 falla (de 5,5{{corrida:C.E3.m7_p95_ms:min/1000}} a 9,4{{corrida:C.E3.m7_p95_ms:max/1000}} s frente a 500{{ref:docs/preinscripciones/E3.md}} ms) |
-| E3b, reserva de claves | CUMPLE | otro diseño: M7 de 0,17{{corrida:C.E3b.p95_ms:min}} a 0,18{{corrida:C.E3b.p95_ms:max}} ms; productor de 177{{corrida:C.E3b.tasa_neta_bps:min/1000}} a 199{{corrida:C.E3b.tasa_neta_bps:max/1000}} kbit/s; sin esperas |
-| E5, control negativo | CUMPLE | con `mcv` la clave de una fuente dependiente pasa y sobra (hasta 381{{corrida:C.E5[fuente=markov_fuerte].resultados.0.bits_clave:max/1000}} mil bits); el conservador la acorta (56{{corrida:C.E5[fuente=markov_fuerte].resultados.2.bits_clave:max/1000}} mil) |
+| E3b, reserva de claves | CUMPLE | no comparable con E3: M7 de 0,17{{corrida:C.E3b.p95_ms:min}} a 0,18{{corrida:C.E3b.p95_ms:max}} ms (reserva cebada); capacidad 177{{corrida:C.E3b.tasa_neta_bps:min/1000}} a 199{{corrida:C.E3b.tasa_neta_bps:max/1000}}, entregado 47,8{{corrida:C.E3b.reporte.tasa_entregada_ventana_bps:min/1000}} kbit/s |
+| E5, control negativo | CUMPLE (casi por construcción) | `mcv` deja pasar hasta 381{{corrida:C.E5[fuente=markov_fuerte].resultados.0.bits_clave:max/1000}} mil bits; el conservador, 56{{corrida:C.E5[fuente=markov_fuerte].resultados.2.bits_clave:max/1000}} mil. Fuentes detectables por el 90B |
 
 - Validación del pipeline: sin hardware IBM no se afirma origen cuántico.
 
 # Lámina 6 · Caso de uso
 
-**Una transacción, una clave que nadie puede recalcular.**
+**Una transacción, una clave. Con una fuente real no se podría recalcular; hoy, en simulador, sí (la semilla es pública).**
 
 - Un pasaje en el Metro o un cobro de peaje es una transacción pequeña que se firma y se cifra.
 - La clave AES-256-GCM sale de la cadena medida; el *nonce* no se repite.
-- El cuello de botella medido era la latencia (M7). El rediseño genera las claves aparte, en un proceso productor, y la transacción consume una ya lista (experimento E3b, versión 0.2.0 en preparación): p95 de 0,17{{corrida:C.E3b.p95_ms:min}} a 0,18{{corrida:C.E3b.p95_ms:max}} ms en simulador, y el arranque, de 6,6{{corrida:C.E3b.arranque_ms:min/1000}} a 6,7{{corrida:C.E3b.arranque_ms:max/1000}} s, se informa aparte.
+- El cuello de botella medido era la latencia (M7). El rediseño genera las claves aparte, en un proceso productor, y la transacción consume una ya lista (experimento E3b, versión 0.2.0 en preparación): p95 de 0,17{{corrida:C.E3b.p95_ms:min}} a 0,18{{corrida:C.E3b.p95_ms:max}} ms en simulador, con la reserva cebada; una transacción durante el arranque espera unos 6,6{{corrida:C.E3b.arranque_ms:min/1000}} s (el arranque llega a 6,7{{corrida:C.E3b.arranque_ms:max/1000}} s), y eso incumpliría M7. No es comparable con E3, que mide generar y cifrar.
 - Las claves de E3b usan el dimensionado `mcv` de 0.1.0. Sin verificar (no medido) el efecto del dimensionado conservador de E5 sobre la latencia.
 
 # Lámina 7 · Impacto

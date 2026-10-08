@@ -29,7 +29,7 @@ Un pipeline reproducible que convierte los bits de un circuito de un solo gate (
 
 - Cadena de procesamiento: mitigación de lectura, extractor de Peres, hash de Toeplitz y validación con tres pruebas de NIST SP 800-22 (monobit, rachas y frecuencia por bloques, de las quince de la batería). La estimación SP 800-90B es informativa: no valida la clave.
 - Siete métricas de aceptación (M1 a M7) con umbral fijado antes de correr.
-- Cinco experimentos preinscritos y juzgados: E1 (calidad de la clave), E2 (sesgo de lectura), E3 (tasa y latencia), E3b (latencia con la clave de una reserva generada aparte) y E5 (control negativo del pipeline completo).
+- Cinco experimentos juzgados, cada uno con preinscripción anterior a la corrida: E1 (calidad de la clave), E2 (sesgo de lectura), E3 (tasa y latencia), E3b (latencia con la clave de una reserva generada aparte) y E5 (control negativo del pipeline completo). E4 (hardware IBM), preinscrito, está bloqueado por falta de credencial y no tiene veredicto.
 - Hardware IBM opcional. Ni la demostración ni el release 0.1.0 dependen de él. El camino a IBM está listo y ensayado contra un backend falso (`qrecauda hardware`, `docs/HARDWARE.md`, preinscripción P.E4), pero la corrida real está bloqueada por falta de credencial: no hay ningún resultado en hardware.
 
 # Lámina 3 · Arquitectura
@@ -67,6 +67,7 @@ Veredicto de E5: CUMPLE. Es el control negativo del pipeline completo: tres fuen
 - El dimensionado conservador (mínimo de MCV y 90B más la contabilidad de la entropía de la fuente) las acorta. La fuente markov_fuerte entrega de 380{{corrida:C.E5[fuente=markov_fuerte].resultados.0.bits_clave:min/1000}} a 381{{corrida:C.E5[fuente=markov_fuerte].resultados.0.bits_clave:max/1000}} mil bits con `mcv` y de 55{{corrida:C.E5[fuente=markov_fuerte].resultados.2.bits_clave:min/1000}} a 56{{corrida:C.E5[fuente=markov_fuerte].resultados.2.bits_clave:max/1000}} mil con el conservador.
 - Usar `min(MCV, 90B)` por sí solo no alcanza en markov_fuerte: la clave sigue por encima de lo que la fuente sostiene (criterio HOY del veredicto de E5). Por eso el conservador suma la contabilidad de la fuente.
 - La fuente buena no paga demasiado: conserva de 856{{corrida:C.E5[fuente=buena].resultados.2.bits_clave:min/1000}} a 883{{corrida:C.E5[fuente=buena].resultados.2.bits_clave:max/1000}} mil bits de clave, y la cadena entera sostiene de 133{{corrida:C.E5[fuente=buena].resultados.2.tasa_bps:min/1000}} a 158{{corrida:C.E5[fuente=buena].resultados.2.tasa_bps:max/1000}} kbit/s.
+- E5 es casi un control por construcción. Las fuentes defectuosas se eligieron detectables por el 90B (control D5). El lado «rechazada» nunca se ejerce: las claves pasan M1 a M5, y el pipeline acorta la clave, no la rechaza. Los umbrales K2 y G2 se fijaron tras un diagnóstico con el mismo generador de defectos.
 - El dimensionado conservador es opt-in: por defecto el pipeline sigue con `mcv`. No se re-midieron E3 ni E3b con él. ⚠️ Sin verificar su efecto sobre la latencia.
 
 # Lámina 6 · E2: sesgo de lectura
@@ -88,9 +89,9 @@ Veredicto de E3 (0.1.0): NO CUMPLE, por M7. Es un resultado, no una avería, y s
 
 Veredicto de E3b: CUMPLE en las 3{{corrida:C.E3b.semilla:n}} semillas. Un proceso productor genera las claves en paralelo y la transacción sólo consume la de la reserva.
 
-- M7 (latencia, p95): entre 0,17{{corrida:C.E3b.p95_ms:min}} y 0,18{{corrida:C.E3b.p95_ms:max}} ms sobre 12 000{{corrida:C.E3b.transacciones:min}} transacciones por semilla, frente a un umbral de 500{{ref:docs/preinscripciones/E3b.md}} ms.
-- Sostenibilidad: el productor sostiene entre 177{{corrida:C.E3b.tasa_neta_bps:min/1000}} y 199{{corrida:C.E3b.tasa_neta_bps:max/1000}} kbit/s, frente a un umbral de 10 000{{ref:docs/preinscripciones/E3b.md}} bit/s y a un consumo declarado de 35,2{{ref:docs/preinscripciones/E3b.md}} kbit/s, con una demanda de 100{{ref:docs/preinscripciones/E3b.md}} transacciones por segundo declarada por el equipo.
-- Sin esperas: 0{{corrida:C.E3b.esperas:max}} esperas por reserva vacía en las tres semillas, y la reserva no se agotó.
+- M7 (latencia, p95), con la reserva cebada: entre 0,17{{corrida:C.E3b.p95_ms:min}} y 0,18{{corrida:C.E3b.p95_ms:max}} ms sobre 12 000{{corrida:C.E3b.transacciones:min}} transacciones por semilla, frente a un umbral de 500{{ref:docs/preinscripciones/E3b.md}} ms. No es comparable con el p95 de E3: E3 mide generar y cifrar la clave dentro de la transacción; E3b mide sólo cifrar con una clave ya generada. Una transacción que llegue durante el arranque espera unos 6,6{{corrida:C.E3b.arranque_ms:min/1000}} s, y eso incumpliría M7.
+- Sostenibilidad: capacidad del productor de 177{{corrida:C.E3b.tasa_neta_bps:min/1000}} a 199{{corrida:C.E3b.tasa_neta_bps:max/1000}} kbit/s; lo entregado en régimen es 47,8{{corrida:C.E3b.reporte.tasa_entregada_ventana_bps:min/1000}} kbit/s. Se compara con un umbral de 10 000{{ref:docs/preinscripciones/E3b.md}} bit/s y con un consumo declarado de 35,2{{ref:docs/preinscripciones/E3b.md}} kbit/s, con una demanda de 100{{ref:docs/preinscripciones/E3b.md}} transacciones por segundo declarada por el equipo.
+- T2 (M7) era casi trivial por la baja utilización del consumidor; el riesgo del experimento estaba en T1 y T3. Sin esperas: 0{{corrida:C.E3b.esperas:max}} esperas por reserva vacía en las tres semillas, y la reserva no se agotó.
 - El costo se trasladó al arranque, que se informa aparte y no decide: de 6,6{{corrida:C.E3b.arranque_ms:min/1000}} a 6,7{{corrida:C.E3b.arranque_ms:max/1000}} s hasta tener la primera clave en la reserva.
 - Limitación: las claves de E3b se generan con el dimensionado `mcv` de 0.1.0, el que E5 mostró que sobrestima con fuentes dependientes. No se re-midió E3b con el dimensionado conservador. ⚠️ Sin verificar el efecto de ese cambio sobre la latencia. La medición es en simulador, sin cola ni red de IBM.
 
@@ -128,5 +129,5 @@ Qué pedimos:
 Qué se lleva el jurado:
 
 - Un pipeline que corre de punta a punta en una PC, con el repositorio, el plan y los registros abiertos.
-- Cuatro experimentos que cumplen y uno que no. E1 y E2 con poder limitado para fallar (E1 condicionado a dos enmiendas); E3b y E5 con criterios que sí podían fallar. E3 no cumple y las razones están medidas.
+- Cuatro experimentos que cumplen y uno que no. E1 y E2 con poder limitado para fallar (E1 condicionado a dos enmiendas); E3b con T2 casi trivial por la baja utilización (el riesgo estaba en T1 y T3) y E5 casi por construcción (fuentes detectables por el 90B, lado «rechazada» no ejercido). E3 no cumple y las razones están medidas.
 - Una regla de trabajo: lo que no tiene corrida detrás no se afirma.

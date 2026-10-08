@@ -60,7 +60,7 @@ def test_el_trl_del_sistema_sigue_en_3_y_la_latencia_con_reserva_no_lo_sube():
     t = _texto("TRL")
     assert "**TRL del sistema: 3**" in t
     fila = next(linea for linea in t.splitlines() if linea.startswith("| Latencia de transacción con la clave de una reserva"))
-    assert "`C.E3b`" in fila and "| 4 |" in fila
+    assert "`C.E3b`" in fila and "| 3 |" in fila  # R.02: 4 sólo con la reserva cebada, la fila queda en 3
     assert "No sube al sistema" in fila
 
 
