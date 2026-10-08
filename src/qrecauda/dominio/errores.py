@@ -35,3 +35,7 @@ class CandadoOcupado(ErrorQRecauda):
 
 class CorridaInvalida(ErrorQRecauda):
     """La corrida no es juzgable (falta o falla un control, la preinscripción no la precede o cambió): no hay veredicto, hay incidencia."""
+
+
+class PresupuestoQpuExcedido(ErrorQRecauda):
+    """El uso de QPU estimado (o ya consumido) pasa el tope pedido o lo que queda de la cuota: se aborta ANTES de enviar."""

@@ -227,7 +227,7 @@ def test_session_si_se_pide_y_se_cierra_aunque_falle(tmp_path: Any) -> None:
     assert modo.tipo == "session" and modo.cerrado
 
 
-def test_backend_con_nombre_o_el_menos_ocupado(tmp_path: Any) -> None:
+def test_backend_con_nombre_o_el_menos_ocupado_con_al_menos_8_qubits(tmp_path: Any) -> None:
     _Sampler.cadenas = ["0"] * 2
     fuente, srv = _fuente(tmp_path, backend="ibm_torino")
     fuente.generar(1, 2)
@@ -236,7 +236,7 @@ def test_backend_con_nombre_o_el_menos_ocupado(tmp_path: Any) -> None:
     fuente2, srv2 = _fuente(tmp_path)
     fuente2.generar(3, 2)
     ((nombre, kw),) = srv2.llamadas
-    assert nombre == "least_busy" and kw["min_num_qubits"] == 3 and kw["simulator"] is False and kw["operational"] is True
+    assert nombre == "least_busy" and kw["min_num_qubits"] == 8 and kw["simulator"] is False and kw["operational"] is True
 
 
 def test_conecta_una_sola_vez(tmp_path: Any) -> None:

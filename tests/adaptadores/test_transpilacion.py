@@ -52,3 +52,60 @@ def test_transpilado_sigue_siendo_hadamard_al_muestrear() -> None:
 def test_circuito_invalido() -> None:
     with pytest.raises(EntradaInvalida):
         a_isa(QuantumCircuit(0))
+
+
+# ------------------------------------------------------------------ F3.07: cableado opcional del servicio de IA
+
+
+class _PmDoble:
+    """Doble de un pass manager de IA: no toca el circuito pero deja constancia de que se usó."""
+
+    def __init__(self) -> None:
+        self.llamado = False
+
+    def run(self, circuito: QuantumCircuit) -> QuantumCircuit:
+        self.llamado = True
+        return circuito
+
+
+def test_sin_pedir_ia_la_via_es_local_y_no_avisa(recwarn: pytest.WarningsRecorder) -> None:
+    t = a_isa(_hadamard(3))
+    assert t.via == "local" and not [w for w in recwarn if "IA" in str(w.message)]
+
+
+def test_con_el_flag_y_una_fabrica_la_via_es_ia() -> None:
+    pm = _PmDoble()
+    pedidos: list[int] = []
+
+    def fabrica(backend: object, nivel: int) -> _PmDoble:
+        pedidos.append(nivel)
+        return pm
+
+    t = a_isa(_hadamard(3), AerSimulator(), ia=True, fabrica_ia=fabrica, nivel_optimizacion=2)
+    assert t.via == "ia" and pm.llamado and pedidos == [2]
+    assert "IA" in t.motivo
+
+
+def test_con_el_flag_y_sin_el_paquete_degrada_con_aviso_nunca_en_silencio(caplog: pytest.LogCaptureFixture) -> None:
+    with (
+        caplog.at_level(logging.WARNING, logger="qrecauda.adaptadores.aer.transpilacion"),
+        pytest.warns(UserWarning, match="qiskit_ibm_transpiler"),
+    ):
+        t = a_isa(_hadamard(3), AerSimulator(), ia=True)
+    assert t.via == "local"
+    assert "degrad" in t.motivo and "qiskit_ibm_transpiler" in t.motivo
+    assert any(r.levelno == logging.WARNING for r in caplog.records)
+
+
+def test_si_el_servicio_de_ia_falla_degrada_con_aviso() -> None:
+    def fabrica(backend: object, nivel: int) -> _PmDoble:
+        raise OSError("sin red")
+
+    with pytest.warns(UserWarning, match="sin red"):
+        t = a_isa(_hadamard(3), AerSimulator(), ia=True, fabrica_ia=fabrica)
+    assert t.via == "local" and "degrad" in t.motivo
+
+
+def test_el_transpilado_informa_profundidad_y_puertas_de_dos_qubits() -> None:
+    t = a_isa(_hadamard(3), AerSimulator())
+    assert t.profundidad == t.circuito.depth() and t.puertas_dos_qubits == 0

@@ -12,6 +12,7 @@ from qrecauda.dominio.errores import (
     EsquemaFuturo,
     FuenteNoDisponible,
     NonceRepetido,
+    PresupuestoQpuExcedido,
 )
 
 OK = 0
@@ -25,6 +26,7 @@ CODIGOS: dict[type[ErrorQRecauda], int] = {
     NonceRepetido: 7,
     CandadoOcupado: 8,
     CorridaInvalida: 9,
+    PresupuestoQpuExcedido: 11,
     ErrorQRecauda: 10,
 }
 
