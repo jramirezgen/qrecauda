@@ -17,7 +17,7 @@ from qiskit import QuantumCircuit
 from qrecauda.adaptadores.aer.transpilacion import a_isa
 from qrecauda.adaptadores.ibm_runtime import Fabricas, FuenteIbm, _con_mascara, _qubits_fisicos
 from qrecauda.datos.hardware import RegistroIbm
-from qrecauda.dominio.errores import EntradaInvalida, FuenteNoDisponible, PresupuestoQpuExcedido
+from qrecauda.dominio.errores import EntradaInvalida, EsquemaFuturo, FuenteNoDisponible, PresupuestoQpuExcedido
 from qrecauda.dominio.muestra import Origen
 from qrecauda.transversal.seguridad import Secreto
 
@@ -444,3 +444,40 @@ def test_un_backend_no_operativo_se_rechaza(tmp_path: Path) -> None:
 
 
 _ = (Secreto, Callable)  # los tipos que usan algunas pruebas por anotación
+
+
+# ------------------------------------------------------------------ gemelo de E4, presupuesto de varios trabajos, esquema
+
+
+def test_el_gemelo_es_aer_con_la_misma_forma_que_el_contraste(ensayo: tuple[FuenteIbm, Any, Any]) -> None:
+    f, cruda, twirl = ensayo
+    g_cruda, g_twirl = f.generar_gemelo(8, 2000)
+    assert (g_cruda.qubits, g_cruda.shots, g_twirl.shots) == (cruda.qubits, cruda.shots, twirl.shots)
+    for m in (g_cruda, g_twirl):
+        assert m.origen is Origen.SIMULADOR_AER and not m.reclama_origen_cuantico and m.procedencia.job_id == ""
+        assert "gemelo" in m.procedencia.backend
+
+
+def test_el_gemelo_sin_mascaras_aborta() -> None:
+    f = FuenteIbm.para_ensayo(transpilar=_transpilar_real, mascaras=0, semilla=1, max_segundos_qpu=5.0)
+    with pytest.raises(EntradaInvalida):
+        f.generar_gemelo(8, 2000)
+
+
+def test_exigir_presupuesto_de_varios_trabajos_aborta_si_no_caben_y_no_envia_nada() -> None:
+    f = FuenteIbm.para_ensayo(transpilar=_transpilar_real, mascaras=3, semilla=1, max_segundos_qpu=5.0)
+    f.exigir_presupuesto_de(8, 2000, 1)
+    with pytest.raises(PresupuestoQpuExcedido):
+        f.exigir_presupuesto_de(8, 2000, 10_000)
+    with pytest.raises(EntradaInvalida):
+        f.exigir_presupuesto_de(8, 2000, 0)
+    assert f.ultimo_registro is None
+
+
+def test_un_registro_de_un_esquema_futuro_se_rechaza(ensayo: tuple[FuenteIbm, Any, Any]) -> None:
+    f, _, _ = ensayo
+    assert f.ultimo_registro is not None
+    d = dict(f.ultimo_registro.a_mapa())
+    d["esquema"] = 99
+    with pytest.raises(EsquemaFuturo):
+        RegistroIbm.desde_mapa(d)

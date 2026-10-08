@@ -8,7 +8,7 @@ Por semilla produce las cuatro corridas que el plan separa (C.E1a…C.E1d), toda
 - C.E1d  fuentes sintéticas defectuosas e ideal, de `bits` bits, con M1/M3/M4/M5, la cota MCV y el 90B: control positivo P1.
 
 Convenciones que la preinscripción no fija con ese detalle (⚠️ declaradas, no decididas en silencio):
-- M1 se mide en los tres puntos con `dominio.entropia.sesgo`, también si el validador (NIST) sólo trae M3, M4, M5: `_ConM1`.
+- M1 se mide en los tres puntos con `dominio.entropia.sesgo`, también si el validador (NIST) sólo trae M3, M4, M5: `ConM1`.
 - El 90B va sobre los primeros `[validacion].muestras_90b` bits de la cruda y de la mitigada (informativo; sólo decide en C.E1d).
   Una muestra con la MISMA huella sha256 reutiliza el 90B ya calculado (cuesta minutos y es función de los bits): la cruda de
   C.E1c es la de C.E1b si el twirling no la toca, y eso se registra (`sha256_muestra_cruda`), no se supone.
@@ -18,55 +18,23 @@ Convenciones que la preinscripción no fija con ese detalle (⚠️ declaradas, 
 
 from __future__ import annotations
 
-import hashlib
 from collections.abc import Callable, Mapping
 
 from qrecauda.aplicacion import criterios_e1 as c
+from qrecauda.aplicacion.con_m1 import ConM1
 from qrecauda.aplicacion.pipeline import ParametrosPipeline, Resultado
 from qrecauda.aplicacion.pipeline import ejecutar as ejecutar_pipeline
+from qrecauda.aplicacion.registradora import Registradora, huella
 from qrecauda.datos import Declaracion, InformeCorrida, Medicion, MedidaDeFuente, RuidoDeLectura
 from qrecauda.dominio.bits import Bits
-from qrecauda.dominio.entropia import min_entropia_mcv, sesgo
+from qrecauda.dominio.entropia import min_entropia_mcv
 from qrecauda.dominio.errores import EntradaInvalida
-from qrecauda.dominio.metricas import Medida, medir
 from qrecauda.dominio.muestra import Muestra
 from qrecauda.puertos import Bitacora, EstimadorDeEntropia, FuenteDeBits, Historial, LaboratorioDeLectura, Reloj, Validador
 
 # (bits, secuencias, longitud, alfa) → por prueba {aprobados, total, proporcion, minimo, cumple}; lo da el adaptador NIST
 Proporciones = Callable[[Bits, int, int, float], Mapping[str, Mapping[str, object]]]
 FuentesDeControl = Callable[[Declaracion, int], Mapping[str, FuenteDeBits]]
-
-
-class _ConM1:
-    """Añade M1 = |p̂(1) − ½| al validador si éste no lo trae: la preinscripción mide M1 en cruda, mitigada y clave (P.E0, regla 4)."""
-
-    def __init__(self, interior: Validador) -> None:
-        self._interior = interior
-
-    def evaluar(self, bits: Bits) -> tuple[Medida, ...]:
-        ms = self._interior.evaluar(bits)
-        return ms if any(m.metrica is c.M1 for m in ms) else (medir(c.M1, sesgo(bits)), *ms)
-
-
-class _Registradora:
-    """Envuelve una fuente y recuerda la última muestra CRUDA: el pipeline sólo devuelve la que entró al extractor (la mitigada)."""
-
-    def __init__(self, interior: FuenteDeBits) -> None:
-        self._interior = interior
-        self.ultima: Muestra | None = None
-
-    def generar(self, qubits: int, shots: int) -> Muestra:
-        self.ultima = self._interior.generar(qubits, shots)
-        return self.ultima
-
-    @property
-    def cruda(self) -> Muestra:
-        assert self.ultima is not None  # el pipeline llamó a la fuente
-        return self.ultima
-
-
-def _huella(bits: Bits) -> str:
-    return hashlib.sha256(bits.datos.tobytes()).hexdigest()
 
 
 class EjecutorE1:
@@ -86,7 +54,7 @@ class EjecutorE1:
         bitacora: Bitacora | None = None,
     ) -> None:
         self._lab, self._prng, self._control = laboratorio, prng, fuentes_de_control
-        self._val, self._est90, self._reloj = _ConM1(validador), estimador_90b, reloj
+        self._val, self._est90, self._reloj = ConM1(validador), estimador_90b, reloj
         self._historial, self._entorno, self._prop, self._bit = historial, entorno, proporciones, bitacora
         self._validador_nombre = type(validador).__name__
 
@@ -115,27 +83,27 @@ class EjecutorE1:
 
         def h90(bits: Bits) -> float:
             recorte = bits[:n90]
-            huella = _huella(recorte)
-            if huella not in cache:
-                cache[huella] = self._est90.estimar(recorte)
-            return cache[huella]
+            clave = huella(recorte)
+            if clave not in cache:
+                cache[clave] = self._est90.estimar(recorte)
+            return cache[clave]
 
         # C.E1a: PRNG, sin ruido y sin mitigar
-        fa = _Registradora(self._prng(semilla))
+        fa = Registradora(self._prng(semilla))
         ra = ejecutar_pipeline(fa, self._val, self._reloj, p)
         informe_a = self._informe(decl, a_id, semilla, ra, fa.cruda, {})
         # C.E1b: Aer ruidoso, sin mitigar
-        fb = _Registradora(self._lab.fuente(ruido, semilla))
+        fb = Registradora(self._lab.fuente(ruido, semilla))
         rb = ejecutar_pipeline(fb, self._val, self._reloj, p)
         informe_b = self._informe(decl, b_id, semilla, rb, fb.cruda, {"h_90b_cruda": h90(fb.cruda.bits)})
         # C.E1c: lo mismo con twirling propio
-        fc = _Registradora(self._lab.fuente(ruido, semilla))
+        fc = Registradora(self._lab.fuente(ruido, semilla))
         bloque = int(decl.numero("ruido", "twirling_bloque"))
         rc = ejecutar_pipeline(fc, self._val, self._reloj, p, mitigador=self._lab.twirling(ruido, semilla, bloque))
         reporte_c = {
             "h_90b_cruda": h90(fc.cruda.bits),
             "h_90b_mitigada": h90(rc.muestra.bits),
-            "sha256_muestra_mitigada": _huella(rc.muestra.bits),
+            "sha256_muestra_mitigada": huella(rc.muestra.bits),
             "proporcion_nist": self._proporciones_de(decl, rc.clave),
         }
         informe_c = self._informe(decl, c_id, semilla, rc, fc.cruda, reporte_c)
@@ -174,7 +142,7 @@ class EjecutorE1:
             qubits=decl.qubits, shots=decl.shots, mitigada=m.mitigada, epsilon=2.0 ** int(decl.numero("cadena", "epsilon_log2")),
             profundidad_peres=int(decl.numero("cadena", "profundidad_peres")), validador=self._validador_nombre, estimador="mcv",
             h_min_entrada=r.h_min, h_min_salida=r.h_min_salida, bits_crudos=r.bits_crudos, bits_clave=len(r.clave),
-            sha256_muestra_cruda=_huella(cruda.bits),  # la CRUDA de verdad, no la mitigada
+            sha256_muestra_cruda=huella(cruda.bits),  # la CRUDA de verdad, no la mitigada
             etapas=dict(r.etapas), veredicto=r.veredicto,
             preinscripcion_sha=self._historial.ultimo_commit(decl.rutas), commit=self._historial.commit_actual(),
             entorno=self._entorno(), reporte=dict(reporte),

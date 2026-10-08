@@ -12,7 +12,7 @@ import hashlib
 import re
 from collections.abc import Callable, Mapping
 from contextlib import ExitStack
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -24,10 +24,12 @@ from qrecauda.adaptadores.libro_jsonl import LibroJsonl
 from qrecauda.adaptadores.prng import FuenteMarkov, FuentePeriodica, FuentePrng
 from qrecauda.adaptadores.sonda_local import SondaLocal
 from qrecauda.adaptadores.temporizador_local import TemporizadorLocal
+from qrecauda.aplicacion.demo import RamaSolicitada, ResultadoDemo, correr_demo
 from qrecauda.aplicacion.ejecutor_e1 import EjecutorE1
 from qrecauda.aplicacion.ejecutor_e2 import EjecutorE2
 from qrecauda.aplicacion.ejecutor_e3 import EjecutorE3
 from qrecauda.aplicacion.ejecutor_e3b import EjecutorE3b
+from qrecauda.aplicacion.ejecutor_e4 import EjecutorE4, mascaras_de
 from qrecauda.aplicacion.ejecutor_e5 import EjecutorE5
 from qrecauda.aplicacion.juez import CorrerYJuzgar
 from qrecauda.aplicacion.pipeline import ParametrosPipeline, Resultado
@@ -36,13 +38,16 @@ from qrecauda.aplicacion.reserva_asincrona import GeneradorDeClaveAprobada
 from qrecauda.aplicacion.transaccion import ServicioDeTransacciones
 from qrecauda.datos import Declaracion, InformeCorrida, ManifiestoDeCorrida, Medicion, RuidoDeLectura, VeredictoDeEureka
 from qrecauda.dominio.bits import Bits
-from qrecauda.dominio.errores import CorridaInvalida, EntradaInvalida, FuenteNoDisponible
+from qrecauda.dominio.errores import CorridaInvalida, EntradaInvalida, FuenteNoDisponible, PresupuestoQpuExcedido
+from qrecauda.dominio.muestra import Muestra
+from qrecauda.dominio.presupuesto_qpu import TOPE_POR_OMISION_S
 from qrecauda.puertos import (
     Bitacora,
     Ejecutor,
     EstimadorDeEntropia,
     EstimadorDeSesgo,
     FuenteDeBits,
+    FuenteDeContraste,
     GeneradorDeClaves,
     Historial,
     Mitigador,
@@ -81,27 +86,54 @@ def fuente_de(cfg: Configuracion) -> FuenteDeBits:
             raise FuenteNoDisponible(f"el backend aer_ruidoso necesita el extra «cuantico»: {e}") from e
         return FuenteAer(cfg.semilla, _modelo_de_ruido(cfg))
     if cfg.backend == "ibm":
-        return fuente_ibm_de(cfg)
+        fuente: FuenteDeBits = fuente_ibm_de(cfg)
+        return fuente
     raise FuenteNoDisponible(f"el backend {cfg.backend!r} no tiene adaptador")
 
 
-def fuente_ibm_de(cfg: Configuracion, conectar: Callable[[Any], Any] | None = None, fabricas: Any = None) -> FuenteDeBits:
-    """F3.04: SamplerV2 sobre IBM. La ruta del token se lee aquí (falta ⇒ `FuenteNoDisponible`); la red se toca en `generar`.
+def fuente_ibm_de(
+    cfg: Configuracion,
+    conectar: Callable[[Any], Any] | None = None,
+    fabricas: Any = None,
+    *,
+    ensayo: bool = False,
+    mascaras: int = 0,
+    max_segundos_qpu: float | None = None,
+    ia: bool = False,
+    espera_max_s: float | None = None,
+    instancia: str = "",
+) -> Any:
+    """F3.04/F3.07: SamplerV2 sobre IBM. La ruta del token se lee aquí (falta ⇒ `FuenteNoDisponible`); la red se toca en `generar`.
 
-    La transpilación a forma ISA (F3.03) se inyecta desde aquí: el adaptador de IBM no importa el de Aer (C2).
-    `conectar` y `fabricas` sólo se pasan en las pruebas (dobles sin red)."""
+    La transpilación a forma ISA (F3.03) se inyecta desde aquí: el adaptador de IBM no importa el de Aer (C2). `ia=True` pide el
+    enrutado con IA y, si falta `qiskit_ibm_transpiler`, DEGRADA con aviso. `ensayo=True` recorre todo el camino contra un backend
+    falso de IBM, sin token ni cuota. `conectar` y `fabricas` sólo se pasan en las pruebas (dobles sin red)."""
     try:
         from qrecauda.adaptadores.aer.transpilacion import a_isa
         from qrecauda.adaptadores.ibm_runtime import FuenteIbm, conectar_real
     except ImportError as e:
         raise FuenteNoDisponible(f"el backend ibm necesita el extra «cuantico»: {e}") from e
+
+    def transpilar(circuito: Any, backend: Any) -> Any:
+        return a_isa(circuito, backend, semilla=cfg.semilla, ia=ia)
+
+    comunes: dict[str, Any] = {
+        "transpilar": transpilar,
+        "mascaras": mascaras,
+        "semilla": cfg.semilla,
+        "max_segundos_qpu": max_segundos_qpu,
+        "espera_max_s": espera_max_s,
+    }
+    if ensayo:
+        return FuenteIbm.para_ensayo(backend=cfg.ibm_backend or "fake_sherbrooke", **comunes)
     return FuenteIbm.desde_ruta(
         Path(cfg.ibm_token_ruta),
-        transpilar=lambda circuito, backend: a_isa(circuito, backend, semilla=cfg.semilla).circuito,
         backend=cfg.ibm_backend,
         modo=cfg.ibm_modo,
         conectar=conectar or conectar_real,
         fabricas=fabricas,
+        instancia=instancia,
+        **comunes,
     )
 
 
@@ -544,6 +576,236 @@ def ejecutor_e5_de(raiz: Path, bitacora: Bitacora | None = None, estimador_90b: 
     return _EnMaquina(ejecutor, candado_de_maquina(raiz), previo, None)
 
 
+# ------------------------------------------------------------------ C.E4 y la demo: el contraste con hardware
+
+
+class _VistaDeContraste:
+    """Una de las dos caras de un contraste: devuelve la muestra ya medida, sin volver a enviar nada."""
+
+    def __init__(self, obtener: Callable[[], Muestra]) -> None:
+        self._obtener = obtener
+
+    def generar(self, qubits: int, shots: int) -> Muestra:
+        m = self._obtener()
+        if (m.qubits, m.shots) != (qubits, shots):
+            raise EntradaInvalida(f"el contraste midió {m.qubits}×{m.shots}, no {qubits}×{shots}: las dos caras salen del mismo envío")
+        return m
+
+
+class ContrasteIbm:
+    """Implementa `FuenteDeContraste` sobre `FuenteIbm`: UN envío, dos caras (cruda y twirling). `cruda()` envía; `con_twirling()` no.
+
+    Es ansiosa a propósito: el trabajo (cola incluida) ocurre al pedir la primera cara, FUERA de cualquier reloj de cadena."""
+
+    def __init__(self, ibm: Any, qubits: int, shots: int) -> None:
+        self._ibm, self._qubits, self._shots = ibm, qubits, shots
+        self._caras: tuple[Muestra, Muestra] | None = None
+        self._gemelos: tuple[Muestra, Muestra] | None = None
+
+    def _enviar(self) -> tuple[Muestra, Muestra]:
+        if self._caras is None:
+            self._caras = self._ibm.generar_contraste(self._qubits, self._shots)
+        return self._caras
+
+    def cruda(self) -> FuenteDeBits:
+        cruda = self._enviar()[0]
+        return _VistaDeContraste(lambda: cruda)
+
+    def con_twirling(self) -> FuenteDeBits:
+        twirl = self._enviar()[1]
+        return _VistaDeContraste(lambda: twirl)
+
+    def _gemelo(self) -> tuple[Muestra, Muestra]:
+        if self._gemelos is None:
+            self._enviar()  # primero el hardware: si el envío aborta (presupuesto, cola), no se gasta tiempo en simular
+            self._gemelos = self._ibm.generar_gemelo(self._qubits, self._shots)
+        return self._gemelos
+
+    def gemelo_cruda(self) -> FuenteDeBits:
+        cruda = self._gemelo()[0]
+        return _VistaDeContraste(lambda: cruda)
+
+    def gemelo_con_twirling(self) -> FuenteDeBits:
+        twirl = self._gemelo()[1]
+        return _VistaDeContraste(lambda: twirl)
+
+    def registro(self) -> Mapping[str, object]:
+        self._enviar()
+        r = self._ibm.ultimo_registro
+        if r is None:
+            raise CorridaInvalida("el envío a IBM no dejó registro del trabajo: sin job_id no hay hardware que reclamar")
+        return dict(r.a_mapa())
+
+
+class _EnUnHilo:
+    """BLAS a un hilo (forzado y comprobado) SIN candado de máquina: E4 espera la cola de IBM y no puede retener la máquina horas.
+    M6/M7 de E4 son informativas (P.E4), así que no necesitan la máquina en exclusiva."""
+
+    def __init__(self, interior: Ejecutor) -> None:
+        self._interior = interior
+
+    def ejecutar(self, declaracion: Declaracion, semilla: int) -> Medicion:
+        with un_hilo():
+            verificar_un_hilo()
+            return self._interior.ejecutar(declaracion, semilla)
+
+
+def ejecutor_e4_de(
+    raiz: Path,
+    *,
+    token_ruta: str = "",
+    backend: str = "",
+    ensayo: bool = False,
+    max_segundos_qpu: float | None = None,
+    ia: bool = False,
+    bitacora: Bitacora | None = None,
+    historial: Historial | None = None,
+    contraste: Callable[[Declaracion, int], FuenteDeContraste] | None = None,
+    conectar: Callable[[Any], Any] | None = None,
+    fabricas: Any = None,
+) -> Ejecutor:
+    """C.E4: las cinco corridas de E4 por semilla (PRNG, Aer realista cruda y con twirling, hardware crudo y con twirling).
+
+    `contraste`, `conectar` y `fabricas` sólo se pasan en las pruebas. Sin token ni `ensayo` no se envía nada: `FuenteNoDisponible`."""
+    if contraste is None:
+        if not ensayo and not token_ruta:
+            raise FuenteNoDisponible("E4 necesita la credencial de IBM (--token-file RUTA) o --ensayo: sin credencial IBM no hay hardware")
+
+        usados: list[Any] = []  # las FuenteIbm de las semillas ya enviadas: el tope es de TODA la corrida, no de cada trabajo
+
+        def contraste(decl: Declaracion, semilla: int) -> FuenteDeContraste:
+            por_omision = decl.tablas.get("hardware", {}).get("tope_qpu_por_omision_s")
+            tope = (
+                max_segundos_qpu
+                if max_segundos_qpu is not None
+                else float(por_omision)
+                if isinstance(por_omision, int | float)
+                else TOPE_POR_OMISION_S
+            )
+            restante = tope - sum(f.gastado_estimado_s for f in usados)
+            if restante <= 0:
+                raise PresupuestoQpuExcedido(
+                    f"el tope de {tope:.1f} s de QPU de la corrida ya está gastado: no se envía el trabajo de {semilla}"
+                )
+            cfg = Configuracion(
+                backend="ibm" if not ensayo else "prng", semilla=semilla, ibm_token_ruta=token_ruta, ibm_backend=backend, ibm_modo="trabajo"
+            )
+            espera = decl.tablas.get("hardware", {}).get("espera_max_s")
+            ibm = fuente_ibm_de(
+                cfg, conectar, fabricas, ensayo=ensayo, mascaras=mascaras_de(decl), max_segundos_qpu=restante, ia=ia,
+                espera_max_s=float(espera) if isinstance(espera, int | float) else None,
+            )  # fmt: skip
+            if not usados:  # antes de enviar el primero: ¿caben TODOS los trabajos? Una corrida a medias gasta cuota y deja artefactos
+                ibm.exigir_presupuesto_de(decl.qubits, decl.shots, len(decl.semillas))
+            usados.append(ibm)
+            return ContrasteIbm(ibm, decl.qubits, decl.shots)
+
+    ejecutor = EjecutorE4(
+        FuentePrng, contraste, validador_de(Configuracion(validador="nist")), RelojMonotonico(), historial or HistorialGit(raiz), entorno,
+        bitacora,
+    )  # fmt: skip
+    return _EnUnHilo(ejecutor)
+
+
+def correr_hardware(
+    raiz: Path,
+    declaracion: Path = Path("declaraciones/E4.toml"),
+    *,
+    token_ruta: str = "",
+    backend: str = "",
+    ensayo: bool = False,
+    max_segundos_qpu: float | None = None,
+    ia: bool = False,
+    historial: Historial | None = None,
+    contraste: Callable[[Declaracion, int], FuenteDeContraste] | None = None,
+) -> ManifiestoDeCorrida:
+    """F3.07: el contraste de E4. Real ⇒ `registro/corridas/` (la preinscripción tiene que estar commiteada). `ensayo` ⇒ todo el
+    camino contra un backend falso de IBM, SIN cuota ni credencial, y escribe en `salidas/ensayo_e4/` (nunca en el registro)."""
+    decl = cargar_declaracion(_relativa(Path(declaracion), raiz), raiz)
+    if decl.eureka != "E4":
+        raise EntradaInvalida(f"`hardware` corre E4, no {decl.eureka}")
+    ejecutor = ejecutor_e4_de(
+        raiz, token_ruta=token_ruta, backend=backend, ensayo=ensayo, max_segundos_qpu=max_segundos_qpu, ia=ia, historial=historial,
+        contraste=contraste,
+    )  # fmt: skip
+    if not ensayo:
+        return juez_de(raiz, ejecutor).correr(decl)
+    carpeta = raiz / "salidas" / "ensayo_e4"
+    juez = CorrerYJuzgar(
+        ejecutor, AlmacenJson(carpeta), historial or HistorialGit(raiz), LibroJsonl(carpeta / "veredictos.jsonl"), entorno()
+    )
+    return juez.correr(decl)
+
+
+DEMO_QUBITS = 8
+DEMO_SHOTS_AER = {False: 100_000, True: 40_000}  # por `rapido`
+DEMO_SHOTS_IBM = {False: 40_000, True: 16_000}  # divisibles por 8 PUBs; pocos: la demo no debe gastar la cuota
+DEMO_MASCARAS_IBM = 7
+DEMO_BLOQUE = 1000
+
+
+def demo_de(
+    cfg: Configuracion,
+    *,
+    rapido: bool = False,
+    fuente: str = "aer",
+    ensayo: bool = False,
+    max_segundos_qpu: float | None = None,
+    conectar: Callable[[Any], Any] | None = None,
+    fabricas: Any = None,
+) -> ResultadoDemo:
+    """F7.07: PRNG, Aer sin mitigar y Aer con twirling lado a lado y, con `fuente="ibm"`, también el hardware (o su ensayo)."""
+    if fuente not in ("aer", "ibm"):
+        raise EntradaInvalida(f"fuente {fuente!r} fuera de ('aer', 'ibm')")
+    if ensayo and fuente != "ibm":
+        raise EntradaInvalida("--ensayo ensaya el camino a IBM: úsalo con --fuente ibm")
+    if fuente == "ibm" and not ensayo and not cfg.ibm_token_ruta:
+        raise FuenteNoDisponible("--fuente ibm exige --token-file RUTA (o QRECAUDA_IBM_TOKEN_FILE); con --ensayo no hace falta")
+    avisos: list[str] = []
+    try:
+        validador = validador_de(Configuracion(validador="nist"))
+    except FuenteNoDisponible as e:
+        validador = validador_de(Configuracion())
+        avisos.append(f"batería NIST no disponible, se usa el validador estadístico: {e}")
+    ruido = Configuracion(nivel_ruido="medio")  # el de E1: sesgo analítico 0,03; el realista (127 qubits) tarda ~1 s por bloque
+    try:
+        from qrecauda.adaptadores.aer import FuenteAer
+        from qrecauda.adaptadores.mthree import TwirlingLectura
+    except ImportError as e:
+        raise FuenteNoDisponible(f"la demo con Aer necesita el extra «cuantico»: {e}") from e
+    modelo = _modelo_de_ruido(ruido)
+    shots = DEMO_SHOTS_AER[rapido]
+    p = ParametrosPipeline(DEMO_QUBITS, shots)
+    ramas = [
+        RamaSolicitada("PRNG clasico", FuentePrng(cfg.semilla)),
+        RamaSolicitada("Aer sin mitigar (ruido medio)", FuenteAer(cfg.semilla, modelo, 1)),
+        RamaSolicitada(
+            "Aer con twirling (ruido medio)", FuenteAer(cfg.semilla, modelo, 1), TwirlingLectura(modelo, cfg.semilla, DEMO_BLOQUE, 1)
+        ),
+    ]  # fmt: skip
+    if fuente == "ibm":
+        cfg_ibm = replace(cfg, backend="ibm" if not ensayo else "prng", ibm_modo="trabajo")
+        ibm = fuente_ibm_de(
+            cfg_ibm, conectar, fabricas, ensayo=ensayo, mascaras=DEMO_MASCARAS_IBM,
+            max_segundos_qpu=max_segundos_qpu if max_segundos_qpu is not None else TOPE_POR_OMISION_S,
+        )  # fmt: skip
+        por_pub = DEMO_SHOTS_IBM[rapido] // (DEMO_MASCARAS_IBM + 1)
+        c = ContrasteIbm(ibm, DEMO_QUBITS, DEMO_SHOTS_IBM[rapido])
+        nombre = "ensayo (fake_sherbrooke)" if ensayo else "IBM"
+        ramas += [
+            RamaSolicitada(f"{nombre} sin mitigar", c.cruda(), shots=por_pub),
+            RamaSolicitada(f"{nombre} con twirling", c.con_twirling(), shots=por_pub * DEMO_MASCARAS_IBM),
+        ]
+        if ensayo:
+            avisos.append("ensayo: backend falso de IBM, sin cuota ni credencial; sus bits los pone Aer, no un dispositivo")
+    with un_hilo():
+        verificar_un_hilo()
+        return correr_demo(
+            ramas, validador, RelojMonotonico(), p, lambda r: servicio_de(cfg, r), fuente="ensayo" if ensayo else fuente, rapido=rapido,
+            avisos=avisos,
+        )  # fmt: skip
+
+
 def ejecutor_de(raiz: Path, decl: Declaracion) -> Ejecutor:
     """E1 → C.E1 (cuatro); E2 → C.E2 sobre Aer; E3 → C.E3 (cadena completa); E3b → C.E3b (reserva aparte); el resto, el pipeline."""
     if decl.eureka == "E1":
@@ -556,6 +818,8 @@ def ejecutor_de(raiz: Path, decl: Declaracion) -> Ejecutor:
         return ejecutor_e3b_de(raiz)
     if decl.eureka == "E5":
         return ejecutor_e5_de(raiz)
+    if decl.eureka == "E4":
+        return ejecutor_e4_de(raiz, token_ruta=Configuracion.cargar(None).ibm_token_ruta)  # `qrecauda correr`: sin ensayo ni token falla
     return _EjecutorDeInformes(HistorialGit(raiz))
 
 

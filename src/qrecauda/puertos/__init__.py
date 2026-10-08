@@ -160,3 +160,18 @@ class LibroDeVeredictos(Protocol):
     """Registro append-only de veredictos (registro/veredictos.jsonl): una línea por veredicto, nunca se reescribe."""
 
     def anadir(self, linea: Mapping[str, object]) -> None: ...
+
+
+class FuenteDeContraste(Protocol):
+    """Un solo envío que da DOS muestras de los mismos disparos: la cruda (sin máscara) y la del twirling. E4 la usa con hardware: cada
+    trabajo cuesta cola y cuota, así que el contraste no puede pedir dos."""
+
+    def cruda(self) -> FuenteDeBits: ...
+
+    def con_twirling(self) -> FuenteDeBits: ...
+
+    def gemelo_cruda(self) -> FuenteDeBits: ...  # el CONTROL: los mismos circuitos en un simulador con el ruido que el backend declara
+
+    def gemelo_con_twirling(self) -> FuenteDeBits: ...
+
+    def registro(self) -> Mapping[str, object]: ...  # lo que se guardó del trabajo (JSON puro: job_id, backend, calibración, tiempos)

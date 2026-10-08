@@ -16,6 +16,7 @@ import numpy as np
 
 from qrecauda.aplicacion import criterios_e1 as e1
 from qrecauda.aplicacion.ejecutor_e3b import p_latencia, tasa_neta_bps
+from qrecauda.aplicacion.juez_e4 import juzgar_e4
 from qrecauda.aplicacion.juez_e5 import juzgar_e5
 from qrecauda.datos import (
     Criterio,
@@ -144,6 +145,8 @@ class CorrerYJuzgar:
             v = _juzgar_e3(decl, m, e3)
         elif decl.eureka == "E3b":
             v = _juzgar_e3b(decl, m, e3b)
+        elif decl.eureka == "E4":
+            v = juzgar_e4(decl, m, informes)
         else:
             v = _juzgar_informes(decl, m, informes)
         self._libro.anadir(v.a_mapa())

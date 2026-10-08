@@ -24,6 +24,7 @@ origen es `SIMULADOR_AER`, nunca `HARDWARE_IBM`: un ensayo no puede reclamar ori
 from __future__ import annotations
 
 import logging
+import warnings
 from collections.abc import Callable
 from contextlib import nullcontext
 from dataclasses import dataclass
@@ -32,6 +33,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import qiskit_aer
 from numpy.typing import NDArray
 from qiskit import QuantumCircuit
 from qiskit.exceptions import QiskitError
@@ -44,6 +46,8 @@ from qrecauda.dominio.muestra import Muestra, Origen, Procedencia
 from qrecauda.dominio.presupuesto_qpu import EstimacionQpu, estimar_segundos_qpu, exigir_presupuesto
 from qrecauda.transversal.seguridad import Secreto, describir
 
+# El servicio local fabrica TODOS los backends falsos y uno avisa de que sus errores no son típicos: ruido sin relación con el ensayo.
+warnings.filterwarnings("ignore", message="Properties of fake_nighthawk")
 _log = logging.getLogger(__name__)
 
 MODOS = ("batch", "session", "trabajo")
@@ -204,12 +208,61 @@ class FuenteIbm:
             self._muestra(np.vstack(pubs[1:]), qubits, registro, pid, mitigada=True),
         )
 
+    def generar_gemelo(self, qubits: int, shots: int) -> tuple[Muestra, Muestra]:
+        """CONTROL de E4: los MISMOS circuitos que `generar_contraste` (misma forma ISA, mismos qubits físicos y mismas máscaras) en Aer
+        con el ruido que el backend elegido declara (`AerSimulator.from_backend`). Origen `SIMULADOR_AER`: nunca reclama hardware.
+        No gasta cuota ni deja registro de trabajo. Sólo modela errores independientes de puerta y lectura, no la deriva ni el
+        cross-talk: la diferencia con el dispositivo real es justo lo que E4 mide."""
+        if self._mascaras < 1:
+            raise EntradaInvalida("generar_gemelo necesita mascaras >= 1: es el gemelo de generar_contraste")
+        n_pubs, por_pub = self._reparto(shots)
+        prep = self._preparar(qubits)
+        mascaras = self._sortear_mascaras(qubits)
+        circuitos = [prep.base] + [_con_mascara(prep.base, fila) for fila in mascaras]
+
+        def simular() -> Any:
+            from qiskit_aer import AerSimulator
+            from qiskit_aer.primitives import SamplerV2 as SamplerAer
+
+            sim = AerSimulator.from_backend(prep.backend)
+            return (
+                SamplerAer.from_backend(sim, default_shots=por_pub, seed=self._semilla)
+                .run([(c, None, por_pub) for c in circuitos])
+                .result()
+            )
+
+        resultado = self._en_sdk("simular el gemelo en Aer", simular)
+        nombre_creg = prep.base.cregs[0].name
+        datos = [_a_disparos(resultado[i].data[nombre_creg].get_bitstrings(), qubits, por_pub, "gemelo") for i in range(n_pubs)]
+        filas = np.vstack([np.zeros((1, qubits), dtype=np.uint8), mascaras])
+        datos = [d ^ f for d, f in zip(datos, filas, strict=True)]
+        proc = Procedencia(f"AerSimulator(gemelo de {prep.nombre})", "", qiskit_aer.__version__)
+
+        def muestra(d: NDArray[np.uint8], mitigada: bool) -> Muestra:
+            return Muestra(Bits(np.ascontiguousarray(d.T).reshape(-1)), Origen.SIMULADOR_AER, qubits, d.shape[0], mitigada, proc)
+
+        return muestra(datos[0], False), muestra(np.vstack(datos[1:]), True)
+
     def estimar_qpu(self, qubits: int, shots: int) -> EstimacionQpu:
         """Cuánto QPU costaría UN trabajo así. Conecta, elige backend y transpila; no envía nada."""
         if qubits < 1 or shots < 1:
             raise EntradaInvalida(f"qubits y shots deben ser positivos, llegó {qubits}, {shots}")
         prep = self._preparar(qubits)
         return self._estimacion(prep, *self._reparto(shots))
+
+    def exigir_presupuesto_de(self, qubits: int, shots: int, trabajos: int) -> EstimacionQpu:
+        """Aborta (`PresupuestoQpuExcedido`) ANTES de enviar nada si `trabajos` trabajos así no caben en el tope o en la cuota. Sirve para
+        que una corrida de varios trabajos no se quede a medias: el primero ya habría gastado cuota y dejado artefactos."""
+        if trabajos < 1:
+            raise EntradaInvalida(f"trabajos debe ser positivo, llegó {trabajos}")
+        unica = self.estimar_qpu(qubits, shots)
+        exigir_presupuesto(
+            estimado_s=unica.segundos * trabajos,
+            tope_s=self._max_qpu_s,
+            restante_s=self._cuota_restante(),
+            ya_gastado_s=self._gastado_s,
+        )
+        return unica
 
     # ------------------------------------------------------------------ envío
 

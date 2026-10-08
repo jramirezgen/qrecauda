@@ -11,7 +11,11 @@ from pathlib import Path
 from qrecauda.dominio.errores import EntradaInvalida
 
 BACKENDS = ("prng", "aer_ruidoso", "ibm")
-MODOS_IBM = ("batch", "session")  # cómo agrupa SamplerV2 los trabajos en IBM Runtime
+MODOS_IBM = (
+    "batch",
+    "session",
+    "trabajo",
+)  # cómo agrupa SamplerV2 los trabajos; «trabajo» = suelto (el único del plan abierto, ⚠️ sin verificar)
 MITIGACIONES = ("ninguna", "lectura")  # «lectura» = twirling de lectura propio (D-009)
 NIVELES_RUIDO = ("bajo", "medio", "alto", "realista")  # «realista» = FakeSherbrooke congelado; los demás, canales sintéticos
 VALIDADORES = ("estadistico", "nist")
@@ -26,7 +30,7 @@ class Configuracion:
     epsilon_exp: int = 64  # ε = 2^-epsilon_exp
     ibm_token_ruta: str = ""  # RUTA al fichero del token; el valor no vive aquí
     ibm_backend: str = ""  # nombre del backend de IBM; vacío = el menos ocupado con qubits suficientes
-    ibm_modo: str = "batch"  # «batch» o «session» (SamplerV2 sobre IBM Runtime)
+    ibm_modo: str = "batch"  # «batch», «session» o «trabajo» (SamplerV2 sobre IBM Runtime)
     mitigacion: str = "ninguna"
     nivel_ruido: str = "medio"  # sólo lo usa el backend aer_ruidoso
     validador: str = "estadistico"

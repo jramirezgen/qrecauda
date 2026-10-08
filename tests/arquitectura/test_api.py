@@ -15,11 +15,20 @@ SRC = Path(__file__).resolve().parents[2] / "src" / "qrecauda"
 
 def test_firmas_congeladas():
     assert sorted(api.__all__) == [
-        "Configuracion", "ManifiestoDeCorrida", "Resultado", "VeredictoDeEureka", "correr", "generar_clave", "juzgar",
+        "Configuracion", "ManifiestoDeCorrida", "Resultado", "ResultadoDemo", "VeredictoDeEureka",
+        "correr", "demo", "generar_clave", "hardware", "juzgar",
     ]  # fmt: skip
     assert str(inspect.signature(api.generar_clave)) == "(cfg: 'Configuracion') -> 'Resultado'"
     assert str(inspect.signature(api.correr)) == "(declaracion: 'Path', raiz: 'Path') -> 'ManifiestoDeCorrida'"
     assert str(inspect.signature(api.juzgar)) == "(eureka: 'str', raiz: 'Path') -> 'VeredictoDeEureka'"
+    assert str(inspect.signature(api.demo)) == (
+        "(cfg: 'Configuracion', *, rapido: 'bool' = False, fuente: 'str' = 'aer', ensayo: 'bool' = False, "
+        "max_segundos_qpu: 'float | None' = None) -> 'ResultadoDemo'"
+    )
+    assert str(inspect.signature(api.hardware)) == (
+        "(raiz: 'Path', *, cfg: 'Configuracion | None' = None, declaracion: 'Path' = PosixPath('declaraciones/E4.toml'), "
+        "ensayo: 'bool' = False, max_segundos_qpu: 'float | None' = None, ia: 'bool' = False) -> 'ManifiestoDeCorrida'"
+    )
 
 
 def test_campos_de_la_configuracion_congelados():
@@ -39,7 +48,9 @@ def test_campos_de_la_configuracion_congelados():
 
 
 def test_firmas_de_presentacion_y_cli_congeladas():
-    assert sorted(presentacion.__all__) == ["json_canonico", "json_de", "resumen_de_corrida", "tabla", "tabla_de_eureka"]
+    assert sorted(presentacion.__all__) == [
+        "json_canonico", "json_de", "json_de_demo", "resumen_de_corrida", "tabla", "tabla_de_demo", "tabla_de_eureka",
+    ]  # fmt: skip
     assert str(inspect.signature(presentacion.tabla)) == "(veredicto: 'Veredicto') -> 'str'"
     assert str(inspect.signature(presentacion.json_canonico)) == "(veredicto: 'Veredicto') -> 'str'"
     assert str(inspect.signature(cli.main)) == "(argv: 'list[str] | None' = None) -> 'int'"
