@@ -60,3 +60,5 @@
 {"nodo":"REL-0.1.0","estado":"hecho","evidencia":"ea0d08a","fecha":"2026-10-08"}
 {"nodo":"F6.03","estado":"hecho","evidencia":"e5c5aaa","fecha":"2026-10-08"}
 {"nodo":"P.E3b","estado":"hecho","evidencia":"88d1d45","fecha":"2026-10-08"}
+{"nodo":"C.E3b","estado":"hecho","evidencia":"e1f47ce","fecha":"2026-10-08"}
+{"nodo":"E3b","estado":"juzgado","evidencia":"e1f47ce","veredicto":"registro/veredictos.jsonl#E3b","fecha":"2026-10-08"}

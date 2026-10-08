@@ -8,9 +8,9 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 58 |
-| juzgado | 3 |
-| pendiente | 4 |
+| hecho | 59 |
+| juzgado | 4 |
+| pendiente | 2 |
 
 ## En curso, bloqueados y pausados
 
@@ -18,7 +18,7 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- **C.E3b** E3b · latencia y sostenibilidad con la clave de una reserva generada aparte
+- **R.02** Revisión adversarial propia previa al release 0.2.0
 
 ## Hechos y juzgados
 
@@ -77,6 +77,8 @@ Plan v1 · 2026-10-07
 | E3 | juzgado | `fdb4386` | ¡EUREKA 3! Tasa y latencia dentro de umbral con la transacción cifrada |
 | F7.03 | hecho | `d9609a1` | Modelo de amenazas |
 | P.E3b | hecho | `88d1d45` | Preinscripción E3b: la latencia de transacción con la clave de una reserva generada aparte |
+| C.E3b | hecho | `e1f47ce` | E3b · latencia y sostenibilidad con la clave de una reserva generada aparte |
+| E3b | juzgado | `e1f47ce` | ¡EUREKA 3b! La latencia de transacción cumple M7 con la clave de una reserva generada aparte |
 | F7.06 | hecho | `013fd62` | Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado |
 | T.TRL | hecho | `8039a6d` | Matriz de TRL por componente, derivada de la evidencia |
 | F7.05 | hecho | `7db7730` | Wiki repo: mapas, bases e incidencias publicados en la bóveda |
