@@ -9,9 +9,9 @@ Plan v1 · 2026-10-07
 | estado | nodos |
 |---|---|
 | bloqueado | 1 |
-| hecho | 68 |
+| hecho | 69 |
 | juzgado | 5 |
-| pendiente | 5 |
+| pendiente | 4 |
 
 ## En curso, bloqueados y pausados
 
@@ -19,7 +19,7 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- **R.02** Revisión adversarial propia previa al release 0.2.0
+- **REL-0.2.0** Release 0.2.0: la reserva asíncrona de claves y la latencia de E3b
 
 ## Hechos y juzgados
 
@@ -97,4 +97,5 @@ Plan v1 · 2026-10-07
 | F7.08 | hecho | `9e1b0a7` | Cuaderno vivo: del circuito a la clave cifrada, con FUENTE aer o ibm |
 | R.01 | hecho | `9048da9` | Revisión adversarial propia previa al release 0.1.0 |
 | REL-0.1.0 | hecho | `ea0d08a` | Release 0.1.0: pipeline QRNG reproducible en simulador (rótulo de TRL según T.TRL) |
+| R.02 | hecho | `aa8bc52` | Revisión adversarial propia previa al release 0.2.0 |
 | R.02c | hecho | `e4a9ff3` | Correcciones de los hallazgos de R.02 en el código: presupuesto QPU, claves reproducibles, productor, 90B, demo y CI |
