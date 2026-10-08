@@ -28,7 +28,7 @@ Las fuentes completas y su etiqueta están en [`docs/pitch/IMPACTO.md`](docs/pit
 | Ruido de lectura | modelado (sesgo crudo de 0,03 en el nivel medio) | ruido real, posiblemente asimétrico, correlacionado y con deriva |
 | Mitigación | twirling propio medido sobre ruido modelado; ZNE y PEC no mueven el sesgo | comprobar que funciona sobre ruido real y compararlo con `mthree` y con las opciones de IBM (⚠️ sin verificar) |
 | Validación | NIST 800-22 y 90B sobre las etapas; control de fuente Markov | 90B sobre los bits crudos del dispositivo, que es lo que informa sobre la fuente |
-| Latencia | M7 NO CUMPLE; reserva de claves en estudio (E3b) | sumará latencia de cola y de red, hoy fuera de M7 |
+| Latencia | M7 cumple con la clave de una reserva generada aparte (E3b); sin cola ni red de IBM | sumará latencia de cola y de red, hoy fuera de M7 |
 | Qué se puede afirmar | que el postprocesamiento y su medición funcionan | nada nuevo hasta que corra E1 y E2 sobre esa fuente con tres semillas |
 
 ## Demo en 2 minutos
@@ -41,7 +41,7 @@ uv run qrecauda demo
 
 Muestra tres ramas lado a lado: un PRNG clásico, la fuente de Aer sin mitigar y la fuente de Aer mitigada. La mitigación limpia la entrada (el sesgo de la muestra baja de 0,03 a cuatro diezmilésimas), pero la clave de las tres ramas pasa la batería: por eso la batería no prueba el origen. La figura sale de las corridas registradas con `presentacion/figura_demo.py` y está en el [deck](docs/pitch/DECK.md); el [guion de dos minutos](docs/pitch/GUION.md) cronometra la presentación. Además cifra y descifra con AES-256-GCM un peaje y un trayecto de Metro con la clave aprobada. `uv run qrecauda demo --rapido` tarda menos; `uv run qrecauda demo --fuente ibm --ensayo` recorre el camino a IBM contra un backend falso (ver [docs/HARDWARE.md](docs/HARDWARE.md)). `uv run qrecauda juzgar E1` rejuzga la corrida registrada.
 
-**Estado en una línea:** TRL **3**, prototipo de laboratorio. Lo que se probó es el postprocesamiento: mitigación de lectura, extracción de entropía, validación estadística y cifrado AES-GCM. El simulador no aporta entropía cuántica y no hay corrida en hardware IBM. La tabla honesta de resultados está debajo y los detalles en [Limitaciones](#limitaciones).
+**Estado en una línea:** TRL **3**, prototipo de laboratorio. Lo que se probó es el postprocesamiento: mitigación de lectura, extracción de entropía, validación estadística y cifrado AES-GCM. El simulador no aporta entropía cuántica y no hay corrida en hardware IBM: el camino está listo y ensayado contra un backend falso (`uv run qrecauda hardware`, [docs/HARDWARE.md](docs/HARDWARE.md)), pero la corrida real (C.E4) está bloqueada por falta de credencial y **no existe ningún resultado en hardware real**. La tabla honesta de resultados está debajo y los detalles en [Limitaciones](#limitaciones).
 
 ## Qué problema aborda
 
@@ -61,9 +61,15 @@ Cada cifra del proyecto sale de una corrida con nombre, registrada en `registro/
 |---|---|---|---|
 | E1 | pipeline con fuente simulada, métricas M1 a M5 | CUMPLE, condicionado | La clave sin mitigar también pasa M1 a M5, así que esas métricas no prueban el valor de la mitigación ni el origen. |
 | E2 | mitigación de lectura | CUMPLE | El twirling propio baja el sesgo de lectura entre 11 y 32 veces sobre ruido modelado. ZNE y PEC no mueven el sesgo de lectura. |
-| E3 | tasa (M6) y latencia (M7) | **NO CUMPLE** | M6 de 180 a 195 kbit/s (umbral 10 kbit/s, cumple). M7, p95 de 5,5 a 9,4 s frente a 500 ms: falla en las tres semillas. |
+| E3 (0.1.0) | tasa (M6) y latencia (M7), la clave se genera dentro de la transacción | **NO CUMPLE** | M6 de 180 a 195 kbit/s (umbral 10 kbit/s, cumple). M7, p95 de 5,5 a 9,4 s frente a 500 ms: falla en las tres semillas. |
+| E3b (0.2.0 en preparación) | latencia y sostenibilidad con la clave de una reserva generada aparte por un proceso productor | CUMPLE | M7, p95 de 0,17 a 0,18 ms sobre 12 000 transacciones por semilla (umbral 500 ms). Productor de 177 a 199 kbit/s contra un consumo declarado de 35,2 kbit/s, sin esperas. Arranque de 6,6 a 6,7 s hasta la primera clave, informado aparte. |
+| E5 (0.2.0 en preparación) | control negativo del pipeline completo con fuentes que dependen de sus bits, y dimensionado conservador | CUMPLE | Con el dimensionado de 0.1.0 (`mcv`), las nueve claves de fuentes defectuosas pasan M1 a M5 y salen entre 1,2 y 2,5 veces más largas que lo que la fuente sostiene (hallazgo R.00-1 en cadena completa). El dimensionado conservador las acorta (markov_fuerte: de 380 a 381 mil bits con `mcv`, de 55 a 56 mil con el conservador) y la fuente buena conserva de 856 a 883 mil bits. |
 
-E3 falla por M7. El veredicto queda en el registro y no se reabre. La reserva asíncrona de claves (E3b, versión 0.2.0) está en curso: se preinscribe como experimento nuevo con sus propios umbrales antes de correr. Todavía no hay resultado de E3b.
+Las cifras salen de `registro/corridas/C.E3.json`, `C.E3b.json` y `C.E5.json` y de `registro/veredictos.jsonl`; el cociente de 1,2 a 2,5 se calcula en el veredicto de E5 (criterio HOY) frente al techo teórico de cada fuente.
+
+**E3 no se reabre.** Falla por M7 y su veredicto queda en el registro. E3b es otro diseño (la clave sale de una reserva que un proceso productor genera en paralelo), con preinscripción propia anterior a la corrida y veredicto propio; no corrige E3. Sus límites: se midió sobre simulador, sin la cola ni la red de IBM; la demanda (100 transacciones por segundo) la declara el equipo; y las claves se generan con el dimensionado `mcv` de 0.1.0.
+
+**El dimensionado conservador es opt-in.** E5 muestra que el mínimo de MCV y 90B más la contabilidad de la entropía de la fuente acorta las claves de fuentes dependientes; `min(MCV, 90B)` por sí solo no alcanza en markov_fuerte. Por defecto el pipeline sigue con `mcv`, y no se re-midieron E3 ni E3b con el conservador (⚠️ sin verificar su efecto sobre la latencia). E5 prueba tres defectos de dependencia con respuesta analítica, no uno adversarial.
 
 ## Estado
 
@@ -74,8 +80,10 @@ E3 falla por M7. El veredicto queda en el registro y no se reabre. La reserva as
 | Validación (NIST SP 800-22 y 90B) | 4 | con control positivo y negativo |
 | Fuente simulada con ruido (Aer) | 3 | Aer muestrea con un PRNG |
 | ZNE y PEC | 3 | sin efecto medido sobre el sesgo de lectura |
-| Cifrado AES-GCM | 3 | falta una latencia de transacción que cumpla M7 |
-| Fuente real (hardware IBM) | 3 | sin corrida, `job_id` nulo |
+| Latencia con reserva de claves (E3b) | 4 | tres semillas preinscritas, en simulador; no sube al sistema |
+| Dimensionado y control negativo del pipeline (E5) | 4 | tres defectos de dependencia, en simulador |
+| Cifrado AES-GCM | 3 | su fila sólo cita E3 |
+| Fuente real (hardware IBM) | 3 | sin corrida, `job_id` nulo; C.E4 bloqueado por falta de credencial |
 | **Sistema** | **3** | la fila más baja, no el promedio |
 
 La tabla completa y su derivación están en [`docs/TRL.md`](docs/TRL.md). El camino a TRL 4 y 5 está en [`docs/ROADMAP.md`](docs/ROADMAP.md).
@@ -169,14 +177,14 @@ Volver a correr un experimento completo (`qrecauda correr declaraciones/E1.toml`
 
 ## Plan y registro
 
-El plan es un grafo acíclico de 59 nodos (`plan/`), todos cerrados para la versión 0.1.0. El estado vive en `registro/nodos.jsonl` y `ESTADO.md` se genera de él. Un nodo se cierra con un commit que toca su entrega. Para ver el estado: `python3 plan/dag.py estado`; para ver qué sigue: `python3 plan/dag.py siguiente`. Si quieres contribuir, empieza por [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`RETOMA.md`](RETOMA.md).
+El plan es un grafo acíclico (`plan/`); los 59 nodos de la versión 0.1.0 están cerrados y la 0.2.0 (en preparación, sin publicar) suma E3b y E5. La hoja de ruta de la 0.3.0 es el camino a hardware: C.E4 y E4 siguen abiertos. El estado vive en `registro/nodos.jsonl` y `ESTADO.md` se genera de él. Un nodo se cierra con un commit que toca su entrega. Para ver el estado: `python3 plan/dag.py estado`; para ver qué sigue: `python3 plan/dag.py siguiente`. Si quieres contribuir, empieza por [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`RETOMA.md`](RETOMA.md).
 
 ## Limitaciones
 
 - Aer muestrea con un PRNG. Pasar la batería NIST prueba el postprocesamiento, no el origen de los bits.
 - No hay corrida en hardware IBM. Que el modelo de ruido propio reproduzca el ruido físico y que la mitigación funcione sobre ruido real quedan sin probar.
-- La clave se dimensiona con min-entropía MCV, que supone bits independientes. Con correlación temporal la longitud se sobrestima. Una fuente Markov de prueba produjo una clave unas tres veces más larga de lo que la fuente sostiene.
-- M7 falla: la latencia por transacción supera 500 ms. Los 500 ms y los 10 kbit/s vienen del manifiesto del equipo, no de un operador real.
+- Por defecto la clave se dimensiona con min-entropía MCV, que supone bits independientes. Con correlación temporal la longitud se sobrestima: E5 la midió en cadena completa (claves de 1,2 a 2,5 veces lo que la fuente sostiene). El dimensionado conservador la corrige en las tres fuentes de prueba, pero es opt-in y no cubre un defecto adversarial.
+- M7 falla en E3 (0.1.0) y cumple en E3b con una reserva de claves, sólo en simulador y sin cola ni red de IBM. Esa reserva en memoria es un depósito de claves que aumenta la exigencia de custodia. Los 500 ms, los 10 kbit/s y los 100 tx/s vienen del manifiesto del equipo, no de un operador real.
 - El registro de nonces vive en la memoria del proceso y no protege entre procesos. No hay gestión de claves (KMS o HSM), ni protección del canal, ni anti-replay.
 - NIST SP 800-22 es una batería estadística y SP 800-90B una cota empírica. Ninguna es una certificación FIPS, ISO o Common Criteria.
 
