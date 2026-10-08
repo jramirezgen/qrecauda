@@ -8,8 +8,9 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 42 |
-| pendiente | 17 |
+| hecho | 43 |
+| juzgado | 1 |
+| pendiente | 15 |
 
 ## En curso, bloqueados y pausados
 
@@ -19,7 +20,6 @@ Plan v1 · 2026-10-07
 
 - **F3.04** SamplerV2 sobre hardware IBM con Batch/Session (opcional)
 - **C.E1a** E1a · control: PRNG clásico pasa M1–M5 (la batería no distingue origen)
-- **C.E2** E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido
 - **C.E1b** E1b · Aer ruidoso sin mitigar
 - **C.E1c** E1c · Aer ruidoso mitigado
 - **C.E1d** E1d · control positivo: fuentes defectuosas rechazadas, fuente ideal aceptada
@@ -67,6 +67,8 @@ Plan v1 · 2026-10-07
 | P.E0 | hecho | `f8e21d0` | Parámetros y aritmética de la cadena, fijados antes de medir |
 | P.E1 | hecho | `dae22a6` | Preinscripción E1: el pipeline entrega claves que cumplen M1–M5 con entrada ruidosa |
 | P.E2 | hecho | `43e2649` | Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 % |
+| C.E2 | hecho | `f22ffd3` | E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido |
+| E2 | juzgado | `f22ffd3` | ¡EUREKA 2! La mitigación mueve el sesgo bajo el umbral M1 |
 | P.E3 | hecho | `d0f062a` | Preinscripción E3: tasa, latencia y caso de uso |
 | F7.03 | hecho | `d9609a1` | Modelo de amenazas |
 | F7.06 | hecho | `013fd62` | Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado |

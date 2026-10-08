@@ -41,3 +41,5 @@
 {"nodo":"F2.07","estado":"hecho","evidencia":"44396b5","fecha":"2026-10-07"}
 {"nodo":"P.E1","estado":"hecho","evidencia":"dae22a6","fecha":"2026-10-07"}
 {"nodo":"F0.09","estado":"hecho","evidencia":"1e8c1a9","fecha":"2026-10-07"}
+{"nodo":"C.E2","estado":"hecho","evidencia":"f22ffd3","fecha":"2026-10-07"}
+{"nodo":"E2","estado":"juzgado","evidencia":"f22ffd3","veredicto":"registro/veredictos.jsonl#E2","fecha":"2026-10-07"}

@@ -137,13 +137,13 @@ n("E1", "E", "eureka", "¡EUREKA 1! Pipeline de punta a punta con veredicto M1�
   "las cuatro corridas cumplen su preinscripción y el informe dice, sin adornos, qué prueba y qué NO prueba sobre el origen cuántico", ["E1"])
 n("P.E2", "E", "preinscripcion", "Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 %", ["F3.02", "S.02", "P.E0"], "docs/preinscripciones/E2.md y declaraciones/E2.toml",
   "tres niveles sintéticos más uno realista, factor mínimo de reducción y residuo máximo fijados antes de correr; declara qué técnica puede mover qué fuente de ruido y que «sin efecto esperado» de ZNE/PEC sobre lectura es un veredicto válido", ["E2"])
-n("C.E2", "E", "corrida", "E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido", ["P.E2", "F4.01", "F4.02"], "registro/corridas/E2.json",
+n("C.E2", "E", "corrida", "E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido", ["P.E2", "F4.01", "F4.02"], "registro/corridas/C.E2.json",
   "sesgo crudo y residual por técnica y por nivel, con su intervalo", ["E2", "M1"])
 n("E2", "E", "eureka", "¡EUREKA 2! La mitigación mueve el sesgo bajo el umbral M1", ["C.E2"], "registro/veredictos.jsonl",
   "el residuo cumple M1 en los tres niveles o el veredicto lo dice con el nivel donde deja de cumplir", ["E2"])
 n("P.E3", "E", "preinscripcion", "Preinscripción E3: tasa, latencia y caso de uso", ["F6.02", "F2.04", "P.E0"], "docs/preinscripciones/E3.md y declaraciones/E3.toml",
   "M6 = bits de clave por segundo de reloj de pared a un hilo; M7 = p95 sobre N ≥ 30 repeticiones tras 3 de calentamiento, extremo a extremo (fuente, mitigación, extracción, validación, cifrado); sin cola ni red de IBM; lote, hilos y máquina fijados antes de medir", ["E3"])
-n("C.E3", "E", "medicion", "E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado", ["P.E3", "F6.02", "F5.02", "F3.05", "F5.01"], "registro/corridas/E3.json",
+n("C.E3", "E", "medicion", "E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado", ["P.E3", "F6.02", "F5.02", "F3.05", "F5.01"], "registro/corridas/C.E3.json",
   "bit/s y ms medidos con reloj monotónico sobre el pipeline con Aer, N repeticiones y la máquina registrada, con la definición de M6 y M7 de la preinscripción", ["E3", "M6", "M7"])
 n("E3", "E", "eureka", "¡EUREKA 3! Tasa y latencia dentro de umbral con la transacción cifrada", ["C.E3"], "registro/veredictos.jsonl",
   "M6 y M7 cumplen con el pipeline completo, o el veredicto dice cuál no y por cuánto", ["E3"])

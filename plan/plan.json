@@ -755,7 +755,7 @@
     "F4.01",
     "F4.02"
    ],
-   "entrega": "registro/corridas/E2.json",
+   "entrega": "registro/corridas/C.E2.json",
    "hecho_cuando": "sesgo crudo y residual por técnica y por nivel, con su intervalo",
    "cubre": [
     "E2",
@@ -807,7 +807,7 @@
     "F3.05",
     "F5.01"
    ],
-   "entrega": "registro/corridas/E3.json",
+   "entrega": "registro/corridas/C.E3.json",
    "hecho_cuando": "bit/s y ms medidos con reloj monotónico sobre el pipeline con Aer, N repeticiones y la máquina registrada, con la definición de M6 y M7 de la preinscripción",
    "cubre": [
     "E3",
