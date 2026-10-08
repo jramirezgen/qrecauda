@@ -58,4 +58,4 @@ def test_real_aborta_si_el_token_es_legible_por_otros(entorno, tmp_path):
 
 def test_demo_con_token_abierto_avisa_pero_sigue(entorno, tmp_path):
     r = _correr(entorno, "demo", str(_token(tmp_path, 0o644)))
-    assert r.returncode == 0 and "UV run qrecauda demo --fuente ibm" in r.stdout
+    assert r.returncode == 0 and "UV run --no-sync qrecauda demo --fuente ibm" in r.stdout

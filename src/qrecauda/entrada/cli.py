@@ -27,9 +27,9 @@ def _parser() -> argparse.ArgumentParser:
     juzgar = sub.add_parser("juzgar", help="aplicar el criterio de la declaración a la corrida ya hecha")
     juzgar.add_argument("eureka", metavar="ID", help="p. ej. E1")
     demo = sub.add_parser(
-        "demo", help="la cadena entera en un minuto: PRNG, Aer sin mitigar y Aer con twirling, y dos transacciones cifradas"
+        "demo", help="la cadena entera (tiempo sin medir): PRNG, Aer sin mitigar y Aer con twirling, y dos transacciones cifradas"
     )
-    demo.add_argument("--rapido", action="store_true", help="menos disparos: segundos en vez de un minuto")
+    demo.add_argument("--rapido", action="store_true", help="menos disparos y por tanto más rápida (tiempo sin medir)")
     demo.add_argument("--semilla", type=int, default=None, help="semilla (por omisión la de la configuración)")
     demo.add_argument("--shots", type=int, default=None, help="disparos de las ramas de Aer (por omisión 100000, o 40000 con --rapido)")
     demo.add_argument(

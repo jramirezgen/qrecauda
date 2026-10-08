@@ -42,7 +42,7 @@ Necesita los extras de la instalación completa (ver [Instalación](#instalació
 .venv/bin/qrecauda demo --rapido     # menos disparos
 ```
 
-Tiempo: `--rapido`, unos segundos; la demo completa, sin medir en esta máquina (la ayuda de la CLI dice «un minuto»; ⚠️ sin verificar). Se probó con Python 3.13.
+Tiempo: sin medir, ni en la demo completa ni con `--rapido` (⚠️ sin verificar; `--rapido` usa menos disparos). La ayuda de la CLI dice lo mismo. Se probó con Python 3.13.
 
 **Dimensionado de la clave (disponible en 0.2.0).** La demo usa por defecto el dimensionado `mcv`. El dimensionado conservador de E5 se activa con `qrecauda demo --dimensionado conservador` (valores: `mcv`, `conservador`); sigue siendo opt-in.
 

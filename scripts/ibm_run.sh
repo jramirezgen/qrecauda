@@ -23,7 +23,7 @@ if [[ -n "${MAX_SEGUNDOS_QPU:-}" ]]; then
   fi
   tope=(--max-segundos-qpu "$MAX_SEGUNDOS_QPU")
 fi
-q() { uv run qrecauda "$@"; }
+q() { uv run --no-sync qrecauda "$@"; }
 
 token() {
   [[ -n "${1:-}" ]] || { echo "falta RUTA_TOKEN (ruta a un fichero con el token, no el token)" >&2; exit 2; }
@@ -66,7 +66,7 @@ case "$modo" in
       exit 3
     fi
     q hardware --token-file "$2" ${3:+--backend "$3"} ${tope[@]+"${tope[@]}"}
-    echo "Ahora: uv run qrecauda juzgar E4"
+    echo "Ahora: uv run --no-sync qrecauda juzgar E4"
     ;;
   *)
     sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//' >&2

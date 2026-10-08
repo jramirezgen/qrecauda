@@ -1,4 +1,4 @@
-"""F7.07 `qrecauda demo`: la cadena entera en un minuto, con tres (o cuatro) fuentes lado a lado.
+"""F7.07 `qrecauda demo`: la cadena entera (tiempo sin medir), con tres (o cuatro) fuentes lado a lado.
 
 Sólo conoce puertos y casos de uso (C1): las fuentes, el validador y el cifrado llegan inyectados. Es una DEMOSTRACIÓN, no una
 medición preinscrita: no escribe en `registro/` y no decide ningún criterio. Las cifras son de la corrida que la imprime.

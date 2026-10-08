@@ -4,7 +4,7 @@ Mide, con las MISMAS clases de fuente que usa el ejecutor (adaptadores.prng) y e
 1 000 000 de bits por fuente y semilla, en 11 semillas: las tres declaradas de E1 (20261007/8/9) y ocho de calibración
 (20261010–20261017). No es una corrida de E1 ni escribe en registro/: es el sustento del piso de la enmienda.
 
-Uso:  OMP_NUM_THREADS=1 .venv/bin/python spikes/S04_90b/calibracion_p1.py   (necesita /tmp/qrecauda_nist90b/ea_non_iid)
+Uso:  OMP_NUM_THREADS=1 .venv/bin/python spikes/S04_90b/calibracion_p1.py   (necesita ~/.cache/qrecauda/nist90b/ea_non_iid, o el heredado en /tmp/qrecauda_nist90b)
 Escribe calibracion_p1.json junto a este archivo.
 """
 

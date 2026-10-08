@@ -189,7 +189,7 @@ El notebook lee `registro/` y no vuelve a correr los experimentos. Genera los ve
 bash spikes/S04_90b/build_nist.sh
 ```
 
-El script baja la versión 1.1.8 desde GitHub, trae las dependencias con `apt-get download` sin root y deja `ea_non_iid` en `/tmp/qrecauda_nist90b/`. Esa ruta es la que busca el código. Si `/tmp` se vacía (por ejemplo tras reiniciar), repite el comando. Sin el binario, los tests de `test_min_entropia.py` se saltan solos y E1 aborta antes de la primera semilla. Los tests de `tests/integracion/test_e2_e3_reales.py` usan el binario sin saltarse, así que compílalo antes de correr la suite completa.
+El script baja la versión 1.1.8 desde GitHub, trae las dependencias con `apt-get download` sin root y deja `ea_non_iid` en `~/.cache/qrecauda/nist90b/` (fuera de `/tmp`; el código verifica que el binario sea del usuario o de root y que nadie más pueda escribirlo). Esa ruta es la que busca el código; si sólo existe el binario de 0.1.0 en `/tmp/qrecauda_nist90b/`, lo usa como respaldo. Si la caché se borra, repite el comando. Sin el binario, los tests de `test_min_entropia.py` se saltan solos y E1 aborta antes de la primera semilla. Los tests de `tests/integracion/test_e2_e3_reales.py` usan el binario sin saltarse, así que compílalo antes de correr la suite completa.
 
 **`CandadoOcupado` (código 8).** Las corridas pesadas toman un candado de máquina en `salidas/candado_maquina.lock`. E3 no espera: si otra corrida lo tiene, aborta. Espera a que termine la otra. El sistema operativo suelta el candado si el proceso muere, así que no queda colgado.
 

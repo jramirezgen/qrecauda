@@ -1,7 +1,7 @@
 """SPIKE S.04: estimador NIST SP 800-90B no-IID independiente (C++ oficial v1.1.8) frente a nuestro MCV.
 
 Uso:  uv run python spikes/S04_90b/run.py
-Compila el binario oficial en /tmp/qrecauda_nist90b (fuera del repo) la primera vez, con build_nist.sh.
+Compila el binario oficial en ~/.cache/qrecauda/nist90b (fuera del repo; en 0.1.0 era /tmp/qrecauda_nist90b) la primera vez, con build_nist.sh.
 Escribe resultado.json y salida_cruda.json junto a este archivo.
 """
 
