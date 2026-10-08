@@ -113,8 +113,7 @@ def test_el_servicio_de_transacciones_se_compone_con_la_clave_de_la_demo():
     assert t.rotulo == ROTULO_VALIDACION and s.descifrar(t) == tx
 
 
-def test_backend_ibm_sin_adaptador_sigue_siendo_fuente_no_disponible(tmp_path):
-    token = tmp_path / "t"
-    token.write_text("x")
+def test_backend_ibm_sin_credencial_legible_es_fuente_no_disponible(tmp_path):
+    token = tmp_path / "t"  # no existe: ningún test toca la red de IBM
     with pytest.raises(FuenteNoDisponible):
         composicion.fuente_de(Configuracion(backend="ibm", ibm_token_ruta=str(token)))

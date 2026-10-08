@@ -11,6 +11,7 @@ from pathlib import Path
 from qrecauda.dominio.errores import EntradaInvalida
 
 BACKENDS = ("prng", "aer_ruidoso", "ibm")
+MODOS_IBM = ("batch", "session")  # cómo agrupa SamplerV2 los trabajos en IBM Runtime
 MITIGACIONES = ("ninguna", "lectura")  # «lectura» = twirling de lectura propio (D-009)
 NIVELES_RUIDO = ("bajo", "medio", "alto", "realista")  # «realista» = FakeSherbrooke congelado; los demás, canales sintéticos
 VALIDADORES = ("estadistico", "nist")
@@ -24,6 +25,8 @@ class Configuracion:
     semilla: int = 20261007
     epsilon_exp: int = 64  # ε = 2^-epsilon_exp
     ibm_token_ruta: str = ""  # RUTA al fichero del token; el valor no vive aquí
+    ibm_backend: str = ""  # nombre del backend de IBM; vacío = el menos ocupado con qubits suficientes
+    ibm_modo: str = "batch"  # «batch» o «session» (SamplerV2 sobre IBM Runtime)
     mitigacion: str = "ninguna"
     nivel_ruido: str = "medio"  # sólo lo usa el backend aer_ruidoso
     validador: str = "estadistico"
@@ -41,6 +44,7 @@ class Configuracion:
             ("mitigacion", self.mitigacion, MITIGACIONES),
             ("nivel_ruido", self.nivel_ruido, NIVELES_RUIDO),
             ("validador", self.validador, VALIDADORES),
+            ("ibm_modo", self.ibm_modo, MODOS_IBM),
         ):
             if valor not in vocabulario:
                 raise EntradaInvalida(f"{nombre} {valor!r} fuera de {vocabulario}")

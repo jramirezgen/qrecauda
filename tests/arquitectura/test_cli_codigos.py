@@ -72,10 +72,9 @@ def test_formato_json_es_canonico_y_parseable(tmp_path, capsys):
     assert d["aprobado"] is True and texto == json.dumps(d, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
 
 
-def test_configuracion_invalida_y_backend_sin_adaptador_tienen_su_codigo(tmp_path, capsys):
+def test_configuracion_invalida_y_backend_sin_credencial_tienen_su_codigo(tmp_path, capsys):
     assert cli.main(["--config", _config(tmp_path, "shotz = 1")]) == CODIGOS[EntradaInvalida]
     capsys.readouterr()
-    token = tmp_path / "t.txt"
-    token.write_text("x")
+    token = tmp_path / "t.txt"  # no existe: sin credencial legible no se llega a la red de IBM
     cfg = _config(tmp_path, f"backend = 'ibm'\nibm_token_ruta = '{token}'\n")
     assert cli.main(["--config", cfg]) == CODIGOS[errores.FuenteNoDisponible]

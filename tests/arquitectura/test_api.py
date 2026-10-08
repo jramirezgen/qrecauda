@@ -30,6 +30,8 @@ def test_campos_de_la_configuracion_congelados():
         ("semilla", "int"),
         ("epsilon_exp", "int"),
         ("ibm_token_ruta", "str"),
+        ("ibm_backend", "str"),
+        ("ibm_modo", "str"),
         ("mitigacion", "str"),
         ("nivel_ruido", "str"),
         ("validador", "str"),

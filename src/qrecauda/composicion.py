@@ -63,7 +63,29 @@ def fuente_de(cfg: Configuracion) -> FuenteDeBits:
         except ImportError as e:
             raise FuenteNoDisponible(f"el backend aer_ruidoso necesita el extra «cuantico»: {e}") from e
         return FuenteAer(cfg.semilla, _modelo_de_ruido(cfg))
-    raise FuenteNoDisponible(f"el backend {cfg.backend!r} aún no tiene adaptador (DAG F3.04)")
+    if cfg.backend == "ibm":
+        return fuente_ibm_de(cfg)
+    raise FuenteNoDisponible(f"el backend {cfg.backend!r} no tiene adaptador")
+
+
+def fuente_ibm_de(cfg: Configuracion, conectar: Callable[[Any], Any] | None = None, fabricas: Any = None) -> FuenteDeBits:
+    """F3.04: SamplerV2 sobre IBM. La ruta del token se lee aquí (falta ⇒ `FuenteNoDisponible`); la red se toca en `generar`.
+
+    La transpilación a forma ISA (F3.03) se inyecta desde aquí: el adaptador de IBM no importa el de Aer (C2).
+    `conectar` y `fabricas` sólo se pasan en las pruebas (dobles sin red)."""
+    try:
+        from qrecauda.adaptadores.aer.transpilacion import a_isa
+        from qrecauda.adaptadores.ibm_runtime import FuenteIbm, conectar_real
+    except ImportError as e:
+        raise FuenteNoDisponible(f"el backend ibm necesita el extra «cuantico»: {e}") from e
+    return FuenteIbm.desde_ruta(
+        Path(cfg.ibm_token_ruta),
+        transpilar=lambda circuito, backend: a_isa(circuito, backend, semilla=cfg.semilla).circuito,
+        backend=cfg.ibm_backend,
+        modo=cfg.ibm_modo,
+        conectar=conectar or conectar_real,
+        fabricas=fabricas,
+    )
 
 
 def mitigador_de(cfg: Configuracion) -> Mitigador | None:
@@ -119,7 +141,7 @@ def juez_de(raiz: Path, ejecutor: Ejecutor) -> CorrerYJuzgar:
 # ------------------------------------------------------------------ F2.07: de la declaración a la CLI
 
 _ID_EUREKA = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
-_CLAVES_DE_CONFIGURACION = ("backend", "mitigacion", "nivel_ruido", "validador", "ibm_token_ruta")
+_CLAVES_DE_CONFIGURACION = ("backend", "mitigacion", "nivel_ruido", "validador", "ibm_token_ruta", "ibm_backend", "ibm_modo")
 
 
 class _EjecutorDeInformes:

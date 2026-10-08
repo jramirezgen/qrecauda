@@ -52,6 +52,7 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 | término | definición |
 |---|---|
 | `FuenteDeBits` | puerto: da una `Muestra` de `qubits` × `shots`. Adaptadores: PRNG, Aer, IBM. |
+| `FuenteIbm`, `ibm_backend`, `ibm_modo` | F3.04: adaptador de `FuenteDeBits` sobre `SamplerV2` de IBM Runtime. `ibm_backend` nombra el backend (vacío = el menos ocupado); `ibm_modo` es `batch` o `session`. El token entra por la ruta `ibm_token_ruta`, la transpilación ISA la inyecta la composición y `Procedencia.job_id` es el del trabajo real. |
 | `Mitigador` | puerto: reduce el sesgo de lectura y devuelve otra `Muestra`; si remuestrea, el origen se degrada a `PRNG_CLASICO`. |
 | `Validador` | puerto: mide M1, M3, M4, M5 sobre unos bits. |
 | `EstimadorDeEntropia` | puerto: cota de min-entropía por bit. `EstimadorMCV` es la del dominio (ciega a la dependencia); el contraste independiente es el 90B de NIST (S.04). |
