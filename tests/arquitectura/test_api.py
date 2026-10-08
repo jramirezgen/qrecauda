@@ -23,7 +23,7 @@ def test_firmas_congeladas():
     assert str(inspect.signature(api.juzgar)) == "(eureka: 'str', raiz: 'Path') -> 'VeredictoDeEureka'"
     assert str(inspect.signature(api.demo)) == (
         "(cfg: 'Configuracion', *, rapido: 'bool' = False, fuente: 'str' = 'aer', ensayo: 'bool' = False, "
-        "max_segundos_qpu: 'float | None' = None) -> 'ResultadoDemo'"
+        "max_segundos_qpu: 'float | None' = None, shots: 'int | None' = None) -> 'ResultadoDemo'"
     )
     assert str(inspect.signature(api.hardware)) == (
         "(raiz: 'Path', *, cfg: 'Configuracion | None' = None, declaracion: 'Path' = PosixPath('declaraciones/E4.toml'), "
@@ -44,6 +44,8 @@ def test_campos_de_la_configuracion_congelados():
         ("mitigacion", "str"),
         ("nivel_ruido", "str"),
         ("validador", "str"),
+        ("ibm_instancia", "str"),
+        ("dimensionado", "str"),
     ]
 
 

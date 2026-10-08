@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from qrecauda.dominio.errores import FuenteNoDisponible, PresupuestoQpuExcedido
+from qrecauda.dominio.errores import EntradaInvalida, FuenteNoDisponible, PresupuestoQpuExcedido
 from qrecauda.entrada import cli
 from qrecauda.entrada.codigos import CODIGOS, OK
 from qrecauda.transversal.configuracion import entorno_sin_git
@@ -89,3 +89,17 @@ def test_hardware_ensayo_de_punta_a_punta_escribe_fuera_del_registro(repo, capsy
     assert sorted({i["corrida"] for i in todos}) == ["C.E4a", "C.E4b", "C.E4c", "C.E4d", "C.E4e"]
     assert d["reporte"]["trabajo"]["backend"] == "fake_sherbrooke" and d["reporte"]["trabajo"]["job_id"]
     assert len(d["reporte"]["sesgos_por_qubit"]) == 8
+
+
+@pytest.mark.parametrize("malo", ["nan", "inf", "1e12", "0", "-5"])
+def test_un_tope_de_qpu_absurdo_aborta_con_error_claro_y_codigo_2(repo, capsys, malo):
+    """R.02: `nan` desactivaba el aborto sin avisar; `inf` y 1e12 lo hacían inútil."""
+    assert _cli(repo, "demo", "--rapido", "--fuente", "ibm", "--ensayo", f"--max-segundos-qpu={malo}") == CODIGOS[EntradaInvalida]
+    assert "tope" in capsys.readouterr().err
+    assert _cli(repo, "hardware", "--ensayo", f"--max-segundos-qpu={malo}") == CODIGOS[EntradaInvalida]
+    assert "tope" in capsys.readouterr().err
+
+
+def test_demo_conservador_sin_disparos_suficientes_sale_con_codigo_2_y_sugiere_shots(repo, capsys):
+    assert _cli(repo, "demo", "--rapido", "--dimensionado", "conservador") == CODIGOS[EntradaInvalida]
+    assert "--shots 125000" in capsys.readouterr().err

@@ -39,12 +39,19 @@ def juzgar(eureka: str, raiz: Path) -> VeredictoDeEureka:
 
 
 def demo(
-    cfg: Configuracion, *, rapido: bool = False, fuente: str = "aer", ensayo: bool = False, max_segundos_qpu: float | None = None
+    cfg: Configuracion,
+    *,
+    rapido: bool = False,
+    fuente: str = "aer",
+    ensayo: bool = False,
+    max_segundos_qpu: float | None = None,
+    shots: int | None = None,
 ) -> ResultadoDemo:
     """F7.07: PRNG, Aer sin mitigar y Aer con twirling lado a lado, y un peaje y un trayecto de Metro cifrados con la mejor clave.
     Determinista dada `cfg.semilla`, sin red ni credencial. `fuente="ibm"` añade el hardware (token por ruta en `cfg`); `ensayo`, su
-    camino completo contra un backend falso. Rotulada «simulado» salvo hardware real."""
-    return composicion.demo_de(cfg, rapido=rapido, fuente=fuente, ensayo=ensayo, max_segundos_qpu=max_segundos_qpu)
+    camino completo contra un backend falso. Rotulada «simulado» salvo hardware real. `cfg.dimensionado` elige «mcv» (por omisión)
+    o «conservador» (90B; exige >= 1 Mbit por rama: pide `shots` >= 125000 con 8 qubits); `shots` sustituye los de las ramas de Aer."""
+    return composicion.demo_de(cfg, rapido=rapido, fuente=fuente, ensayo=ensayo, max_segundos_qpu=max_segundos_qpu, shots=shots)
 
 
 def hardware(
@@ -60,5 +67,6 @@ def hardware(
     `cfg.ibm_token_ruta` (una RUTA). Real ⇒ `registro/corridas/`; `ensayo` ⇒ backend falso, sin cuota, en `salidas/ensayo_e4/`."""
     c = cfg if cfg is not None else Configuracion()
     return composicion.correr_hardware(
-        raiz, declaracion, token_ruta=c.ibm_token_ruta, backend=c.ibm_backend, ensayo=ensayo, max_segundos_qpu=max_segundos_qpu, ia=ia
-    )
+        raiz, declaracion, token_ruta=c.ibm_token_ruta, backend=c.ibm_backend, ensayo=ensayo, max_segundos_qpu=max_segundos_qpu, ia=ia,
+        instancia=c.ibm_instancia,
+    )  # fmt: skip

@@ -19,11 +19,12 @@ import hashlib
 from collections.abc import Callable, Mapping, Sequence
 
 from qrecauda.aplicacion import criterios_e5 as c
+from qrecauda.aplicacion.dimensionado import estimadores_conservadores
 from qrecauda.aplicacion.pipeline import ParametrosPipeline, Resultado
 from qrecauda.aplicacion.pipeline import ejecutar as ejecutar_pipeline
 from qrecauda.datos import Declaracion, ExperimentoE5, Medicion
 from qrecauda.dominio.bits import Bits
-from qrecauda.dominio.entropia import EstimadorMCV, EstimadorMinimo
+from qrecauda.dominio.entropia import EstimadorMinimo
 from qrecauda.dominio.errores import CorridaInvalida, EntradaInvalida, EntropiaInsuficiente
 from qrecauda.dominio.muestra import Muestra
 from qrecauda.puertos import Bitacora, EstimadorDeEntropia, FuenteDeBits, Mitigador, Reloj, SondaDeMaquina, Validador
@@ -151,10 +152,11 @@ class EjecutorE5:
         cotas: _Cotas | None = None
         kw: dict[str, EstimadorDeEntropia] = {}
         if dim != "mcv":  # «mcv» es el pipeline de 0.1.0, sin un solo argumento nuevo
-            cotas = _Cotas(EstimadorMinimo([(EstimadorMCV(), None), (self._est90, prefijo)]))
-            kw = {"estimador": cotas, "estimador_de_salida": EstimadorMCV()}
+            est = estimadores_conservadores(self._est90, prefijo)  # sin `qubits`: exactamente lo preinscrito
+            cotas = _Cotas(est.minimo)
+            kw = {"estimador": cotas, "estimador_de_salida": est.de_salida}
             if dim == "conservador":
-                kw["estimador_de_fuente"] = EstimadorMinimo([(self._est90, prefijo)])
+                kw["estimador_de_fuente"] = est.de_fuente
         try:
             r = ejecutar_pipeline(fuente, self._val, self._reloj, p, mitigador=mit, **kw)
         except EntropiaInsuficiente as e:

@@ -49,3 +49,43 @@ def test_contabilidad_nunca_sube_la_cota_del_pool():
 def test_contabilidad_rechaza_entradas_vacias():
     with pytest.raises(ValueError):
         h_contable(0.5, 0, 0.5, 10)
+
+
+# ------------------------------------------------------------------ R.02: la muestra qubit-mayor y el prefijo del 90B
+
+
+def _qubit_mayor_con_un_qubit_muerto(qubits: int = 4, disparos: int = 2000) -> Bits:
+    import numpy as np
+
+    rng = np.random.default_rng(7)
+    m = rng.integers(0, 2, size=(qubits, disparos), dtype=np.uint8)
+    m[qubits - 1] = 0  # el último qubit lee siempre cero: el prefijo qubit-mayor de `disparos` bits sólo ve el qubit 0
+    return Bits(m.reshape(-1))
+
+
+def test_el_prefijo_qubit_mayor_no_ve_al_qubit_muerto_pero_las_vistas_si():
+    from qrecauda.dominio.entropia import EstimadorPorVistas
+
+    bits = _qubit_mayor_con_un_qubit_muerto()
+    solo_prefijo = EstimadorMinimo([(EstimadorMCV(), 2000)]).estimar(bits)
+    vistas = EstimadorPorVistas(EstimadorMCV(), qubits=4, prefijo=2000)
+    por_vista = vistas.por_vista(bits)
+    assert solo_prefijo > 0.85  # el defecto pasa inadvertido, como en el hallazgo
+    assert por_vista["por-disparo"] < 0.6 and por_vista["columna-3"] < 0.05
+    assert vistas.estimar(bits) == min(por_vista.values()) < 0.05
+
+
+def test_las_columnas_solo_se_miran_si_tienen_prefijo_disparos():
+    from qrecauda.dominio.entropia import EstimadorPorVistas
+
+    bits = _qubit_mayor_con_un_qubit_muerto(qubits=4, disparos=1000)
+    vistas = EstimadorPorVistas(EstimadorMCV(), qubits=4, prefijo=2000)
+    assert set(vistas.por_vista(bits)) == {"qubit-mayor", "por-disparo"}  # el 90B no admite menos de su mínimo: no se inventan columnas
+
+
+def test_una_muestra_que_no_es_multiplo_de_los_qubits_se_rechaza():
+    from qrecauda.dominio.entropia import EstimadorPorVistas
+    from qrecauda.dominio.errores import EntradaInvalida
+
+    with pytest.raises(EntradaInvalida, match="qubit-mayor"):
+        EstimadorPorVistas(EstimadorMCV(), qubits=3, prefijo=10).estimar(Bits.desde([0, 1] * 5))

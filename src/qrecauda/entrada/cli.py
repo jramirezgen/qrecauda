@@ -31,6 +31,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     demo.add_argument("--rapido", action="store_true", help="menos disparos: segundos en vez de un minuto")
     demo.add_argument("--semilla", type=int, default=None, help="semilla (por omisión la de la configuración)")
+    demo.add_argument("--shots", type=int, default=None, help="disparos de las ramas de Aer (por omisión 100000, o 40000 con --rapido)")
+    demo.add_argument(
+        "--dimensionado", choices=("mcv", "conservador"), default=None,
+        help="«mcv» (por omisión) o «conservador» (mínimo con el 90B; exige >= 1 Mbit por rama: sube --shots)",
+    )  # fmt: skip
     _opciones_ibm(demo)
     demo.add_argument("--fuente", choices=("aer", "ibm"), default="aer", help="«ibm» añade el hardware (o su --ensayo)")
     hw = sub.add_parser("hardware", help="E4: el mismo circuito en Aer y en el hardware de IBM (>= 3 trabajos) a registro/corridas/")
@@ -44,7 +49,8 @@ def _opciones_ibm(ap: argparse.ArgumentParser) -> None:
     ap.add_argument("--token-file", type=Path, default=None, metavar="RUTA", help="RUTA del fichero con el token de IBM (nunca el valor)")
     ap.add_argument("--backend", default="", help="nombre del backend de IBM; vacío = el menos ocupado con >= 8 qubits")
     ap.add_argument("--ensayo", action="store_true", help="todo el camino contra un backend falso de IBM: sin cuota ni credencial")
-    ap.add_argument("--max-segundos-qpu", type=float, default=None, help="tope de segundos de QPU: aborta ANTES de enviar si se pasa")
+    ap.add_argument("--max-segundos-qpu", type=float, default=None, help="tope de segundos de QPU (finito, > 0): aborta ANTES de enviar")
+    ap.add_argument("--instancia", default="", help="instancia de IBM (CRN o nombre); vacío = la que elija el servicio")
 
 
 def _config_con_ibm(args: argparse.Namespace) -> api.Configuracion:
@@ -52,13 +58,20 @@ def _config_con_ibm(args: argparse.Namespace) -> api.Configuracion:
     cambios: dict[str, object] = {"ibm_backend": args.backend or cfg.ibm_backend}
     if args.token_file is not None:
         cambios["ibm_token_ruta"] = str(args.token_file)
+    if args.instancia:
+        cambios["ibm_instancia"] = args.instancia
     if getattr(args, "semilla", None) is not None:
         cambios["semilla"] = args.semilla
+    if getattr(args, "dimensionado", None) is not None:
+        cambios["dimensionado"] = args.dimensionado
     return replace(cfg, **cambios)  # type: ignore[arg-type]
 
 
 def _demo(args: argparse.Namespace) -> int:
-    d = api.demo(_config_con_ibm(args), rapido=args.rapido, fuente=args.fuente, ensayo=args.ensayo, max_segundos_qpu=args.max_segundos_qpu)
+    d = api.demo(
+        _config_con_ibm(args), rapido=args.rapido, fuente=args.fuente, ensayo=args.ensayo, max_segundos_qpu=args.max_segundos_qpu,
+        shots=args.shots,
+    )  # fmt: skip
     print(json_de_demo(d) if args.formato == "json" else tabla_de_demo(d))
     return OK
 

@@ -15,7 +15,8 @@ MODOS_IBM = (
     "batch",
     "session",
     "trabajo",
-)  # cómo agrupa SamplerV2 los trabajos; «trabajo» = suelto (el único del plan abierto, ⚠️ sin verificar)
+)  # cómo agrupa SamplerV2 los trabajos; «trabajo» = suelto (el del plan abierto, ⚠️ sin verificar: el SDK instalado no lo documenta)
+DIMENSIONADOS_DEMO = ("mcv", "conservador")  # F5.05: «mcv» = el de 0.1.0; «conservador» = mínimo(MCV, 90B) + contabilidad de la fuente
 MITIGACIONES = ("ninguna", "lectura")  # «lectura» = twirling de lectura propio (D-009)
 NIVELES_RUIDO = ("bajo", "medio", "alto", "realista")  # «realista» = FakeSherbrooke congelado; los demás, canales sintéticos
 VALIDADORES = ("estadistico", "nist")
@@ -30,10 +31,12 @@ class Configuracion:
     epsilon_exp: int = 64  # ε = 2^-epsilon_exp
     ibm_token_ruta: str = ""  # RUTA al fichero del token; el valor no vive aquí
     ibm_backend: str = ""  # nombre del backend de IBM; vacío = el menos ocupado con qubits suficientes
-    ibm_modo: str = "batch"  # «batch», «session» o «trabajo» (SamplerV2 sobre IBM Runtime)
+    ibm_modo: str = "trabajo"  # «trabajo» (suelto), «batch» o «session»: estos dos son de planes de pago (⚠️ sin verificar)
     mitigacion: str = "ninguna"
     nivel_ruido: str = "medio"  # sólo lo usa el backend aer_ruidoso
     validador: str = "estadistico"
+    ibm_instancia: str = ""  # CRN o nombre de la instancia de IBM; vacía = la que el servicio elija por omisión
+    dimensionado: str = "mcv"  # sólo lo usa `qrecauda demo`: «mcv» o «conservador» (90B + contabilidad; exige >= 1 Mbit por rama)
 
     def __post_init__(self) -> None:
         if self.backend not in BACKENDS:
@@ -49,11 +52,14 @@ class Configuracion:
             ("nivel_ruido", self.nivel_ruido, NIVELES_RUIDO),
             ("validador", self.validador, VALIDADORES),
             ("ibm_modo", self.ibm_modo, MODOS_IBM),
+            ("dimensionado", self.dimensionado, DIMENSIONADOS_DEMO),
         ):
             if valor not in vocabulario:
                 raise EntradaInvalida(f"{nombre} {valor!r} fuera de {vocabulario}")
         if self.mitigacion == "lectura" and self.backend != "aer_ruidoso":
             raise EntradaInvalida("la mitigación «lectura» re-ejecuta el circuito: sólo existe sobre backend aer_ruidoso")
+        if self.ibm_instancia != self.ibm_instancia.strip() or any(c.isspace() or not c.isprintable() for c in self.ibm_instancia):
+            raise EntradaInvalida("ibm_instancia no puede llevar espacios ni caracteres de control")
         if self.backend == "ibm" and not self.ibm_token_ruta:
             raise EntradaInvalida("backend ibm exige ibm_token_ruta (ruta, nunca el valor)")
 
@@ -72,7 +78,10 @@ class Configuracion:
 
     def como_dict(self) -> dict[str, object]:
         """Para el manifiesto: claves ordenadas, sólo rutas (nunca el valor de un secreto)."""
-        return dict(sorted(asdict(self).items()))
+        d = asdict(self)
+        if d["ibm_instancia"]:
+            d["ibm_instancia"] = "<definida>"  # identifica la cuenta: queda constancia de que se usó, no cuál
+        return dict(sorted(d.items()))
 
     @classmethod
     def cargar(cls, ruta: Path | None) -> Configuracion:

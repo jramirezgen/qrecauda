@@ -25,6 +25,7 @@ from qrecauda.adaptadores.prng import FuenteMarkov, FuentePeriodica, FuentePrng
 from qrecauda.adaptadores.sonda_local import SondaLocal
 from qrecauda.adaptadores.temporizador_local import TemporizadorLocal
 from qrecauda.aplicacion.demo import RamaSolicitada, ResultadoDemo, correr_demo
+from qrecauda.aplicacion.dimensionado import estimadores_conservadores
 from qrecauda.aplicacion.ejecutor_e1 import EjecutorE1
 from qrecauda.aplicacion.ejecutor_e2 import EjecutorE2
 from qrecauda.aplicacion.ejecutor_e3 import EjecutorE3
@@ -40,7 +41,7 @@ from qrecauda.datos import Declaracion, InformeCorrida, ManifiestoDeCorrida, Med
 from qrecauda.dominio.bits import Bits
 from qrecauda.dominio.errores import CorridaInvalida, EntradaInvalida, FuenteNoDisponible, PresupuestoQpuExcedido
 from qrecauda.dominio.muestra import Muestra
-from qrecauda.dominio.presupuesto_qpu import TOPE_POR_OMISION_S
+from qrecauda.dominio.presupuesto_qpu import TOPE_POR_OMISION_S, validar_tope_qpu
 from qrecauda.puertos import (
     Bitacora,
     Ejecutor,
@@ -86,7 +87,7 @@ def fuente_de(cfg: Configuracion) -> FuenteDeBits:
             raise FuenteNoDisponible(f"el backend aer_ruidoso necesita el extra «cuantico»: {e}") from e
         return FuenteAer(cfg.semilla, _modelo_de_ruido(cfg))
     if cfg.backend == "ibm":
-        fuente: FuenteDeBits = fuente_ibm_de(cfg)
+        fuente: FuenteDeBits = fuente_ibm_de(cfg, instancia=cfg.ibm_instancia)  # el tope por omisión lo pone `fuente_ibm_de`
         return fuente
     raise FuenteNoDisponible(f"el backend {cfg.backend!r} no tiene adaptador")
 
@@ -107,7 +108,9 @@ def fuente_ibm_de(
 
     La transpilación a forma ISA (F3.03) se inyecta desde aquí: el adaptador de IBM no importa el de Aer (C2). `ia=True` pide el
     enrutado con IA y, si falta `qiskit_ibm_transpiler`, DEGRADA con aviso. `ensayo=True` recorre todo el camino contra un backend
-    falso de IBM, sin token ni cuota. `conectar` y `fabricas` sólo se pasan en las pruebas (dobles sin red)."""
+    falso de IBM, sin token ni cuota. `conectar` y `fabricas` sólo se pasan en las pruebas (dobles sin red).
+
+    Sin `max_segundos_qpu` rige `TOPE_POR_OMISION_S`: ninguna ruta, ni `qrecauda` sin subcomando, envía a hardware sin tope (R.02)."""
     try:
         from qrecauda.adaptadores.aer.transpilacion import a_isa
         from qrecauda.adaptadores.ibm_runtime import FuenteIbm, conectar_real
@@ -121,7 +124,7 @@ def fuente_ibm_de(
         "transpilar": transpilar,
         "mascaras": mascaras,
         "semilla": cfg.semilla,
-        "max_segundos_qpu": max_segundos_qpu,
+        "max_segundos_qpu": validar_tope_qpu(TOPE_POR_OMISION_S if max_segundos_qpu is None else max_segundos_qpu),
         "espera_max_s": espera_max_s,
     }
     if ensayo:
@@ -132,7 +135,7 @@ def fuente_ibm_de(
         modo=cfg.ibm_modo,
         conectar=conectar or conectar_real,
         fabricas=fabricas,
-        instancia=instancia,
+        instancia=instancia or cfg.ibm_instancia,
         **comunes,
     )
 
@@ -658,6 +661,7 @@ def ejecutor_e4_de(
     ensayo: bool = False,
     max_segundos_qpu: float | None = None,
     ia: bool = False,
+    instancia: str = "",
     bitacora: Bitacora | None = None,
     historial: Historial | None = None,
     contraste: Callable[[Declaracion, int], FuenteDeContraste] | None = None,
@@ -688,8 +692,9 @@ def ejecutor_e4_de(
                     f"el tope de {tope:.1f} s de QPU de la corrida ya está gastado: no se envía el trabajo de {semilla}"
                 )
             cfg = Configuracion(
-                backend="ibm" if not ensayo else "prng", semilla=semilla, ibm_token_ruta=token_ruta, ibm_backend=backend, ibm_modo="trabajo"
-            )
+                backend="ibm" if not ensayo else "prng", semilla=semilla, ibm_token_ruta=token_ruta, ibm_backend=backend,
+                ibm_modo="trabajo", ibm_instancia=instancia,
+            )  # fmt: skip
             espera = decl.tablas.get("hardware", {}).get("espera_max_s")
             ibm = fuente_ibm_de(
                 cfg, conectar, fabricas, ensayo=ensayo, mascaras=mascaras_de(decl), max_segundos_qpu=restante, ia=ia,
@@ -716,17 +721,20 @@ def correr_hardware(
     ensayo: bool = False,
     max_segundos_qpu: float | None = None,
     ia: bool = False,
+    instancia: str = "",
     historial: Historial | None = None,
     contraste: Callable[[Declaracion, int], FuenteDeContraste] | None = None,
 ) -> ManifiestoDeCorrida:
     """F3.07: el contraste de E4. Real ⇒ `registro/corridas/` (la preinscripción tiene que estar commiteada). `ensayo` ⇒ todo el
     camino contra un backend falso de IBM, SIN cuota ni credencial, y escribe en `salidas/ensayo_e4/` (nunca en el registro)."""
+    if max_segundos_qpu is not None:
+        validar_tope_qpu(max_segundos_qpu)  # nan/inf/1e12 abortan aquí, antes de cargar nada y con un error claro
     decl = cargar_declaracion(_relativa(Path(declaracion), raiz), raiz)
     if decl.eureka != "E4":
         raise EntradaInvalida(f"`hardware` corre E4, no {decl.eureka}")
     ejecutor = ejecutor_e4_de(
-        raiz, token_ruta=token_ruta, backend=backend, ensayo=ensayo, max_segundos_qpu=max_segundos_qpu, ia=ia, historial=historial,
-        contraste=contraste,
+        raiz, token_ruta=token_ruta, backend=backend, ensayo=ensayo, max_segundos_qpu=max_segundos_qpu, ia=ia, instancia=instancia,
+        historial=historial, contraste=contraste,
     )  # fmt: skip
     if not ensayo:
         return juez_de(raiz, ejecutor).correr(decl)
@@ -751,10 +759,19 @@ def demo_de(
     fuente: str = "aer",
     ensayo: bool = False,
     max_segundos_qpu: float | None = None,
+    shots: int | None = None,
     conectar: Callable[[Any], Any] | None = None,
     fabricas: Any = None,
+    estimador_90b: EstimadorDeEntropia | None = None,
 ) -> ResultadoDemo:
-    """F7.07: PRNG, Aer sin mitigar y Aer con twirling lado a lado y, con `fuente="ibm"`, también el hardware (o su ensayo)."""
+    """F7.07: PRNG, Aer sin mitigar y Aer con twirling lado a lado y, con `fuente="ibm"`, también el hardware (o su ensayo).
+
+    `cfg.dimensionado` elige «mcv» (0.1.0, por omisión) o «conservador» (F5.05: mínimo(MCV, 90B) + contabilidad de la fuente, como E5).
+    `estimador_90b` sólo se pasa en las pruebas (el 90B real exige >= 1 Mbit por rama y el binario compilado)."""
+    if max_segundos_qpu is not None:
+        validar_tope_qpu(max_segundos_qpu)
+    if shots is not None and shots < 1:
+        raise EntradaInvalida(f"--shots debe ser positivo, llegó {shots}")
     if fuente not in ("aer", "ibm"):
         raise EntradaInvalida(f"fuente {fuente!r} fuera de ('aer', 'ibm')")
     if ensayo and fuente != "ibm":
@@ -774,7 +791,7 @@ def demo_de(
     except ImportError as e:
         raise FuenteNoDisponible(f"la demo con Aer necesita el extra «cuantico»: {e}") from e
     modelo = _modelo_de_ruido(ruido)
-    shots = DEMO_SHOTS_AER[rapido]
+    shots = shots if shots is not None else DEMO_SHOTS_AER[rapido]
     p = ParametrosPipeline(DEMO_QUBITS, shots)
     ramas = [
         RamaSolicitada("PRNG clasico", FuentePrng(cfg.semilla)),
@@ -798,12 +815,39 @@ def demo_de(
         ]
         if ensayo:
             avisos.append("ensayo: backend falso de IBM, sin cuota ni credencial; sus bits los pone Aer, no un dispositivo")
+    estimadores = _estimadores_de_demo(cfg, ramas, p, estimador_90b)
     with un_hilo():
         verificar_un_hilo()
         return correr_demo(
             ramas, validador, RelojMonotonico(), p, lambda r: servicio_de(cfg, r), fuente="ensayo" if ensayo else fuente, rapido=rapido,
-            avisos=avisos,
+            avisos=avisos, estimadores=estimadores,
         )  # fmt: skip
+
+
+def _estimadores_de_demo(
+    cfg: Configuracion, ramas: list[RamaSolicitada], p: ParametrosPipeline, estimador_90b: EstimadorDeEntropia | None
+) -> dict[str, EstimadorDeEntropia] | None:
+    """`mcv`: None (el pipeline de 0.1.0). `conservador`: los estimadores de F5.05 con el 90B y la fuente por vistas de qubit (R.02).
+
+    Falla ANTES de gastar nada si alguna rama no llega al mínimo de bits del 90B, y dice cuántos disparos hacen falta."""
+    if cfg.dimensionado == "mcv":
+        return None
+    try:
+        from qrecauda.adaptadores.min_entropia import MUESTRAS_MIN, EstimadorNist90B
+    except ImportError as e:
+        raise FuenteNoDisponible(f"el dimensionado conservador necesita el extra «validacion» y el 90B: {e}") from e
+    cortas = [(r.nombre, p.qubits * (r.shots if r.shots is not None else p.shots)) for r in ramas]
+    cortas = [(n, b) for n, b in cortas if b < MUESTRAS_MIN]
+    if cortas:
+        nombre, bits = min(cortas, key=lambda x: x[1])
+        necesarios = -(-MUESTRAS_MIN // p.qubits)
+        raise EntradaInvalida(
+            f"--dimensionado conservador exige >= {MUESTRAS_MIN} bits por rama (SP 800-90B) y «{nombre}» tiene {bits}: "
+            f"con {p.qubits} qubits hacen falta >= {necesarios} disparos por rama (--shots {necesarios}); "
+            f"las ramas de hardware reparten pocos disparos a propósito, así que con --fuente ibm usa --dimensionado mcv"
+        )
+    est = estimadores_conservadores(estimador_90b or EstimadorNist90B(), MUESTRAS_MIN, qubits=p.qubits)
+    return est.kw_del_pipeline()
 
 
 def ejecutor_de(raiz: Path, decl: Declaracion) -> Ejecutor:

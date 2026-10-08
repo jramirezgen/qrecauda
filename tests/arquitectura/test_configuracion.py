@@ -117,3 +117,34 @@ def test_backend_ibm_sin_credencial_legible_es_fuente_no_disponible(tmp_path):
     token = tmp_path / "t"  # no existe: ningún test toca la red de IBM
     with pytest.raises(FuenteNoDisponible):
         composicion.fuente_de(Configuracion(backend="ibm", ibm_token_ruta=str(token)))
+
+
+# ------------------------------------------------------------------ R.02: modo, instancia y dimensionado
+
+
+def test_el_modo_de_ibm_por_omision_es_trabajo_porque_batch_y_session_son_de_pago():
+    assert Configuracion().ibm_modo == "trabajo"
+
+
+def test_la_instancia_no_lleva_espacios_ni_se_vuelca_al_manifiesto():
+    with pytest.raises(EntradaInvalida, match="ibm_instancia"):
+        Configuracion(ibm_instancia="mi instancia")
+    assert Configuracion(ibm_instancia="crn:v1:abc").como_dict()["ibm_instancia"] == "<definida>"
+    assert Configuracion().como_dict()["ibm_instancia"] == ""
+
+
+def test_el_dimensionado_tiene_vocabulario_cerrado():
+    assert Configuracion().dimensionado == "mcv"
+    with pytest.raises(EntradaInvalida, match="dimensionado"):
+        Configuracion(dimensionado="agresivo")
+
+
+def test_qrecauda_sin_subcomando_con_ibm_usa_el_tope_por_omision(tmp_path):
+    """R.02: `fuente_de` con backend ibm enviaba sin tope; ahora rige TOPE_POR_OMISION_S y la instancia llega al servicio."""
+    from qrecauda.dominio.presupuesto_qpu import TOPE_POR_OMISION_S
+
+    ruta = tmp_path / "t.txt"
+    ruta.write_text("tok-SECRETO-0123456789abcdef")
+    fuente = composicion.fuente_de(Configuracion(backend="ibm", ibm_token_ruta=str(ruta), ibm_instancia="crn:v1:abc"))
+    assert fuente._max_qpu_s == TOPE_POR_OMISION_S == 60.0 and fuente._instancia == "crn:v1:abc"
+    assert fuente._modo == "trabajo"

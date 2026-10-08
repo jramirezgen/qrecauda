@@ -84,3 +84,50 @@ def test_demo_ibm_en_ensayo_anade_dos_ramas_y_dice_que_es_un_ensayo():
     assert any("ensayo" in a for a in d.avisos)
     assert d.rotulo == ROTULO_SIMULADO  # los bits del ensayo los pone Aer
     assert ROTULO_REAL != ROTULO_SIMULADO
+
+
+# ------------------------------------------------------------------ R.02: dimensionado, nombres y tope
+
+
+class _Noventa:
+    def __init__(self) -> None:
+        self.vistos: list[int] = []
+
+    def estimar(self, bits):  # noqa: ANN001, ANN201
+        self.vistos.append(len(bits))
+        return 0.9
+
+
+def test_la_demo_usa_nombres_de_lugares_de_lima():
+    from qrecauda.aplicacion.demo import METRO, PEAJE
+
+    assert (PEAJE.estacion, METRO.estacion) == ("Peaje Villa", "Metro Gamarra")
+
+
+def test_dimensionado_por_omision_es_mcv_y_la_demo_no_cambia():
+    assert Configuracion().dimensionado == "mcv"
+    cfg = Configuracion(semilla=3)
+    assert json_de_demo(demo_de(cfg, rapido=True)) == json_de_demo(demo_de(Configuracion(semilla=3, dimensionado="mcv"), rapido=True))
+
+
+def test_conservador_con_pocos_bits_lo_dice_y_sugiere_mas_disparos():
+    with pytest.raises(EntradaInvalida) as e:
+        demo_de(Configuracion(dimensionado="conservador"), rapido=True)  # 8 × 40 000 = 320 000 bits < 1 Mbit
+    msg = str(e.value)
+    assert "1000000" in msg and "--shots 125000" in msg and "mcv" in msg
+
+
+def test_conservador_cablea_el_90b_en_el_pipeline_de_la_demo(monkeypatch):
+    from qrecauda.adaptadores import min_entropia
+
+    monkeypatch.setattr(min_entropia, "MUESTRAS_MIN", 1000)  # el 90B real exige 1 Mbit; el doble acepta cualquier prefijo
+    n90 = _Noventa()
+    d = demo_de(Configuracion(semilla=5, dimensionado="conservador"), rapido=True, shots=2000, estimador_90b=n90)
+    assert len(d.ramas) == 3 and n90.vistos  # el 90B se consultó (pool, fuente por vistas)
+    assert max(n90.vistos) <= 8 * 2000 and 1000 in n90.vistos  # prefijo qubit-mayor (y no la muestra entera) en al menos una vista
+
+
+@pytest.mark.parametrize("malo", [float("nan"), float("inf"), 1e12, 0.0, -3.0])
+def test_la_demo_rechaza_un_tope_de_qpu_que_no_es_finito_positivo_y_razonable(malo):
+    with pytest.raises(EntradaInvalida, match="tope"):
+        demo_de(Configuracion(), rapido=True, max_segundos_qpu=malo)

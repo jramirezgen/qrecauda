@@ -62,6 +62,38 @@ class EstimadorMinimo:
         return min(self.por_cota(bits))
 
 
+class EstimadorPorVistas:
+    """Cota sobre la MUESTRA CRUDA que no depende de qué qubits caen en el prefijo (R.02, hallazgo del 90B qubit-mayor).
+
+    La muestra de `FuenteAer`/`FuenteIbm` va en orden QUBIT-MAYOR (todos los disparos del qubit 0, luego los del 1…), así que el prefijo de
+    10⁶ bits que se le da al 90B puede cubrir sólo los primeros qubits y no ver al peor ni la dependencia ENTRE qubits. Aquí la cota es el
+    mínimo de varias vistas de los mismos bits, cada una sobre a lo sumo `prefijo` bits: (1) el prefijo qubit-mayor de siempre; (2) el
+    INTERCALADO por disparo (disparo 0 de todos los qubits, disparo 1…), que reparte el prefijo entre todos los qubits y deja ver la
+    correlación entre ellos; (3) cada COLUMNA de qubit, sólo si tiene al menos `prefijo` disparos (el 90B no admite menos: no se inventa).
+    Es OPCIONAL: lo medido en E1–E5 usa el prefijo solo."""
+
+    def __init__(self, interior: CotaDeEntropia, qubits: int, prefijo: int) -> None:
+        if qubits < 1 or prefijo < 1:
+            raise EntradaInvalida(f"qubits y prefijo deben ser positivos, llegó {qubits}, {prefijo}")
+        self._interior, self._qubits, self._prefijo = interior, qubits, prefijo
+
+    def por_vista(self, bits: Bits) -> dict[str, float]:
+        q, n = self._qubits, len(bits)
+        if n % q:
+            raise EntradaInvalida(f"{n} bits no son una muestra qubit-mayor de {q} qubits")
+        disparos = n // q
+        m = bits.datos.reshape(q, disparos)
+        vistas: dict[str, Bits] = {"qubit-mayor": bits[: self._prefijo]}
+        if q > 1:
+            vistas["por-disparo"] = Bits(m.T.reshape(-1)[: self._prefijo])
+        if disparos >= self._prefijo:
+            vistas.update({f"columna-{k}": Bits(m[k, : self._prefijo]) for k in range(q)})
+        return {nombre: self._interior.estimar(v) for nombre, v in vistas.items()}
+
+    def estimar(self, bits: Bits) -> float:
+        return min(self.por_vista(bits).values())
+
+
 def h_contable(h_pool: float, bits_pool: int, h_fuente: float, bits_fuente: int) -> float:
     """Contabilidad de entropía: Peres es una función determinista de la muestra, no crea entropía, así que el pool entero
     no puede tener más que la muestra: `|pool|·h ≤ N·h_fuente`. Devuelve `min(h_pool, h_fuente·N/|pool|)`, por bit de pool.

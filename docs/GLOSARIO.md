@@ -58,6 +58,8 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 | `EstimadorDeEntropia` | puerto: cota de min-entropía por bit. `EstimadorMCV` es la del dominio (ciega a la dependencia); el contraste independiente es el 90B de NIST (S.04). |
 | `CotaDeEntropia` | firma mínima de una cota de min-entropía (la del puerto `EstimadorDeEntropia`, que el dominio no importa); lo que `EstimadorMinimo` combina. |
 | `EstimadorMinimo` | dimensionado conservador (F5.05): el mínimo de varias cotas, cada una sobre un prefijo declarado (MCV sobre todo el pool, 90B sobre 10⁶ bits). Con `h_contable` acota además la entropía total por la de la muestra cruda. |
+| `EstimadorPorVistas` | opción más estricta para la muestra cruda (R.02): el mínimo de varias vistas de los mismos bits (prefijo qubit-mayor, intercalado por disparo y columnas de qubit con ≥ prefijo disparos), porque el prefijo qubit-mayor del 90B puede no ver a todos los qubits. No cambia lo medido en E1–E5. |
+| `EstimadoresConservadores` | los tres estimadores del dimensionado conservador (mínimo del pool, de la fuente y de la salida) armados en un solo sitio para E5, la demo y la reserva. |
 | `EstimadorDeSesgo` | puerto: ⟨Z⟩ con y sin mitigar; ahí vivirían ZNE/PEC. |
 | `FuenteDeSemilla` | puerto: bits uniformes para la semilla de Toeplitz (D-004). |
 | `Cifrador` | puerto: AES-GCM con la clave del pipeline. |

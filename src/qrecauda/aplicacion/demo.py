@@ -9,7 +9,7 @@ sin origen cuántico» (D-002); y aun con hardware real la batería NIST NO cert
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 
 from qrecauda.aplicacion.pipeline import ParametrosPipeline, Resultado
@@ -18,15 +18,15 @@ from qrecauda.aplicacion.transaccion import ServicioDeTransacciones, Transaccion
 from qrecauda.dominio.errores import EntradaInvalida
 from qrecauda.dominio.metricas import Metrica
 from qrecauda.dominio.muestra import Origen
-from qrecauda.puertos import FuenteDeBits, Mitigador, Reloj, Validador
+from qrecauda.puertos import EstimadorDeEntropia, FuenteDeBits, Mitigador, Reloj, Validador
 
 ROTULO_SIMULADO = "simulado: Aer es pseudoaleatorio, sin origen cuántico"
 ROTULO_REAL = "hardware IBM: origen físico real; la batería NIST no certifica aleatoriedad cuántica"
 ROTULO_PRNG = "clásico: PRNG determinista dada la semilla"
 _ROTULO_DE = {Origen.PRNG_CLASICO: ROTULO_PRNG, Origen.SIMULADOR_AER: ROTULO_SIMULADO, Origen.HARDWARE_IBM: ROTULO_REAL}
 
-PEAJE = Transaccion("Peaje Tlalpan", 4500, "tarjeta-****-1234")
-METRO = Transaccion("Metro Zócalo", 500, "tarjeta-****-5678")
+PEAJE = Transaccion("Peaje Villa", 4500, "tarjeta-****-1234")
+METRO = Transaccion("Metro Gamarra", 500, "tarjeta-****-5678")
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,12 +135,26 @@ def correr_demo(
     fuente: str,
     rapido: bool,
     avisos: Sequence[str] = (),
+    estimadores: Mapping[str, EstimadorDeEntropia] | None = None,
 ) -> ResultadoDemo:
-    """Corre el pipeline real una vez por rama y cifra un peaje y un trayecto de Metro con la clave de la última rama aprobada."""
+    """Corre el pipeline real una vez por rama y cifra un peaje y un trayecto de Metro con la clave de la última rama aprobada.
+
+    `estimadores` (opcional) son los argumentos `estimador`, `estimador_de_fuente` y `estimador_de_salida` del pipeline, p. ej. los del
+    dimensionado conservador; por omisión (None) es el pipeline de 0.1.0, sin un solo argumento nuevo."""
     if not ramas:
         raise EntradaInvalida("la demo necesita al menos una rama")
     resultados = [
-        (r, ejecutar_pipeline(r.fuente, validador, reloj, p if r.shots is None else replace(p, shots=r.shots), mitigador=r.mitigador))
+        (
+            r,
+            ejecutar_pipeline(
+                r.fuente,
+                validador,
+                reloj,
+                p if r.shots is None else replace(p, shots=r.shots),
+                mitigador=r.mitigador,
+                **(estimadores or {}),
+            ),
+        )
         for r in ramas
     ]
     filas = tuple(_rama(r.nombre, res) for r, res in resultados)

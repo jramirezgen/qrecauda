@@ -299,36 +299,43 @@ class FuenteIbm:
         nombre_creg = prep.base.cregs[0].name
         job_id, job, reservado = "", None, 0.0
         error: FuenteNoDisponible | None = None
+        completo = False
         try:
-            if self._modo == "trabajo":
-                contexto: Any = nullcontext(prep.backend)
-            else:
-                contexto = (fabricas.batch if self._modo == "batch" else fabricas.session)(prep.backend)
-            with contexto as modo:
-                # Sólo `.run()` y `.result()` van en el filtro de fallos del SDK: lo demás es código nuestro y sube tal cual.
-                job = self._en_sdk(
-                    f"enviar el trabajo a {prep.nombre}", lambda: fabricas.sampler(mode=modo).run([(c, None, por_pub) for c in circuitos])
-                )
-                job_id = str(job.job_id() or "")
-                if not job_id:
-                    raise FuenteNoDisponible(
-                        f"{prep.nombre} no devolvió job_id: sin trabajo real no hay hardware y la muestra no se acepta como HARDWARE_IBM"
+            try:
+                if self._modo == "trabajo":
+                    contexto: Any = nullcontext(prep.backend)
+                else:
+                    contexto = (fabricas.batch if self._modo == "batch" else fabricas.session)(prep.backend)
+                with contexto as modo:
+                    # Sólo `.run()` y `.result()` van en el filtro de fallos del SDK: lo demás es código nuestro y sube tal cual.
+                    job = self._en_sdk(
+                        f"enviar el trabajo a {prep.nombre}",
+                        lambda: fabricas.sampler(mode=modo).run([(c, None, por_pub) for c in circuitos]),
                     )
-                if not self._ensayo:  # desde que existe el job_id la cuota puede estar corriendo: se cuenta YA y se reconcilia con usage()
-                    reservado = estimado.segundos
-                    self._gastado_s += reservado
-                _log.info("trabajo %s enviado a %s (%s, %d PUBs × %d shots)", job_id, prep.nombre, self._modo, n_pubs, por_pub)
-                espera = self._espera_max_s if self._espera_max_s and not self._ensayo else None
-                resultado = self._en_sdk(
-                    f"obtener la muestra del trabajo {job_id} en {prep.nombre}",
-                    lambda: job.result(timeout=espera) if espera else job.result(),
-                    job_id,
-                )
-                datos = [self._leer_pub(resultado, i, nombre_creg, qubits, por_pub, job_id) for i in range(n_pubs)]
-        except BaseException as e:  # incluye KeyboardInterrupt: un trabajo que nadie espera ya sigue gastando cola y cuota
-            self._cancelar(job, job_id)
-            if not isinstance(e, FuenteNoDisponible):
-                raise
+                    job_id = str(job.job_id() or "")
+                    if not job_id:
+                        raise FuenteNoDisponible(
+                            f"{prep.nombre} no devolvió job_id: sin trabajo real no hay hardware "
+                            f"y la muestra no se acepta como HARDWARE_IBM"
+                        )
+                    if (
+                        not self._ensayo
+                    ):  # desde que existe el job_id la cuota puede estar corriendo: se cuenta YA y se reconcilia con usage()
+                        reservado = estimado.segundos
+                        self._gastado_s += reservado
+                    _log.info("trabajo %s enviado a %s (%s, %d PUBs × %d shots)", job_id, prep.nombre, self._modo, n_pubs, por_pub)
+                    espera = self._espera_max_s if self._espera_max_s and not self._ensayo else None
+                    resultado = self._en_sdk(
+                        f"obtener la muestra del trabajo {job_id} en {prep.nombre}",
+                        lambda: job.result(timeout=espera) if espera else job.result(),
+                        job_id,
+                    )
+                    datos = [self._leer_pub(resultado, i, nombre_creg, qubits, por_pub, job_id) for i in range(n_pubs)]
+                completo = True
+            finally:
+                if not completo:  # también con Ctrl-C: un trabajo que nadie espera sigue gastando cola y cuota
+                    self._cancelar(job, job_id)
+        except FuenteNoDisponible as e:
             error = e
         if error is not None:
             raise error  # fuera del `except`: sin __context__, la excepción original (que podría citar el token) no viaja
@@ -510,7 +517,7 @@ class FuenteIbm:
         try:
             cancelar()
             _log.warning("trabajo %s: cancelación pedida porque ya no se espera su resultado", job_id)
-        except Exception as e:  # noqa: BLE001 - cancelar es un esfuerzo: el error real es el que ya viaja
+        except (*_FALLOS_DEL_SDK, AttributeError, TypeError) as e:  # cancelar es un esfuerzo: el error real es el que ya viaja
             _log.warning("trabajo %s: no se pudo cancelar (%s)", job_id, type(e).__name__)
 
     def _fallo(self, que: str, e: BaseException, job_id: str = "") -> FuenteNoDisponible:
