@@ -26,7 +26,7 @@ semilla_repeticion = "semilla * 100 + i"        # i = 0..32
 hilos = 1
 omp_num_threads = 1
 aer_max_parallel_threads = 1
-carga_previa_maxima = 1.0                        # os.getloadavg()[0] < 1.0
+carga_previa_maxima = 2.0                        # os.getloadavg()[0] < 2.0 (enmienda 2026-10-08: un proceso ajeno en otro nucleo; corrida fijada con taskset a un nucleo libre)
 candado_de_maquina = true
 maquina = "la registrada por entorno() + CPU, nucleos logicos, RAM y kernel; una sola para las tres semillas"
 
