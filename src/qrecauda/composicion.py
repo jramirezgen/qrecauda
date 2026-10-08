@@ -68,12 +68,20 @@ from qrecauda.transversal.reproducibilidad import (
     verificar_un_hilo,
 )
 
+EXTRAS_DE_LA_DEMO = ("cuantico", "mitigacion", "validacion", "cifrado")  # los que `qrecauda demo` necesita; el extra «demo» los reúne
+
+
+def instalar(extra: str) -> str:
+    """La línea EXACTA que arregla un extra ausente. `uv sync` sin `--extra` desinstala lo que no nombra: por eso se nombran todos."""
+    todos = " ".join(f"--extra {x}" for x in EXTRAS_DE_LA_DEMO)
+    return f"Instala con: uv sync --frozen --group dev {todos}  (equivale a --extra demo; para sólo «{extra}»: uv sync --extra {extra})"
+
 
 def _modelo_de_ruido(cfg: Configuracion) -> Any:
     try:
         from qrecauda.adaptadores.aer.ruido import NIVELES, modelo_de_ruido, modelo_realista
     except ImportError as e:
-        raise FuenteNoDisponible(f"el backend aer_ruidoso necesita el extra «cuantico»: {e}") from e
+        raise FuenteNoDisponible(f"el backend aer_ruidoso necesita el extra «cuantico»: {e}. {instalar('cuantico')}") from e
     return modelo_realista() if cfg.nivel_ruido == "realista" else modelo_de_ruido(NIVELES[cfg.nivel_ruido])
 
 
@@ -84,7 +92,7 @@ def fuente_de(cfg: Configuracion) -> FuenteDeBits:
         try:
             from qrecauda.adaptadores.aer import FuenteAer
         except ImportError as e:
-            raise FuenteNoDisponible(f"el backend aer_ruidoso necesita el extra «cuantico»: {e}") from e
+            raise FuenteNoDisponible(f"el backend aer_ruidoso necesita el extra «cuantico»: {e}. {instalar('cuantico')}") from e
         return FuenteAer(cfg.semilla, _modelo_de_ruido(cfg))
     if cfg.backend == "ibm":
         fuente: FuenteDeBits = fuente_ibm_de(cfg, instancia=cfg.ibm_instancia)  # el tope por omisión lo pone `fuente_ibm_de`
@@ -115,7 +123,7 @@ def fuente_ibm_de(
         from qrecauda.adaptadores.aer.transpilacion import a_isa
         from qrecauda.adaptadores.ibm_runtime import FuenteIbm, conectar_real
     except ImportError as e:
-        raise FuenteNoDisponible(f"el backend ibm necesita el extra «cuantico»: {e}") from e
+        raise FuenteNoDisponible(f"el backend ibm necesita el extra «cuantico»: {e}. {instalar('cuantico')}") from e
 
     def transpilar(circuito: Any, backend: Any) -> Any:
         return a_isa(circuito, backend, semilla=cfg.semilla, ia=ia)
@@ -146,7 +154,7 @@ def mitigador_de(cfg: Configuracion) -> Mitigador | None:
     try:
         from qrecauda.adaptadores.mthree import TwirlingLectura
     except ImportError as e:
-        raise FuenteNoDisponible(f"la mitigación «lectura» necesita el extra «cuantico»: {e}") from e
+        raise FuenteNoDisponible(f"la mitigación «lectura» necesita el extra «cuantico»: {e}. {instalar('cuantico')}") from e
     return TwirlingLectura(_modelo_de_ruido(cfg), cfg.semilla)
 
 
@@ -155,7 +163,7 @@ def validador_de(cfg: Configuracion) -> Validador:
         try:
             from qrecauda.adaptadores.nist import ValidadorNist
         except ImportError as e:
-            raise FuenteNoDisponible(f"el validador nist necesita el extra «validacion»: {e}") from e
+            raise FuenteNoDisponible(f"el validador nist necesita el extra «validacion»: {e}. {instalar('validacion')}") from e
         return ValidadorNist()
     return ValidadorEstadistico()
 
@@ -175,7 +183,7 @@ def servicio_de(cfg: Configuracion, resultado: Resultado) -> ServicioDeTransacci
     try:
         from qrecauda.adaptadores.aes_gcm import CifradorAesGcm, ReservaDeClave
     except ImportError as e:
-        raise FuenteNoDisponible(f"el cifrado necesita el extra «cifrado»: {e}") from e
+        raise FuenteNoDisponible(f"el cifrado necesita el extra «cifrado»: {e}. {instalar('cifrado')}") from e
     return ServicioDeTransacciones(resultado, CifradorAesGcm(), ReservaDeClave)
 
 
@@ -254,7 +262,7 @@ class _LaboratorioAer:
         try:
             from qrecauda.adaptadores.aer.ruido import CanalLectura, modelo_de_ruido, modelo_realista
         except ImportError as e:
-            raise FuenteNoDisponible(f"E2 necesita el extra «cuantico»: {e}") from e
+            raise FuenteNoDisponible(f"E2 necesita el extra «cuantico»: {e}. {instalar('cuantico')}") from e
         if ruido.realista:
             if self._realista is None:  # construirlo cuesta; la calibración es congelada, así que es el mismo en toda la corrida
                 self._realista = modelo_realista()
@@ -265,14 +273,14 @@ class _LaboratorioAer:
         try:
             from qrecauda.adaptadores.aer import FuenteAer
         except ImportError as e:
-            raise FuenteNoDisponible(f"E2 necesita el extra «cuantico»: {e}") from e
+            raise FuenteNoDisponible(f"E2 necesita el extra «cuantico»: {e}. {instalar('cuantico')}") from e
         return FuenteAer(semilla, self._modelo(ruido), self._hilos)
 
     def twirling(self, ruido: RuidoDeLectura, semilla: int, bloque: int) -> Mitigador:
         try:
             from qrecauda.adaptadores.mthree import TwirlingLectura
         except ImportError as e:
-            raise FuenteNoDisponible(f"el twirling necesita el extra «cuantico»: {e}") from e
+            raise FuenteNoDisponible(f"el twirling necesita el extra «cuantico»: {e}. {instalar('cuantico')}") from e
         return TwirlingLectura(self._modelo(ruido), semilla, bloque, self._hilos)
 
     def zne(self, ruido: RuidoDeLectura, semilla: int) -> EstimadorDeSesgo:
@@ -296,7 +304,7 @@ def _alinear_niveles_con_el_toml(decl: Declaracion) -> None:
     try:
         from qrecauda.adaptadores.aer.ruido import NIVELES
     except ImportError as e:
-        raise FuenteNoDisponible(f"E2 necesita el extra «cuantico»: {e}") from e
+        raise FuenteNoDisponible(f"E2 necesita el extra «cuantico»: {e}. {instalar('cuantico')}") from e
     tabla = decl.tabla("ruido_lectura")
     for nivel in decl.lista("niveles", "sinteticos"):
         canal = NIVELES[nivel]
@@ -358,7 +366,7 @@ def ejecutor_e3_de(raiz: Path, bitacora: Bitacora | None = None) -> Ejecutor:
         from qrecauda.adaptadores.aes_gcm import CifradorAesGcm, ReservaDeClave
         from qrecauda.adaptadores.min_entropia import EstimadorNist90B
     except ImportError as e:
-        raise FuenteNoDisponible(f"E3 necesita el extra «cifrado»: {e}") from e
+        raise FuenteNoDisponible(f"E3 necesita el extra «cifrado»: {e}. {instalar('cifrado')}") from e
     ejecutor = EjecutorE3(
         _LaboratorioAer(max_parallel_threads=1), validador_de(Configuracion(validador="nist")), EstimadorNist90B(),
         CifradorAesGcm, ReservaDeClave, RelojMonotonico(), SondaLocal(), bitacora,
@@ -414,7 +422,7 @@ def _generador_en_hijo(esp: _EspecificacionDeProductor) -> GeneradorDeClaves:
     try:
         from qrecauda.adaptadores.min_entropia import EstimadorNist90B
     except ImportError as e:
-        raise FuenteNoDisponible(f"E3b necesita el 90B y el extra «validacion»: {e}") from e
+        raise FuenteNoDisponible(f"E3b necesita el 90B y el extra «validacion»: {e}. {instalar('validacion')}") from e
     parametros = ParametrosPipeline(esp.qubits, esp.shots, epsilon=2.0**esp.epsilon_exp, profundidad_peres=esp.profundidad_peres)
     return GeneradorDeClaveAprobada(
         _LaboratorioAer(max_parallel_threads=1),
@@ -455,7 +463,7 @@ def ejecutor_e3b_de(raiz: Path, bitacora: Bitacora | None = None) -> Ejecutor:
         from qrecauda.adaptadores.aes_gcm import CifradorAesGcm, ReservaDeClave
         from qrecauda.adaptadores.productor_en_proceso import ProductorEnProceso
     except ImportError as e:
-        raise FuenteNoDisponible(f"E3b necesita el extra «cifrado»: {e}") from e
+        raise FuenteNoDisponible(f"E3b necesita el extra «cifrado»: {e}. {instalar('cifrado')}") from e
 
     permitidos = afinidad()  # antes de que el consumidor se fije a su núcleo
 
@@ -490,7 +498,7 @@ def _proporciones_nist(bits: Bits, secuencias: int, longitud: int, alfa: float) 
     try:
         from qrecauda.adaptadores.nist import p_frecuencia_por_bloques, p_monobit, p_runs, proporcion_aprobados
     except ImportError as e:
-        raise FuenteNoDisponible(f"la proporción NIST necesita el extra «validacion»: {e}") from e
+        raise FuenteNoDisponible(f"la proporción NIST necesita el extra «validacion»: {e}. {instalar('validacion')}") from e
     salida: dict[str, dict[str, object]] = {}
     for nombre, prueba in (("M3", p_monobit), ("M4", p_runs), ("M5", p_frecuencia_por_bloques)):
         pr = proporcion_aprobados([prueba(bits[i * longitud : (i + 1) * longitud]) for i in range(secuencias)], alfa)
@@ -798,7 +806,7 @@ def demo_de(
         from qrecauda.adaptadores.aer import FuenteAer
         from qrecauda.adaptadores.mthree import TwirlingLectura
     except ImportError as e:
-        raise FuenteNoDisponible(f"la demo con Aer necesita el extra «cuantico»: {e}") from e
+        raise FuenteNoDisponible(f"la demo con Aer necesita el extra «cuantico»: {e}. {instalar('cuantico')}") from e
     modelo = _modelo_de_ruido(ruido)
     shots = shots if shots is not None else DEMO_SHOTS_AER[rapido]
     p = ParametrosPipeline(DEMO_QUBITS, shots)
@@ -844,7 +852,9 @@ def _estimadores_de_demo(
     try:
         from qrecauda.adaptadores.min_entropia import MUESTRAS_MIN, EstimadorNist90B
     except ImportError as e:
-        raise FuenteNoDisponible(f"el dimensionado conservador necesita el extra «validacion» y el 90B: {e}") from e
+        raise FuenteNoDisponible(
+            f"el dimensionado conservador necesita el extra «validacion» y el 90B: {e}. {instalar('validacion')}"
+        ) from e
     cortas = [(r.nombre, p.qubits * (r.shots if r.shots is not None else p.shots)) for r in ramas]
     cortas = [(n, b) for n, b in cortas if b < MUESTRAS_MIN]
     if cortas:

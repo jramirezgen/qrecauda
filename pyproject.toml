@@ -30,6 +30,7 @@ cuantico = ["qiskit>=1.0", "qiskit-aer>=0.15", "qiskit-ibm-runtime>=0.30"]   # a
 mitigacion = ["mthree>=2.7"]                                                  # adaptadores/mthree (⚠️ compatibilidad con qiskit: spike S.02)
 validacion = ["nistrng>=1.2"]                                                 # adaptadores/nist
 cifrado = ["cryptography>=43"]                                                # adaptadores/aes_gcm
+demo = ["qiskit>=1.0", "qiskit-aer>=0.15", "qiskit-ibm-runtime>=0.30", "mthree>=2.7", "nistrng>=1.2", "cryptography>=43"]  # = cuantico+mitigacion+validacion+cifrado: `qrecauda demo` completa
 informe = ["matplotlib>=3.9", "plotly>=5.24", "jupyter>=1.1"]                 # presentacion/ y notebooks/
 
 [project.urls]

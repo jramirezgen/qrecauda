@@ -3561,6 +3561,14 @@ cuantico = [
     { name = "qiskit-aer" },
     { name = "qiskit-ibm-runtime" },
 ]
+demo = [
+    { name = "cryptography" },
+    { name = "mthree" },
+    { name = "nistrng" },
+    { name = "qiskit" },
+    { name = "qiskit-aer" },
+    { name = "qiskit-ibm-runtime" },
+]
 informe = [
     { name = "jupyter" },
     { name = "matplotlib" },
@@ -3587,19 +3595,25 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cryptography", marker = "extra == 'cifrado'", specifier = ">=43" },
+    { name = "cryptography", marker = "extra == 'demo'", specifier = ">=43" },
     { name = "jupyter", marker = "extra == 'informe'", specifier = ">=1.1" },
     { name = "matplotlib", marker = "extra == 'informe'", specifier = ">=3.9" },
+    { name = "mthree", marker = "extra == 'demo'", specifier = ">=2.7" },
     { name = "mthree", marker = "extra == 'mitigacion'", specifier = ">=2.7" },
+    { name = "nistrng", marker = "extra == 'demo'", specifier = ">=1.2" },
     { name = "nistrng", marker = "extra == 'validacion'", specifier = ">=1.2" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "plotly", marker = "extra == 'informe'", specifier = ">=5.24" },
     { name = "qiskit", marker = "extra == 'cuantico'", specifier = ">=1.0" },
+    { name = "qiskit", marker = "extra == 'demo'", specifier = ">=1.0" },
     { name = "qiskit-aer", marker = "extra == 'cuantico'", specifier = ">=0.15" },
+    { name = "qiskit-aer", marker = "extra == 'demo'", specifier = ">=0.15" },
     { name = "qiskit-ibm-runtime", marker = "extra == 'cuantico'", specifier = ">=0.30" },
+    { name = "qiskit-ibm-runtime", marker = "extra == 'demo'", specifier = ">=0.30" },
     { name = "scipy", specifier = ">=1.14" },
     { name = "threadpoolctl", specifier = ">=3.5" },
 ]
-provides-extras = ["cuantico", "mitigacion", "validacion", "cifrado", "informe"]
+provides-extras = ["cuantico", "mitigacion", "validacion", "cifrado", "demo", "informe"]
 
 [package.metadata.requires-dev]
 dev = [

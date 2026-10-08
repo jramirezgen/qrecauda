@@ -131,3 +131,29 @@ def test_conservador_cablea_el_90b_en_el_pipeline_de_la_demo(monkeypatch):
 def test_la_demo_rechaza_un_tope_de_qpu_que_no_es_finito_positivo_y_razonable(malo):
     with pytest.raises(EntradaInvalida, match="tope"):
         demo_de(Configuracion(), rapido=True, max_segundos_qpu=malo)
+
+
+# ------------------------------------------------------------------ R.02: sin extras, el mensaje trae la línea exacta
+
+
+def test_demo_sin_el_extra_cuantico_dice_la_linea_exacta_de_instalacion(monkeypatch):
+    import sys
+
+    from qrecauda.composicion import EXTRAS_DE_LA_DEMO, instalar
+
+    for m in ("qrecauda.adaptadores.aer", "qrecauda.adaptadores.mthree"):
+        monkeypatch.setitem(sys.modules, m, None)  # `import` lanza ImportError, como sin el extra
+    with pytest.raises(FuenteNoDisponible) as e:
+        demo_de(Configuracion(), rapido=True)
+    esperado = "uv sync --frozen --group dev " + " ".join(f"--extra {x}" for x in EXTRAS_DE_LA_DEMO)
+    assert esperado in str(e.value) and esperado in instalar("cuantico")
+
+
+def test_el_extra_demo_de_pyproject_reune_los_cuatro_extras_de_la_demo():
+    import tomllib
+    from pathlib import Path
+
+    from qrecauda.composicion import EXTRAS_DE_LA_DEMO
+
+    extras = tomllib.loads((Path(__file__).resolve().parents[2] / "pyproject.toml").read_text())["project"]["optional-dependencies"]
+    assert set(extras["demo"]) == {d for x in EXTRAS_DE_LA_DEMO for d in extras[x]}
