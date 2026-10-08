@@ -2,6 +2,7 @@
 name = "qrecauda"
 version = "0.1.0.dev0"
 description = "Entropía cuántica certificada (QRNG) para la recaudación del Perú: Hadamard → mitigación → extractores → validación NIST → clave"
+license = "Apache-2.0"
 requires-python = ">=3.11"
 dependencies = [
     "numpy>=2.0",
