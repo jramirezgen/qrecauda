@@ -79,7 +79,7 @@
     "F0.01"
    ],
    "entrega": ".importlinter y tests/arquitectura/",
-   "hecho_cuando": "lint-imports pasa con 5 contratos y un import prohibido sembrado a propósito lo hace fallar",
+   "hecho_cuando": "lint-imports pasa con 7 contratos y un import prohibido sembrado a propósito lo hace fallar",
    "cubre": [
     "C-contratos"
    ],
@@ -151,7 +151,7 @@
    "id": "F0.09",
    "fase": "F0",
    "tipo": "infra",
-   "titulo": "Remotos: GitHub privado y espejo bare",
+   "titulo": "Remotos: GitHub público y espejo bare",
    "depende_de": [
     "F0.07"
    ],

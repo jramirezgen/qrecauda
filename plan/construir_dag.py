@@ -37,7 +37,7 @@ n("F0.02", "F0", "doc", "FUNDAMENTO, DISENO y GLOSARIO", ["F0.01"], "docs/FUNDAM
 n("F0.03", "F0", "decision", "Decisiones D-001…D-008", ["F0.02"], "docs/decisiones/D-001.md … D-008.md",
   "una decisión por archivo con motivo, fecha y cómo se revertiría", ["A-decisiones", "D-001", "D-002", "D-003", "D-004", "D-005", "D-006", "D-007", "D-008"])
 n("F0.04", "F0", "infra", "Contratos de imports y trinquetes de arquitectura", ["F0.01"], ".importlinter y tests/arquitectura/",
-  "lint-imports pasa con 5 contratos y un import prohibido sembrado a propósito lo hace fallar", ["C-contratos"])
+  "lint-imports pasa con 7 contratos y un import prohibido sembrado a propósito lo hace fallar", ["C-contratos"])
 n("F0.05", "F0", "infra", "DAG verificable, registro append-only y ESTADO.md generado", ["F0.01"], "plan/plan.json, registro/nodos.jsonl, ESTADO.md, tests/test_dag_estandar.py",
   "python3 plan/dag.py validar sale en verde y ESTADO.md coincide con su regeneración", ["A-dag"])
 n("F0.06", "F0", "infra", "RETOMA.md y CLAUDE.md del repo", ["F0.05"], "RETOMA.md y CLAUDE.md",
@@ -46,7 +46,7 @@ n("F0.07", "F0", "infra", "Hooks commit-msg (sin atribución) y pre-push (CI loc
   "git config core.hooksPath apunta a scripts/hooks; un commit con trailer de modelo se rechaza, un push con la CI local en rojo se rechaza y el test recorre toda la historia", ["R-sin-atribucion"])
 n("F0.08", "F0", "infra", "CI local: ruff, mypy, lint-imports, pytest y DAG", ["F0.04", "F0.05"], "scripts/ci_local.sh",
   "un comando corre todo lo anterior y sale distinto de cero si algo falla; se corre ANTES de empujar", ["T-empaquetado"])
-n("F0.09", "F0", "infra", "Remotos: GitHub privado y espejo bare", ["F0.07"], "scripts/remotos.md con origin y espejo, sin ningún token",
+n("F0.09", "F0", "infra", "Remotos: GitHub público y espejo bare", ["F0.07"], "scripts/remotos.md con origin y espejo, sin ningún token",
   "primer push a origin y al espejo en F:/REPOSITORIOS/espejos/QRECAUDA.git; la credencial se pasa por ruta", ["T-seguridad"])
 
 n("R.00", "F0", "revision", "Revisión adversarial del diseño, antes de construir", ["F0.02", "F0.03"], "docs/informes/REVISION_DISENO_R00.md",
