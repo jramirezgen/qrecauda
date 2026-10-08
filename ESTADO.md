@@ -8,9 +8,9 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 43 |
-| juzgado | 1 |
-| pendiente | 15 |
+| hecho | 47 |
+| juzgado | 2 |
+| pendiente | 10 |
 
 ## En curso, bloqueados y pausados
 
@@ -19,10 +19,6 @@ Plan v1 · 2026-10-07
 ## Listos
 
 - **F3.04** SamplerV2 sobre hardware IBM con Batch/Session (opcional)
-- **C.E1a** E1a · control: PRNG clásico pasa M1–M5 (la batería no distingue origen)
-- **C.E1b** E1b · Aer ruidoso sin mitigar
-- **C.E1c** E1c · Aer ruidoso mitigado
-- **C.E1d** E1d · control positivo: fuentes defectuosas rechazadas, fuente ideal aceptada
 - **C.E3** E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado
 
 ## Hechos y juzgados
@@ -66,6 +62,11 @@ Plan v1 · 2026-10-07
 | F6.02 | hecho | `a7cd133` | Transacción de peaje/Metro cifrada con la clave certificada |
 | P.E0 | hecho | `f8e21d0` | Parámetros y aritmética de la cadena, fijados antes de medir |
 | P.E1 | hecho | `dae22a6` | Preinscripción E1: el pipeline entrega claves que cumplen M1–M5 con entrada ruidosa |
+| C.E1a | hecho | `89cdaba` | E1a · control: PRNG clásico pasa M1–M5 (la batería no distingue origen) |
+| C.E1b | hecho | `89cdaba` | E1b · Aer ruidoso sin mitigar |
+| C.E1c | hecho | `89cdaba` | E1c · Aer ruidoso mitigado |
+| C.E1d | hecho | `89cdaba` | E1d · control positivo: fuentes defectuosas rechazadas, fuente ideal aceptada |
+| E1 | juzgado | `89cdaba` | ¡EUREKA 1! Pipeline de punta a punta con veredicto M1–M5 y control negativo |
 | P.E2 | hecho | `43e2649` | Preinscripción E2: la mitigación reduce el sesgo de lectura bajo el 1 % |
 | C.E2 | hecho | `f22ffd3` | E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido |
 | E2 | juzgado | `f22ffd3` | ¡EUREKA 2! La mitigación mueve el sesgo bajo el umbral M1 |
