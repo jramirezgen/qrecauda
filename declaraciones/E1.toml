@@ -52,9 +52,10 @@ bits = 1_000_000
 sesgada_p1 = 0.7                                 # como el spike S.04
 periodica = "00001111"                           # como el spike S.04
 markov_permanencia = 0.8                         # como el spike S.04 (h real 0,322 bit/bit, analítico)
-rechazo_por_90b_menor_que = 0.9                  # UMBRALES[MIN_ENTROPIA]
-mcv_deja_pasar_markov_mayor_que = 0.9            # la tesis de la discrepancia 8
-ideal_pasa = ["M1", "M3", "M4", "M5", "M2_90b"]  # si la ideal no pasa el 90B > 0,9, el control falla: instrumento inválido
+piso_ideal_90b = 0.8                             # ENMIENDA 2026-10-07 (2): mínimo de 11 medidas del 90B de la ideal (0,821) redondeado abajo a 0,1; ver E1.md y spikes/S04_90b/calibracion_p1.json. Reemplaza «ideal con 90B > 0,9» (9 de 11 ideales no lo cumplían)
+techo_rechazo_90b = 0.5                          # ENMIENDA 2026-10-07 (2): Markov (observado <= 0,1717) y periódica deben quedar por debajo; hueco 0,3 hasta el piso. Reemplaza «90B < 0,9»
+mcv_deja_pasar_markov_mayor_que = 0.9            # la tesis de la discrepancia 8 (observado >= 0,9898); sin cambio
+ideal_pasa = ["M1", "M3", "M4", "M5", "ideal_90b_ge_piso"]   # si la ideal no alcanza el piso, el control falla: instrumento inválido
 
 [informativo]                                    # se reporta, no decide
 proporcion_nist_secuencias = 93                  # P.E0
@@ -66,7 +67,7 @@ falsa_alarma_c_e1a_analitica = 0.165             # 1 − 0,99^18, supone indepen
 requeridos = ["N1", "D1", "P1"]
 n1 = "C.E1a: la batería acepta una fuente ideal conocida (no rechaza lo bueno)"
 d1 = "C.E1b: |sesgo de la cruda − 0,03| <= 0,002 (el detector ve lo inyectado)"
-p1 = "C.E1d: sesgada, periódica y Markov rechazadas; ideal aceptada; MCV de la Markov > 0,9"
+p1 = "C.E1d (enmendado 2026-10-07): ideal con 90B >= piso_ideal_90b; Markov con 90B < techo_rechazo_90b y MCV >= 0,9; periódica rechazada (batería o 90B < techo); sesgada rechazada por M1 y M3"
 
 [desenlaces]
 validos = ["CUMPLE", "NO_CUMPLE", "NULO", "CUMPLE_PARCIAL"]   # INVALIDA no es desenlace: es CorridaInvalida (código 9)
