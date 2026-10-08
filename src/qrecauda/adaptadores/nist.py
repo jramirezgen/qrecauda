@@ -47,7 +47,7 @@ def p_frecuencia_por_bloques(bits: Bits) -> float:
 
 
 class ValidadorNist:
-    """Implementa `Validador`: M1 sesgo (dominio puro, la misma que emite `estadistica`) y, con nistrng, M3 monobit, M4 runs, M5 frecuencia por bloques."""
+    """Implementa `Validador`: M1 sesgo (la de dominio, igual que `estadistica`) y, con nistrng, M3 monobit, M4 runs, M5 bloques."""
 
     def evaluar(self, bits: Bits) -> tuple[Medida, ...]:
         return (
