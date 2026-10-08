@@ -1,6 +1,6 @@
 # Informe técnico (docs/paper)
 
-Informe de QRecauda: planeación, método preinscrito y resultados de E1, E2, E3, E3b y E5.
+Informe de QRecauda: un pipeline de claves AES-256 sobre un QRNG simulado, medido de extremo a extremo (E1, E2, E3, E3b y E5). El plan verificable, las enmiendas y las discrepancias van como apéndices.
 
 | fichero | función |
 |:--|:--|

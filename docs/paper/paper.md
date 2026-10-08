@@ -1,19 +1,19 @@
 ---
-title: "QRecauda: un pipeline QRNG planificado como contrato verificable, preinscrito y acotado en sus afirmaciones"
-subtitle: "Planeación, metodología y resultados de los experimentos E1, E2, E3, E3b y E5"
+title: "QRecauda: un pipeline de claves AES-256 sobre un generador cuántico de números aleatorios simulado, medido de extremo a extremo"
+subtitle: "Mitigación de lectura, extracción, dimensionado por entropía y latencia, evaluados con cinco experimentos preinscritos"
 author: kaitokid
 date: "2026-10-08"
 lang: es
-serie: "Informe técnico · QRecauda"
-keywords: [generador cuántico de números aleatorios (QRNG), preinscripción, DAG verificable, mitigación de lectura, extracción de aleatoriedad, latencia, reproducibilidad]
-licencia: "Licencia Apache-2.0 · Repositorio público del proyecto (enlace en la ficha del repositorio) · Estado: informe vivo, versión 0.2.0; E1 con CUMPLE condicionado a dos enmiendas, E2 con CUMPLE por una propiedad algebraica, E3 (0.1.0) con NO CUMPLE (latencia), E3b con CUMPLE (otro diseño, reserva de claves, en simulador), E5 con CUMPLE (control negativo del pipeline completo); sin ningún resultado en hardware real"
-subject: "Pipeline QRNG para recaudación: planeación, método preinscrito y resultados"
+serie: "Informe técnico · QRecauda · versión 0.2.0"
+keywords: [generador cuántico de números aleatorios (QRNG), mitigación de lectura, extracción de aleatoriedad, min-entropía, NIST SP 800-90B, AES-GCM, latencia, preinscripción]
+licencia: "Licencia Apache-2.0 · Código, registro de corridas y documentación públicos · Resultados obtenidos en simulador; sin corrida en hardware de IBM"
+subject: "Pipeline QRNG para recaudación: método, calidad medida y resultados"
 abstract: |
-  QRecauda genera claves AES-256-GCM a partir de los bits de un circuito de un solo gate (Hadamard sobre 8 qubits, medido en la base computacional) y las destina a cifrar transacciones de peaje y de Metro. La cadena de procesamiento es clásica y conocida: mitigación de lectura, extractor de Peres, hash de Toeplitz dimensionado con el *Leftover Hash Lemma*, y validación con tres pruebas de NIST SP 800-22 (monobit, rachas y frecuencia por bloques, de las 15 de la batería) más una estimación de min-entropía SP 800-90B que es informativa y no valida la clave. El aporte principal es metodológico. El plan se formaliza como un grafo dirigido acíclico de 59 nodos que una herramienta valida; cada experimento se preinscribe antes de correr, con controles y enmiendas fechadas; la arquitectura hexagonal de cuatro macro-capas se impone con siete contratos de importación; y toda cifra procede de una corrida nombrada.
+  Los sistemas de cobro de peajes y del Metro de Lima cifran millones de transacciones pequeñas cada día, y su seguridad exige claves que un atacante no pueda predecir. Un generador pseudoaleatorio queda determinado por su estado interno. Un generador cuántico de números aleatorios (QRNG) evita esa dependencia, pero uno simulado no aporta entropía cuántica, y una batería estadística no certifica una clave. QRecauda convierte los bits de un circuito de Hadamard sobre 8 qubits en claves AES-256-GCM mediante mitigación de lectura por *twirling*, extractor de Peres, hash de Toeplitz dimensionado con el *Leftover Hash Lemma* y validación con tres pruebas de NIST SP 800-22 y una estimación de min-entropía de SP 800-90B. Este informe mide la calidad de esa cadena de extremo a extremo sobre un simulador con ruido de lectura asimétrico, con cinco experimentos preinscritos de tres semillas cada uno.
 
-  Cinco experimentos se han juzgado, cada uno con preinscripción anterior a la corrida (E1, E2, E3, E3b y E5; un sexto, E4, sobre hardware de IBM, está preinscrito y bloqueado por falta de credencial): E1, E2, E3b y E5 cumplen y E3 no. E1 y E2 tienen un poder limitado para fallar, E3b tenía un criterio casi trivial por la baja utilización (T2) y E5 es casi un control por construcción. El experimento E1 (calidad de la clave) obtiene CUMPLE en las tres semillas preinscritas, con claves de unos 956 000 bits, pero ese veredicto está condicionado a dos enmiendas que declararon informativas M4 y M5 de la muestra mitigada, pruebas que fallan en las tres semillas (p entre 10^-15^ y 2·10^-3^); sin esas enmiendas E1 habría sido CUMPLE PARCIAL. La clave sin mitigar también pasa M1 a M5 en las tres semillas (hallazgo R.00-1): Peres y Toeplitz bastan para aprobar la batería, y la mitigación reduce el sesgo crudo de 0,030 a un máximo de 0,0004 sin ser necesaria para aprobar. Varios criterios de E1 y E2 (B1, D1, K4) son identidades analíticas del *twirling*, porque el sesgo global se anula por álgebra; lo que podía fallar era M2 a M5, la separación de fuentes y el residuo local. El experimento E2 (sesgo de lectura) obtiene CUMPLE en las nueve celdas sintéticas: el *twirling* propio lleva el sesgo medio por qubit de 0,0098–0,0505 a 0,00074–0,00131 en el agregado, mientras el sesgo local por bloque de 200 persiste (lo detectan M4 y M5); ZNE y PEC dejan el sesgo de lectura sin cambio apreciable (hasta 6,6 %). El nivel realista no pone a prueba la mitigación y el nivel bajo coincide con el umbral de M1.
+  El *twirling* de lectura reduce el sesgo medio por qubit de 0,0098–0,0505 a 0,00074–0,00131, mientras que ZNE y PEC no modifican el sesgo de lectura (cambio máximo de 6,6 %). La clave supera las pruebas M1 a M5 en las tres semillas, pero también las supera la clave obtenida sin mitigar. Además, una fuente de Markov con min-entropía real de 0,322 bit por bit produce claves que la batería aprueba y que son de 1,2 a 2,5 veces más largas de lo que la fuente sostiene: la batería aplicada a la salida no distingue fuentes defectuosas de buenas, y el estimador de valor más común (MCV) no ve la dependencia. Un dimensionado conservador, que toma el mínimo de MCV y SP 800-90B y contabiliza la entropía de la fuente, acorta esas claves por debajo del techo teórico y conserva del 89,5 al 92,3 % de la clave de una fuente buena. Generar una clave nueva por transacción incumple el requisito de latencia (percentil 95 de 5,5 a 9,4 s frente a 500 ms). Una reserva de claves producida por un proceso aparte lo cumple: 0,17 a 0,18 ms con la reserva cebada, con una capacidad del productor de 177 a 199 kbit/s y un arranque de 6,6 s.
 
-  El experimento E3 (tasa y latencia, versión 0.1.0) obtiene NO CUMPLE por la latencia. La tasa cumple con holgura (M6 de 180 466 a 195 465 bit/s frente a 10 000), pero el percentil 95 del ciclo completo es de 9 378, 5 554 y 5 547 ms frente a 500 ms (semillas 20261007, 20261008 y 20261009), un factor de 11 a 19. Generar una clave por transacción no cumple el requisito de latencia, y el 47 a 49 % del tiempo se va en la mitigación. Con una reserva de claves ya generada, el ciclo de cifrado cuesta 15 a 22 µs de mediana (30 667 a 63 638 transacciones por segundo); esa cifra del perfil B de E3 no decide. El diseño con reserva se preinscribió aparte como E3b, un experimento distinto que no reabre E3: con la clave de una reserva que un proceso productor genera en paralelo, E3b CUMPLE en las tres semillas, con p95 de 0,17 a 0,18 ms sobre 12 000 transacciones por semilla con la reserva cebada, una capacidad del productor de 177 a 199 kbit/s (entregado en régimen, 47,8 kbit/s, 1,36 veces el consumo declarado de 35,2 kbit/s) y cero esperas; el arranque, de 6,6 a 6,7 s hasta la primera clave, se informa aparte y una transacción que llegue durante él incumpliría M7. La comparación con E3 no es equivalente: E3 mide generar y cifrar la clave, y E3b sólo cifrar con la reserva ya cebada. Sus límites: simulador, sin la cola ni la red de IBM, demanda declarada por el equipo y claves generadas con el dimensionado `mcv` de 0.1.0. No hay corrida en hardware IBM (decisión D-010; el camino está listo y ensayado contra un backend falso, y la corrida real espera una credencial) y el TRL del sistema es 3, con la latencia con reserva y el dimensionado en TRL 4 como componentes sobre simulador. No se afirma origen cuántico: el simulador no aporta entropía cuántica y «certificada» significa «supera esta batería». En la versión 0.1.0 el pipeline carecía de control negativo completo: una fuente de Markov con min-entropía real de 0,322 bit por bit produjo una clave de unos 756 kbit, unas tres veces más de lo que sostiene la fuente, que pasa M3, M4 y M5 en tres semillas, porque el dimensionado usa MCV, que no ve la dependencia. E5 cierra ese hueco con un control negativo del pipeline completo (tres fuentes con dependencia, tres semillas, tres dimensionados) y mide el hallazgo en cadena completa: con `mcv` las nueve claves defectuosas pasan M1 a M5 y salen de 1,2 a 2,5 veces más largas que lo que la fuente sostiene; un dimensionado conservador (mínimo de MCV y 90B más la contabilidad de la entropía de la fuente) las acorta bajo el techo teórico, y la fuente buena conserva del 89,5 al 92,3 % de su clave. Ese dimensionado es opt-in y no se re-midieron E3 ni E3b con él. E5 es casi un control por construcción: las fuentes defectuosas se eligieron detectables por el 90B (control D5), el lado «rechazada» nunca se ejerce (las 36 claves pasan M1 a M5; el pipeline acorta, no rechaza) y los umbrales K2 y G2 se fijaron tras un diagnóstico con el mismo generador de defectos. `min(MCV, 90B)` por sí solo no alcanza en la fuente markov_fuerte. La calibración del control P1 se hizo con las mismas semillas, así que es una prueba de regresión y no un control con poder; la estimación 90B de la muestra cruda de E1 daría claves entre 20 y 26 % más cortas (con el 90B del *pool* y la fuente buena de E5, entre 7,5 y 10,5 %). Una revisión adversarial independiente (R.01, [sección](#sec:r01)) puntuó el trabajo entre 5,5 y 6,0 sobre 10 y sus hallazgos se recogen aquí.
+  Todo se midió en simulador. No hay corrida en hardware, no se afirma origen cuántico y el nivel de madurez tecnológica (TRL) del sistema es 3. Tres de los cinco experimentos tienen un poder limitado para fallar, y el informe indica por qué. Cada criterio, control y desviación se fijó o se fechó antes de la corrida, de modo que el resultado negativo de la latencia permanece en el registro. La corrida en hardware de IBM está preinscrita y pendiente de una credencial.
 ---
 
 # Introducción {#sec:intro}
@@ -52,20 +52,18 @@ Este trabajo es de ingeniería y de método experimental. No afirma entropía cu
 
 ## Contribuciones {#sec:contribuciones}
 
-Cada contribución se verifica en el repositorio mediante el nodo del plan o la corrida que se indica ([Tabla](#tbl:aportes)).
+El trabajo aporta seis resultados sobre la calidad de un pipeline QRNG. Cada uno remite al experimento que lo sostiene ([Tabla](#tbl:aportes)). El símbolo ⚠ marca en el texto lo que no se ha verificado y se usa sólo como hipótesis.
 
-| \# | contribución | evidencia en el repositorio | sección |
-|:-----|:------------------------------------|:------------------------------------|:--------------------------|
-| 1 | Plan como DAG de 59 nodos con registro de sólo añadir y preinscripción anterior a la corrida; un juez que se niega a veredictar si falta el orden o un control | F0.05, F2.07; verificación `dag.py validar`; error de salida 9 | [4](#sec:plan), [5](#sec:preinscripcion) |
-| 2 | Mitigación de lectura propia por *twirling* con XOR clásico, y el análisis de que ZNE y PEC no actúan sobre el ruido de lectura, con escala efectiva $s=(\lambda+1)/2$ en el plegado de la puerta H | F4.01, F4.02; spike S.02; corrida C.E2 | [7](#sec:mitigacion), [8](#sec:e2) |
-| 3 | Control positivo del estimador 90B con fuentes sintéticas, que muestra la ceguera del MCV a la dependencia | spike S.04; corrida C.E1d | [7](#sec:entropia), [8](#sec:e1) |
-| 4 | Hallazgo R.00-1: Peres y Toeplitz bastan para que la clave pase M1 a M5, con la fuente cruda fuera de umbral | revisión R.00; corrida C.E1b; veredicto de E1 | [8](#sec:e1) |
-| 5 | Arquitectura hexagonal en cuatro macro-capas con siete contratos de importación ejecutables, trinquetes por AST y 482 casos de prueba | F0.04; pruebas de arquitectura; CI local | [6](#sec:arquitectura) |
-| 6 | Protocolo de reproducibilidad: semillas declaradas, manifiestos con commit y entorno, y figuras regeneradas desde el registro | manifiestos de `registro/corridas/`; `docs/paper/figuras.py` | [11](#sec:repro) |
-| 7 | Medición de latencia de extremo a extremo con un hilo, candado de máquina, controles de integridad y desglose por etapa, que entrega un resultado negativo (M7) sin ajustar el criterio | corrida C.E3; veredicto de E3 | [8](#sec:e3) |
+| \# | contribución | experimento | sección |
+|:-----|:------------------------------------|:------------------|:--------------------------|
+| 1 | Mitigación de lectura que conserva los bits por disparo (*twirling* con XOR clásico), y el análisis de por qué ZNE, PEC y mthree no actúan sobre un flujo de bits | E2, spike S.02 | [N](#sec:mitigacion), [N](#sec:e2) |
+| 2 | Medición de M1 a M5 en tres puntos (cruda, mitigada y clave), que muestra que la clave aprueba la batería aun sin mitigar y que la batería sobre la salida no discrimina entre fuentes | E1 | [N](#sec:e1) |
+| 3 | Control negativo del pipeline completo: con el dimensionado por MCV, claves aprobadas son de 1,2 a 2,5 veces más largas de lo que la fuente sostiene; un dimensionado conservador las acorta | E5 | [N](#sec:e5) |
+| 4 | Medición de latencia de extremo a extremo con desglose por etapa: el resultado negativo de generar una clave por transacción, y una arquitectura con reserva de claves que lo resuelve en simulador | E3, E3b | [N](#sec:e3), [N](#sec:e3b) |
+| 5 | Calidad verificable del software: arquitectura hexagonal con siete contratos de importación ejecutables, 883 casos de prueba, dos validadores independientes que se contrastan y cifras que se regeneran desde el registro | todos | [N](#sec:calidad) |
+| 6 | Un diseño experimental con preinscripción anterior a la corrida, controles obligatorios, enmiendas fechadas y revisión adversarial independiente por versión | todos | [N](#sec:preinscripcion) |
 
-: Contribuciones y su evidencia verificable. []{#tbl:aportes}
-
+: Contribuciones y su evidencia. []{#tbl:aportes}
 # Trabajos relacionados {#sec:relacionados}
 
 Esta sección cita únicamente fuentes cuyos datos bibliográficos se contrastaron con el registro de DOI (Crossref) o con el repositorio de preprints el 2026-10-07.
@@ -106,213 +104,6 @@ Se protege que la clave AES-256 de una transacción no sea predecible por un ata
 | Latencia de cola y red de IBM Quantum | n. a. | fuera de M7 |
 
 : Amenazas que el diseño cubre y las que no. []{#tbl:amenazas}
-
-## Discrepancias con el manifiesto fundacional {#sec:discrepancias}
-
-El manifiesto del equipo gobierna el objetivo del proyecto. Su método choca en nueve puntos con lo que permiten las bibliotecas o la estadística. Cada punto se declaró antes de actuar, y una décima discrepancia surgió de la revisión adversarial del diseño ([Tabla](#tbl:discrepancias)).
-
-| \# | El manifiesto dice | Lo que se encontró o decidió | Estado |
-|:-----|:-------------------------------------|:-------------------------------------|:--------------------------|
-| 1 | «No dependemos de hardware real» y, a la vez, «procesadores físicos de IBM» | Son dos alcances: el backend es un puerto (D-001), con simulador por defecto y hardware opcional | decidido |
-| 2 | Aer con ruido produce «entropía cuántica» | El muestreo de Aer es un PRNG; `Origen.SIMULADOR_AER` no reclama origen cuántico (D-002; S.03) | demostrado |
-| 3 | TREX + ZNE + PEC mitigan el *bitstream* del muestreador | ZNE y PEC se definen sobre valores esperados; `resilience_level` es opción del estimador (S.02) | verificado |
-| 4 | «TREX vía mthree» | Son técnicas distintas; mthree entrega cuasi-probabilidades, no bits (D-009) | verificado |
-| 5 | Min-entropía > 0,9 prueba la calidad | Tras Toeplitz vale casi 1 por construcción; la informativa es la de entrada | decidido |
-| 6 | «Claves certificadas» | SP 800-22 no certifica origen ni impredecibilidad; hay control negativo (D-007) | decidido |
-| 7 | «TRL 4» | La rúbrica exige $n\ge3$, protocolo preinscrito y auditable; el TRL real es el de la afirmación más débil (fuente en simulador: TRL 3) | cerrado por T.TRL: TRL del sistema 3 |
-| 8 | El MCV decide la longitud y la «certifica» | El MCV es ciego a la dependencia: Markov con permanencia 0,8 (min-entropía real 0,322 bit/bit, analítico) da MCV 0,992 (S.04, C.E1d); el dimensionado sigue usando MCV | demostrado; E5 lo mide en cadena completa y el dimensionado conservador (opt-in) lo corrige en las tres fuentes de prueba; el predeterminado sigue siendo `mcv` |
-| 9 | M1 < 1 % y M2 > 0,9 como umbrales | Con $N=800\,000$ el monobit exige sesgo menor que 0,0014 (siete veces más estricto que M1) y M2 sobre 256 bits no supera 0,785 (analítico, P.E0) | decidido |
-| 10 | (revisión R.00) | Medir M1 a M5 sólo sobre la salida de Toeplitz haría pasar a cualquier fuente; se miden en tres puntos (cruda, mitigada y clave); hallazgo R.00-1 | decidido y confirmado en E1 |
-
-: Discrepancias con el manifiesto fundacional. []{#tbl:discrepancias}
-
-# El plan como contrato verificable {#sec:plan}
-
-La planeación es la parte más desarrollada del trabajo. El plan es un grafo dirigido acíclico generado por un script. El estado de cada nodo vive aparte, en un registro de sólo añadir, y una herramienta de validación rechaza cualquier estado que contradiga las reglas. El plan no se edita a mano: se regenera, y una prueba comprueba que el fichero versionado coincide con la regeneración. Así, la pregunta «¿se hizo?» tiene una respuesta mecánica.
-
-## Estructura del DAG {#sec:dag-estructura}
-
-El plan de la versión 0.1.0 tenía 59 nodos y 132 aristas, con una única hoja (el producto 0.1.0) y una profundidad máxima de 15 niveles. Esta sección, sus tablas y la figura son una instantánea de 0.1.0; a la fecha el plan tiene 78 nodos y 189 aristas, porque el trabajo posterior (E3b, E5, el camino a hardware y las revisiones) añadió nodos (conclusión 2). Se organiza en ocho fases más la revisión final ([Tabla](#tbl:fases)). Cada nodo declara su tipo ([Tabla](#tbl:tipos)), sus dependencias, su entrega (rutas del repositorio), el criterio de cierre y los requisitos que cubre. La [Figura](#fig:dag) muestra el estado real al cierre de 0.1.0: 54 nodos hechos, 3 juzgados (E1, E2 y E3) y 2 pendientes (la revisión R.01, lista, y el release 0.1.0, bloqueado por ella).
-
-![El plan como DAG, por fases y coloreado por el estado real (instantánea de 0.1.0: plan de 59 nodos y registro de estado de ese momento; a la fecha el plan tiene 78 nodos). Borde grueso: eureka; discontinuo: preinscripción; punteado: corrida o medición. Verde: hecho; azul: juzgado; naranja: listo; blanco: pendiente.](fig/dag.pdf){#fig:dag}
-
-| fase | contenido | nodos |
-|:----------|:---------------------------------------------------------------------------------|------------:|
-| F0 | Fundación: repositorio, decisiones, contratos de importación, DAG, hooks, CI local, revisión adversarial R.00 | 11 |
-| F1 | Dominio: bits, extractores (von Neumann, Peres, Toeplitz con LHL), entropía y métricas | 3 |
-| F2 | Puertos, bala trazadora, transversales, presentación, almacén, correr y juzgar | 7 |
-| F3 | Fuente y ruido: spikes S.01 a S.04, circuito sobre Aer, modelo de ruido, transpilación, IBM opcional | 10 |
-| F4 | Mitigación: *twirling* de lectura (F4.01) y ZNE/PEC sobre ⟨Z⟩ (F4.02) | 2 |
-| F5 | Validación: batería NIST SP 800-22 y min-entropía SP 800-90B | 2 |
-| F6 | Cifrado AES-256-GCM y transacción de peaje o Metro | 2 |
-| E | Experimentos: parámetros P.E0, preinscripciones P.E1 a P.E3, corridas, veredictos E1 a E3 | 13 |
-| F7 | Difusión: amenazas, integración, TRL, wiki, informe | 7 |
-| R | Revisión adversarial del release (R.01) y release 0.1.0 | 2 |
-
-: Fases del plan y número de nodos de cada una. []{#tbl:fases}
-
-| tipo | nodos | uso |
-|:---------------------------|----------:|:------------------------------------------------------------------|
-| infra | 13 | repositorio, contratos, CI, hooks, transversales, integración |
-| adaptador | 11 | un sistema externo detrás de un puerto (Aer, IBM, mthree, nistrng, cifrado, disco) |
-| doc | 7 | documentos con entrega comprobable (amenazas, TRL, informe) |
-| corrida | 5 | ejecución preinscrita cuyo artefacto entra al registro |
-| insumo | 4 | spikes de viabilidad (S.01 a S.04) |
-| decision | 3 | decisión con consecuencia en el plan (parámetros P.E0, hardware) |
-| dominio, aplicacion | 3 + 3 | lógica pura y casos de uso |
-| preinscripcion | 3 | fija umbrales, controles y desenlaces antes de correr |
-| eureka | 3 | veredicto de un experimento; depende de sus corridas |
-| revision | 2 | revisión adversarial independiente |
-| medicion | 1 | medición de tiempos con candado de máquina (C.E3) |
-| release | 1 | versión 0.1.0; exige revisión propia |
-
-: Tipos de nodo. []{#tbl:tipos}
-
-## Reglas que la herramienta hace cumplir {#sec:reglas-dag}
-
-La validación del plan comprueba once reglas ([Tabla](#tbl:reglas-dag)). Las más relevantes para la credibilidad de los resultados son cuatro: el cierre de un nodo exige un commit que modifique su entrega; el registro de estado sólo admite añadidos; cada experimento tiene exactamente una preinscripción de la que descienden sus corridas; y cada release exige una revisión adversarial propia.
-
-| regla | efecto |
-|:---------------------------------------------------|:---------------------------------------------------|
-| Acíclico, con dependencias existentes y una sola hoja | Impide ciclos, nodos huérfanos y destinos ambiguos |
-| Monotonía: un nodo no puede estar avanzado sobre dependencias abiertas | Impide declarar un resultado antes que sus insumos |
-| Cerrar exige un commit que toque la entrega del nodo | La evidencia es un commit verificable y no una declaración |
-| Registro de sólo añadir: cada versión de `registro/*.jsonl` extiende a la anterior y el estado de un nodo es su última línea | El pasado no se reescribe; un resultado negativo no se borra |
-| Eureka con una sola preinscripción; sus corridas descienden de ella; el eureka depende de al menos una | Impide veredictos sin preinscripción o con varias a elegir |
-| Revisión adversarial propia por release (no vale la que ya sirvió a una release anterior) | Impide reutilizar una revisión vieja |
-| Nodos protegidos: no se borran, no cambian de tipo, no dejan de cubrir un eureka sin declararlo | Impide «resolver» un problema quitando el nodo que lo prueba |
-| `juzgado` sólo para eurekas y con veredicto en el registro | Todo veredicto deja rastro |
-| Los nodos abiertos no citan decisiones congeladas ni frases de alarma; el criterio de cierre tiene longitud acotada | Impide reabrir lo decidido y criterios vagos |
-| Cobertura: todo requisito del manifiesto lo cubre algún nodo | Impide requisitos olvidados |
-| El plan versionado es la regeneración del script y cada versión se valida contra la anterior | Impide eludir las reglas commiteando generador y plan a la vez |
-
-: Reglas del DAG que `dag.py validar` y la CI local comprueban. []{#tbl:reglas-dag}
-
-Cada experimento tiene así tres nodos encadenados: una preinscripción, una o varias corridas que descienden de ella y un nodo de veredicto que depende de las corridas. El documento de estado legible se genera desde el plan y el registro y nunca se edita.
-
-## Ejecución paralela con revisión {#sec:paralela}
-
-Las tareas independientes del DAG (adaptadores distintos, los cuatro spikes) avanzaron en paralelo. Cada entrega pasó por la CI local antes de empujarse, y el plan exige revisiones adversariales independientes. La primera, sobre el diseño y anterior a la construcción, puntuó la arquitectura de capas con 6/10 y el DAG hacia TRL 4 con 3,5/10. Los hallazgos aceptados entraron al tablero de incidencias antes que al DAG. La segunda, R.01, corresponde al release y se hizo sobre el commit `f1e8c3b` (véase la [sección](#sec:r01)); el nodo R.01 y el release 0.1.0 siguen abiertos hasta cerrar sus hallazgos.
-
-# Preinscripción y método experimental {#sec:preinscripcion}
-
-## Protocolo de preinscripción {#sec:que-preinscribir}
-
-La regla 5 del documento de fundamento obliga a fijar el umbral y el criterio de cada experimento antes de la corrida. El protocolo opera en cinco pasos.
-
-1. La preinscripción en prosa y su declaración legible por máquina entran en un commit.
-2. La corrida registra en su manifiesto el commit de la preinscripción y el del código.
-3. El juez se niega a veredictar si ese commit no precede a la corrida, si el documento cambió después o si falta o falla un control (error de salida 9).
-4. Un control fallido significa que la medición no es válida: no se emite veredicto y se abre una incidencia.
-5. Un resultado negativo cierra el experimento como negativo; reintentar exige una preinscripción nueva y el veredicto anterior se conserva.
-
-Un error detectado antes de correr se corrige con una enmienda fechada, en commit propio y anterior a la corrida; después de correr, el documento no se modifica. Las semillas (20261007, 20261008 y 20261009) son identificadores enteros y no fechas, se declaran de antemano, y elegir una semilla está prohibido: el veredicto se emite sobre las tres. Son tres muestras de un generador determinista, no tres réplicas físicas: prueban determinismo y no repetibilidad física.
-
-![Cronología de preinscripciones, enmiendas, código del ejecutor y corridas con veredicto (hora de commit; eje cortado entre 19:30 y 21:30 del 2026-10-07, y panel aparte para el 2026-10-08). Cada preinscripción precede a su corrida; las enmiendas de E3 del 2026-10-08 son anteriores a C.E3.](fig/cronologia.pdf){#fig:cronologia}
-
-La [Figura](#fig:cronologia) muestra el orden real, leído de los commits. El juez comprueba por máquina que el commit de la preinscripción es ancestro de la corrida.
-
-## Controles positivos y negativos {#sec:controles}
-
-Cada experimento tiene controles sin los cuales no hay veredicto. Un control negativo comprueba que la batería acepta lo que debe aceptar, incluido un PRNG clásico. Un control positivo comprueba que el detector reconoce lo que se inyecta ([Tabla](#tbl:controles)).
-
-| experimento | control | tipo | qué comprueba |
-|:---------------|:--------------|:----------------------|:------------------------------------------------------|
-| E1 | N1 (C.E1a) | negativo | El PRNG clásico sin sesgo y sin mitigación pasa M1 a M5: la batería no prueba origen cuántico (D-007) |
-| E1 | D1 | positivo | El detector ve el sesgo inyectado: $\lvert$M1 cruda $-\,0{,}030\rvert\le0{,}002$ |
-| E1 | P1 (C.E1d) | positivo (prueba de regresión) | El instrumento separa lo bueno de lo malo, con piso calibrado sobre las mismas semillas: sesgada, periódica y Markov bajo el techo 0,5 del 90B, ideal sobre el piso 0,8, MCV de la Markov $\ge0{,}9$ |
-| E1 | B1 | positivo | La cruda de Aer ruidoso debe fallar M1 o M3 con el ruido declarado |
-| E2 | C1 | positivo | $\lvert$crudo $-$ analítico$\rvert\le0{,}002$ en los niveles medio y alto |
-| E2 | C2 | negativo | *Twirling* sin ruido: residuo $\le0{,}003$ |
-| E2 | C3 | negativo | *Twirling* con canal simétrico (0,05; 0,05): residuo $\le0{,}003$ |
-| E2 | C4 | puerta | ZNE o PEC «sin efecto» si mueven $\langle Z\rangle$ menos de 10 % |
-| E2 | C5 | contraste | mthree como cifra de contraste, sin decidir |
-| E3 | U1 a U5 | positivo y negativo | Ida y vuelta 1 000/1 000; alteración de 1 bit detectada al 100 %; clave ajena falla al 100 %; ningún par (clave, nonce) repetido; rótulos «validación del pipeline» |
-| E3b | T4, U1 a U5 | positivo y negativo | Un hilo por proceso (cpu/pared $\le1{,}10$); ida y vuelta; *nonces* distintos; ningún par (clave, *nonce*) ni clave repetidos; ninguna clave en la bitácora ni en el informe; rótulo «validación del pipeline» y origen `simulador_aer` |
-| E5 | D5, P5 | positivo y de igualdad | D5: el 90B de la muestra cruda ve el defecto (menos de 0,5 en las tres defectuosas, al menos 0,7 en la buena). P5: los tres dimensionados de una fuente y semilla parten de la misma muestra (igual sha256). Si fallan, la corrida es INVÁLIDA |
-
-: Controles de los experimentos. Un control fallido invalida la corrida. []{#tbl:controles}
-
-La tasa de falsa alarma del control negativo es $1-0{,}99^{18}\approx0{,}165$ por las 18 pruebas a $\alpha=0{,}01$ (analítico, con supuesto de independencia ⚠️). Se aceptó a priori. Si ocurre, la corrida es inválida y no se repite con otra semilla. Contando las 18 pruebas del control negativo, las 9 de M-2 y las 3 de M3 sobre la mitigada, E1 tiene unas 30 comparaciones aleatorias decisivas a $\alpha=0{,}01$ sin corrección por comparaciones múltiples: una falla espuria en un pipeline correcto ronda $1-0{,}99^{30}\approx0{,}26$ (analítico, con supuesto de independencia ⚠️), cifra que no se había reportado.
-
-**Alcance de los controles.** En E1, el control negativo lo es del instrumento: una fuente defectuosa (sesgada, periódica, Markov) es rechazada por el 90B y por la batería. En la versión 0.1.0 el pipeline completo carecía de un control negativo equivalente, hueco que cierra E5 (sección [E5](#sec:e5)): tres fuentes con dependencia atraviesan la cadena entera y el dimensionado conservador las acorta, mientras que el de 0.1.0 no. En una prueba de la revisión R.01, una fuente de Markov con min-entropía real de 0,322 bit por bit atravesó el pipeline y produjo una clave de unos 756 kbit, unas tres veces más de lo que la fuente sostiene, que pasa M3, M4 y M5 en las tres semillas, porque el dimensionado usa MCV sobre el *pool* y supone bits independientes. Entonces era una limitación declarada y no un hallazgo de las corridas del registro; E5 la midió después en el registro y la mitigación (dimensionar con el mínimo de MCV y 90B más la contabilidad de la entropía de la fuente) es opt-in. P1 se calibró con las mismas semillas del experimento (piso 0,8, techo 0,5): es una prueba de regresión del instrumento y no un control con poder para invalidar E1. U1 a U3 de E3 comprueban propiedades de AES-GCM más que del código del proyecto; sólo U4 y U5 dependen de él.
-
-## Criterios por experimento {#sec:criterios}
-
-| experimento | afirma | criterios que deciden | informativos |
-|:---------|:--------------------------------|:--------------------------------|:--------------------------------|
-| E1 | Con entrada ruidosa (Aer, nivel medio, sesgo analítico 0,030) la cadena entrega una clave que cumple M1 a M5 y la medición distingue fuentes malas de buenas | C.E1a, D1, P1, B1; M-1: la mitigada pasa M1 y M3; M-2: la clave pasa M1 a M5 | M4 y M5 de la mitigada (por enmienda), 90B de la cruda y la mitigada, proporción NIST de la clave, resultado de la clave sin mitigar |
-| E2 | Con ruido de lectura asimétrico inyectado, la mitigación baja el sesgo bajo M1 | Por celda (9 celdas sintéticas de nivel y semilla): K1 residuo $<0{,}01$; K2 IC95 superior $<0{,}01$; K3 residuo $\le0{,}003$; K4 crudo/residuo $\ge5$ si crudo $\ge0{,}01$ | Nivel realista (veredicto propio, fuera de la conjunción); mthree; ZNE y PEC |
-| E3 | El conjunto en una PC con Aer entrega M6 $>10\,000$ bit/s y M7 $<500$ ms, con una transacción cifrada | Perfil A (lote completo de 3,2 M de bits): M6 y M7 (percentil 95 de 30 repeticiones), U1 a U5 | Perfil B (reserva ya generada, 1 000 transacciones); no puede rescatar un perfil A fallido |
-| E3b | Con la clave de una reserva generada aparte, la transacción cumple M7 mientras el productor sostiene M6 y supera el consumo | T1 (tasa neta mayor que 10 000 bit/s y que el consumo), T2 (p95 menor que 500 ms), T3 (cero esperas, reserva no agotada); controles T4 y U1 a U5 | R1 (arranque), mediana, p99, máximo, cambios de clave, claves rechazadas, CPU de cada proceso |
-| E5 | El pipeline completo acorta o rechaza la clave de una fuente con dependencia, sin dañar a la fuente buena | D por fuente (clave bajo el techo teórico K1 y bajo el 25 % de la buena), G1 a G3 (la buena pasa M1 a M5, conserva al menos el 75 % y M6 mayor que 10 000 bit/s); controles D5 y P5 | HOY con `mcv` y con `min_mcv_90b`; efecto sobre M6 |
-
-: Criterios preinscritos de cada experimento. []{#tbl:criterios}
-
-Tras ver un resultado registrado, ningún experimento puede relajar un umbral, repetirse con otra semilla ni mover una métrica a informativa; las excepciones que hubo, todas anteriores a la corrida registrada pero algunas posteriores a un ensayo o a un diagnóstico sin registro, están listadas en la sección siguiente. Los desenlaces posibles son CUMPLE, NO CUMPLE, NULO, CUMPLE PARCIAL e INVÁLIDA, y esta última corresponde al error de corrida inválida.
-
-## Enmiendas fechadas y desviaciones del protocolo {#sec:enmiendas}
-
-Todas las enmiendas de la tabla son anteriores a la corrida registrada a la que afectan, y ninguna cambia un umbral de M1 a M7. La única edición de una preinscripción posterior a su corrida es de redacción: `d9c9c6d` (fila final de la tabla). Sí cambian el estatus de dos métricas (M4 y M5 de la mitigada, de decisivas a informativas) y dos umbrales de control (P1, de 0,9 a un piso de 0,8 y un techo de 0,5; la carga previa de E3, de 1,0 a 2,0). Las tres del 2026-10-08 afectan a las condiciones de la medición de E3 (carga previa, clave rechazada, reposo) y no a las definiciones de M6 y M7; la segunda es la única que modifica lo que se mide, y lo hace en contra de la corrida, porque el tiempo del intento rechazado se cuenta. Cada una abre una oportunidad de sesgo del investigador y por eso se documenta ([Tabla](#tbl:enmiendas)).
-
-| fecha | doc. | enmienda | commit | motivo y alcance |
-|:---------|:------|:----------------------------------|:---------------------|:----------------------------------|
-| 2026-10-07 | E3 | El guard de cifrado juzga sólo M1 a M5; M6 y M7 las juzga C.E3 de extremo a extremo | `8984147`, `09da88c`, `5a72939` | Las M6 y M7 internas se miden hasta Toeplitz y podrían impedir cifrar; no se salta el guard ni se relaja un umbral |
-| 2026-10-07 | E3 | M1 a M5 en el punto «mitigada» pasan a informativas | `5a72939` | Misma causa que en E1; los criterios T1 a T4 no leen M1 a M5 |
-| 2026-10-07 | E1 | M5 sobre la mitigada pasa a informativa | `dae22a6` | Diagnóstico de escritorio sin corrida registrada ⚠️ (la preinscripción cita una falla en 7 de 8 semillas, sin artefacto archivado) |
-| 2026-10-07 | E1 (1) | M4 sobre la mitigada pasa a informativa; M-1 decide con M1 y M3 | `1a06602` | Misma causa; la clave sigue decidiendo con M1 a M5 |
-| 2026-10-08 | E3 | Carga previa de la máquina: de menos de 1,0 a menos de 2,0, con la corrida fijada a un núcleo libre | `15bd897` | El umbral era arbitrario y un proceso ajeno de un hilo mantenía la carga entre 1,4 y 2,0 durante horas; la validez de «un hilo» sigue decidiendo |
-| 2026-10-08 | E3 | Una clave rechazada por M1 a M5 se regenera y el tiempo del intento rechazado suma a $t_{rep}$ | `8cc0ec1` | Con $\alpha=0{,}01$ por prueba una clave válida falla alguna con probabilidad no nula; cinco rechazos seguidos invalidan la corrida. Se hizo el mismo día de la corrida, tras un primer intento real que cayó en el monobit; ese intento no conserva cifras |
-| 2026-10-08 | E3 | Reposo de hasta 900 s entre semillas antes de comprobar la carga | `41cd058` | La medición de una semilla eleva la carga de 1 min en ≈ 1 y habría invalidado la siguiente por autocontaminación |
-| 2026-10-07 | E1 (2) | P1 cambia de «ideal con 90B $>0{,}9$» a separación del instrumento: piso 0,8 y techo 0,5 | `37b89ca`, `447c907` | Desviación declarada, descrita a continuación. La segunda enmienda de E1 es ésta, tras una calibración con las semillas declaradas |
-| 2026-10-08 | E3 | Redacción: la nota sobre E1 pasa de «M4 decisiva con alerta analítica» a «M4 y M5 informativas por enmienda» | `d9c9c6d` | **Posterior** a C.E3 (`fdb4386`, 14:46; `d9c9c6d`, 15:08): sólo edita texto de `docs/preinscripciones/E3.md`; no cambia umbrales, criterios ni T1 a T4 |
-
-: Enmiendas fechadas; todas anteriores a la corrida salvo la de redacción de `d9c9c6d`. []{#tbl:enmiendas}
-
-La enmienda del control P1 constituye una desviación del protocolo que debe declararse con detalle. El 90B de la fuente ideal se midió antes de correr E1, pero sobre las semillas declaradas (20261007, 20261008 y 20261009) y ocho más (20261010 a 20261017), con $10^6$ bits por fuente y semilla. La fuente ideal dio 90B entre 0,821 y 0,903 (sólo 2 de 11 superan 0,9), la Markov entre 0,170 y 0,172, la sesgada entre 0,321 y 0,324, y la periódica 0. El criterio original (ideal con 90B mayor que 0,9) fallaba en 9 de 11 fuentes ideales. El instrumento resultaba inválido por una propiedad suya, ya que el mínimo de diez estimadores es una cota conservadora incluso con $h=1$, y no por la fuente. Además, el 0,9 de M2 corresponde a la clave de salida tras Toeplitz, otra magnitud. El piso 0,8 es el mínimo observado (0,821) redondeado hacia abajo a la décima; el techo 0,5 deja un hueco de 0,3.
-
-Quien fijó el piso conocía los valores de las tres semillas declaradas (0,821; 0,902 y 0,832). En consecuencia, P1 pasaría en ellas salvo cambio de código, la calibración no fue ciega, y la cola por debajo de 0,8 en una semilla futura no está medida (⚠️ sin verificar). Con la media y la desviación de las 11 fuentes, la probabilidad de que una fuente ideal nueva quede bajo 0,8 ronda el 2 % (analítico, revisión R.01). P1 es por tanto una prueba de regresión del instrumento.
-
-**Enmiendas hechas el mismo día de la corrida.** Las tres enmiendas de E3 del 2026-10-08 se escribieron después de que un primer intento real de C.E3 tropezara con la carga de la máquina y con una clave rechazada. La primera semilla completa de ese intento se descartó como INVÁLIDA y no se conservaron sus cifras, contra la letra de la regla de que las corridas anteriores permanecen en el registro. Es un grado de libertad del investigador y se declara como tal. El veredicto de E3 no depende de ello: M7 supera el umbral entre 8,9 y 19 veces incluso en la repetición más rápida, y las enmiendas lo penalizan en vez de favorecerlo. E1 aplicó el criterio contrario ante el mismo evento (clave rechazada: INVÁLIDA, sin repetir), de modo que la política no es homogénea entre experimentos. La pregunta que P1 responde pasa a ser una separación (¿distingue el estimador lo bueno de lo malo?) y deja de ser si la ideal alcanza 0,9.
-
-# Arquitectura y calidad del código {#sec:arquitectura}
-
-## Cuatro macro-capas {#sec:capas}
-
-La arquitectura es hexagonal. El núcleo no importa ningún SDK y todo lo que comunica con un sistema externo vive detrás de un puerto ([Figura](#fig:capas)). Hay cuatro macro-capas ([Tabla](#tbl:capas)); la presentación y la interfaz de línea de comandos son bordes de la lógica y no una quinta capa.
-
-![Arquitectura en cuatro macro-capas y dependencias permitidas (flechas). La lógica no depende de la integración, lo transversal es hoja y cada adaptador es independiente de los demás.](fig/capas.pdf){#fig:capas}
-
-| macro-capa | contenido | paquetes |
-|:----------------|:----------------------------------------------------|:-----------------------------------|
-| Datos | Lo que persiste y cruza fronteras: esquemas versionados, informes, serialización canónica, almacén de sólo añadir | `datos/`, puerto `Almacen` |
-| Lógica | Matemática de la entropía, métricas, casos de uso y orquestador | `dominio/` (puro), `aplicacion/` |
-| Integración | Todo lo que comunica con un sistema externo, uno por puerto, con su SDK confinado | `adaptadores/`, `composicion.py` |
-| Transversales | Configuración, errores, observabilidad, reproducibilidad, seguridad, concurrencia, empaquetado | `transversal/`, `dominio/errores.py` |
-
-: Macro-capas de la arquitectura. []{#tbl:capas}
-
-La fuente de bits es un puerto (D-001) con tres adaptadores: PRNG clásico, Aer e IBM Runtime. La mitigación es otro puerto. El validador y el estimador de entropía tienen cada uno dos implementaciones independientes que se contrastan entre sí (D-006): el validador propio frente a nistrng, y la cota MCV del dominio frente al estimador oficial no-IID. Un adaptador cambia sin tocar a otro, y los SDK pesados son extras opcionales.
-
-## Contratos de importación y trinquetes {#sec:contratos}
-
-| contrato | regla | qué previene |
-|:-----------|:-----------------------------------------------------|:--------------------------------------|
-| C1 | Las capas sólo se importan en el sentido permitido | Que la lógica dependa de la integración |
-| C2 | Los adaptadores son independientes entre sí | Acoplar Aer con IBM o con mthree |
-| C3 | El núcleo y la presentación no importan transversal, adaptadores ni entrada | Un núcleo con efectos laterales |
-| C4 | El dominio es puro: sin E/S, reloj, aleatoriedad global ni SDK | Resultados no reproducibles |
-| C5 | Los SDK sólo se importan en adaptadores | Fuga de dependencias pesadas al núcleo |
-| C5b | Los bordes (API, composición, entrada, transversal) no importan un SDK directamente | Que el borde sortee el confinamiento de C5 |
-| C6 | Lo transversal es hoja | Ciclos con configuración y errores |
-
-: Contratos de importación (siete: C1 a C5, C5b y C6) verificados con import-linter. []{#tbl:contratos}
-
-Sobre los siete contratos operan trinquetes por AST: ninguna captura silenciosa de excepciones genéricas, lectura del entorno sólo en configuración, ninguna credencial en el código, ninguna aleatoriedad global en el dominio, y lo vendorizado sin divergencias. Un trinquete sólo puede apretarse, de modo que un caso nuevo que lo viole rompe la CI. Una prueba siembra un import prohibido para comprobar que el contrato falla cuando debe, porque un contrato que nunca falla no demuestra nada. Un hook de commit rechaza mensajes con atribución automática de autoría.
-
-## Desarrollo guiado por pruebas y CI local {#sec:tdd}
-
-La prueba precede a la implementación, y cada decisión de diseño con consecuencia verificable tiene una prueba que la fija. El repositorio contiene 585 funciones de prueba, que pytest recoge como 798 casos con los parametrizados, repartidas por capa: dominio, adaptadores, aplicación, arquitectura, transversales, integración y datos. Entre ellas figuran: Toeplitz por FFT exacto a $n\ge2\cdot10^5$ y coincidente con la matriz densa módulo 2; los validadores NIST propio y de nistrng contrastados entre sí y con los vectores publicados; el cifrador contra el vector oficial de GCM; la aritmética de ZNE sobre la escala efectiva; y el control negativo de la propia arquitectura. La CI local (ruff, mypy en modo estricto, import-linter, comprobaciones del DAG y pytest) se ejecuta antes de empujar, y un hook de push la exige.
 
 # Pipeline y métodos {#sec:metodos}
 
@@ -433,6 +224,69 @@ Con $\hat p=0{,}5$ y $n=256$, $p_u\approx0{,}581$ y $H_{\min}\approx0{,}785$: M2
 
 **Desviación declarada en M2.** La preinscripción pide la mediana de bloques de 4096 bits, con el mínimo aparte. La implementación calcula la cota MCV sobre la clave entera (unos 956 000 bits), y la corrida registra 0,994 a 0,996 en lugar del valor esperado de ≈ 0,943 por bloques. La desviación favorece el resultado por la holgura del tamaño mayor. No cambia el veredicto, porque 0,943 también supera 0,9, y debió declararse por enmienda y no sustituirse en silencio. M2 sobre la salida de Toeplitz vale casi 1 por construcción y no informa sobre la fuente.
 
+# Diseño experimental {#sec:preinscripcion}
+
+Cada experimento se fija por escrito antes de correr: hipótesis, métricas, umbrales, controles y qué desenlaces son posibles. Esta sección describe el protocolo, los controles y los criterios; las enmiendas y las desviaciones, con su fecha y su commit, están en el apéndice D.
+
+## Protocolo de preinscripción {#sec:que-preinscribir}
+
+La regla 5 del documento de fundamento obliga a fijar el umbral y el criterio de cada experimento antes de la corrida. El protocolo opera en cinco pasos.
+
+1. La preinscripción en prosa y su declaración legible por máquina entran en un commit.
+2. La corrida registra en su manifiesto el commit de la preinscripción y el del código.
+3. El juez se niega a veredictar si ese commit no precede a la corrida, si el documento cambió después o si falta o falla un control (error de salida 9).
+4. Un control fallido significa que la medición no es válida: no se emite veredicto y se abre una incidencia.
+5. Un resultado negativo cierra el experimento como negativo; reintentar exige una preinscripción nueva y el veredicto anterior se conserva.
+
+Un error detectado antes de correr se corrige con una enmienda fechada, en commit propio y anterior a la corrida; después de correr, el documento no se modifica. Las semillas (20261007, 20261008 y 20261009) son identificadores enteros y no fechas, se declaran de antemano, y elegir una semilla está prohibido: el veredicto se emite sobre las tres. Son tres muestras de un generador determinista, no tres réplicas físicas: prueban determinismo y no repetibilidad física.
+
+![Cronología de preinscripciones, enmiendas, código del ejecutor y corridas con veredicto (hora de commit; eje cortado entre 19:30 y 21:30 del 2026-10-07, y panel aparte para el 2026-10-08). Cada preinscripción precede a su corrida; las enmiendas de E3 del 2026-10-08 son anteriores a C.E3.](fig/cronologia.pdf){#fig:cronologia}
+
+La [Figura](#fig:cronologia) muestra el orden real, leído de los commits. El juez comprueba por máquina que el commit de la preinscripción es ancestro de la corrida.
+
+## Controles positivos y negativos {#sec:controles}
+
+Cada experimento tiene controles sin los cuales no hay veredicto. Un control negativo comprueba que la batería acepta lo que debe aceptar, incluido un PRNG clásico. Un control positivo comprueba que el detector reconoce lo que se inyecta ([Tabla](#tbl:controles)).
+
+| experimento | control | tipo | qué comprueba |
+|:---------------|:--------------|:----------------------|:------------------------------------------------------|
+| E1 | N1 (C.E1a) | negativo | El PRNG clásico sin sesgo y sin mitigación pasa M1 a M5: la batería no prueba origen cuántico (D-007) |
+| E1 | D1 | positivo | El detector ve el sesgo inyectado: $\lvert$M1 cruda $-\,0{,}030\rvert\le0{,}002$ |
+| E1 | P1 (C.E1d) | positivo (prueba de regresión) | El instrumento separa lo bueno de lo malo, con piso calibrado sobre las mismas semillas: sesgada, periódica y Markov bajo el techo 0,5 del 90B, ideal sobre el piso 0,8, MCV de la Markov $\ge0{,}9$ |
+| E1 | B1 | positivo | La cruda de Aer ruidoso debe fallar M1 o M3 con el ruido declarado |
+| E2 | C1 | positivo | $\lvert$crudo $-$ analítico$\rvert\le0{,}002$ en los niveles medio y alto |
+| E2 | C2 | negativo | *Twirling* sin ruido: residuo $\le0{,}003$ |
+| E2 | C3 | negativo | *Twirling* con canal simétrico (0,05; 0,05): residuo $\le0{,}003$ |
+| E2 | C4 | puerta | ZNE o PEC «sin efecto» si mueven $\langle Z\rangle$ menos de 10 % |
+| E2 | C5 | contraste | mthree como cifra de contraste, sin decidir |
+| E3 | U1 a U5 | positivo y negativo | Ida y vuelta 1 000/1 000; alteración de 1 bit detectada al 100 %; clave ajena falla al 100 %; ningún par (clave, nonce) repetido; rótulos «validación del pipeline» |
+| E3b | T4, U1 a U5 | positivo y negativo | Un hilo por proceso (cpu/pared $\le1{,}10$); ida y vuelta; *nonces* distintos; ningún par (clave, *nonce*) ni clave repetidos; ninguna clave en la bitácora ni en el informe; rótulo «validación del pipeline» y origen `simulador_aer` |
+| E5 | D5, P5 | positivo y de igualdad | D5: el 90B de la muestra cruda ve el defecto (menos de 0,5 en las tres defectuosas, al menos 0,7 en la buena). P5: los tres dimensionados de una fuente y semilla parten de la misma muestra (igual sha256). Si fallan, la corrida es INVÁLIDA |
+
+: Controles de los experimentos. Un control fallido invalida la corrida. []{#tbl:controles}
+
+La tasa de falsa alarma del control negativo es $1-0{,}99^{18}\approx0{,}165$ por las 18 pruebas a $\alpha=0{,}01$ (analítico, con supuesto de independencia ⚠️). Se aceptó a priori. Si ocurre, la corrida es inválida y no se repite con otra semilla. Contando las 18 pruebas del control negativo, las 9 de M-2 y las 3 de M3 sobre la mitigada, E1 tiene unas 30 comparaciones aleatorias decisivas a $\alpha=0{,}01$ sin corrección por comparaciones múltiples: una falla espuria en un pipeline correcto ronda $1-0{,}99^{30}\approx0{,}26$ (analítico, con supuesto de independencia ⚠️), cifra que no se había reportado.
+
+**Alcance de los controles.** En E1, el control negativo lo es del instrumento: una fuente defectuosa (sesgada, periódica, Markov) es rechazada por el 90B y por la batería. En la versión 0.1.0 el pipeline completo carecía de un control negativo equivalente, hueco que cierra E5 (sección [E5](#sec:e5)): tres fuentes con dependencia atraviesan la cadena entera y el dimensionado conservador las acorta, mientras que el de 0.1.0 no. En una prueba de la revisión R.01, una fuente de Markov con min-entropía real de 0,322 bit por bit atravesó el pipeline y produjo una clave de unos 756 kbit, unas tres veces más de lo que la fuente sostiene, que pasa M3, M4 y M5 en las tres semillas, porque el dimensionado usa MCV sobre el *pool* y supone bits independientes. Entonces era una limitación declarada y no un hallazgo de las corridas del registro; E5 la midió después en el registro y la mitigación (dimensionar con el mínimo de MCV y 90B más la contabilidad de la entropía de la fuente) es opt-in. P1 se calibró con las mismas semillas del experimento (piso 0,8, techo 0,5): es una prueba de regresión del instrumento y no un control con poder para invalidar E1. U1 a U3 de E3 comprueban propiedades de AES-GCM más que del código del proyecto; sólo U4 y U5 dependen de él.
+
+## Criterios por experimento {#sec:criterios}
+
+| experimento | afirma | criterios que deciden | informativos |
+|:---------|:--------------------------------|:--------------------------------|:--------------------------------|
+| E1 | Con entrada ruidosa (Aer, nivel medio, sesgo analítico 0,030) la cadena entrega una clave que cumple M1 a M5 y la medición distingue fuentes malas de buenas | C.E1a, D1, P1, B1; M-1: la mitigada pasa M1 y M3; M-2: la clave pasa M1 a M5 | M4 y M5 de la mitigada (por enmienda), 90B de la cruda y la mitigada, proporción NIST de la clave, resultado de la clave sin mitigar |
+| E2 | Con ruido de lectura asimétrico inyectado, la mitigación baja el sesgo bajo M1 | Por celda (9 celdas sintéticas de nivel y semilla): K1 residuo $<0{,}01$; K2 IC95 superior $<0{,}01$; K3 residuo $\le0{,}003$; K4 crudo/residuo $\ge5$ si crudo $\ge0{,}01$ | Nivel realista (veredicto propio, fuera de la conjunción); mthree; ZNE y PEC |
+| E3 | El conjunto en una PC con Aer entrega M6 $>10\,000$ bit/s y M7 $<500$ ms, con una transacción cifrada | Perfil A (lote completo de 3,2 M de bits): M6 y M7 (percentil 95 de 30 repeticiones), U1 a U5 | Perfil B (reserva ya generada, 1 000 transacciones); no puede rescatar un perfil A fallido |
+| E3b | Con la clave de una reserva generada aparte, la transacción cumple M7 mientras el productor sostiene M6 y supera el consumo | T1 (tasa neta mayor que 10 000 bit/s y que el consumo), T2 (p95 menor que 500 ms), T3 (cero esperas, reserva no agotada); controles T4 y U1 a U5 | R1 (arranque), mediana, p99, máximo, cambios de clave, claves rechazadas, CPU de cada proceso |
+| E5 | El pipeline completo acorta o rechaza la clave de una fuente con dependencia, sin dañar a la fuente buena | D por fuente (clave bajo el techo teórico K1 y bajo el 25 % de la buena), G1 a G3 (la buena pasa M1 a M5, conserva al menos el 75 % y M6 mayor que 10 000 bit/s); controles D5 y P5 | HOY con `mcv` y con `min_mcv_90b`; efecto sobre M6 |
+
+: Criterios preinscritos de cada experimento. []{#tbl:criterios}
+
+Tras ver un resultado registrado, ningún experimento puede relajar un umbral, repetirse con otra semilla ni mover una métrica a informativa; las excepciones que hubo, todas anteriores a la corrida registrada pero algunas posteriores a un ensayo o a un diagnóstico sin registro, están listadas en el apéndice D. Los desenlaces posibles son CUMPLE, NO CUMPLE, NULO, CUMPLE PARCIAL e INVÁLIDA, y esta última corresponde al error de corrida inválida.
+
+## Enmiendas y desviaciones {#sec:enmiendas-resumen}
+
+Hubo nueve enmiendas fechadas ([Tabla](#tbl:enmiendas), apéndice D). Ocho son anteriores a la corrida registrada a la que afectan y ninguna cambia un umbral de M1 a M7; la novena es de redacción y posterior a la corrida de E3. Dos enmiendas cambian el estatus de una métrica (M4 y M5 de la muestra mitigada pasan de decisivas a informativas) y dos cambian un umbral de control. Tres de ellas, del mismo día que la corrida de E3, se hicieron tras un primer intento real que tropezó con la carga de la máquina y con una clave rechazada; la primera semilla completa de ese intento se descartó sin conservar cifras, un grado de libertad del investigador que se declara aquí. El control P1 de E1 se calibró con las semillas declaradas, de modo que es una prueba de regresión del instrumento y no un control con poder.
+
 # Resultados {#sec:resultados}
 
 Cada cifra procede de una corrida o de un spike nombrado, y los veredictos proceden del registro de veredictos. Lo no corrido se marca PENDIENTE y no lleva cifras ni estimaciones. Los resultados cerrados son los de E1, E2, E3, E3b y E5.
@@ -494,7 +348,7 @@ El 90B de la cruda (idéntica en C.E1b y C.E1c) vale 0,765, 0,766 y 0,761; el de
 
 ### Control positivo con fuentes sintéticas {#sec:e1d}
 
-Con fuentes de $10^6$ bits ([Figura](#fig:e1d)), la sesgada ($p(1)=0{,}7$) tiene 90B de 0,322 a 0,323 y falla M1, M3, M4 y M5. La periódica tiene 90B 0 y falla M4. La Markov tiene 90B de 0,170 a 0,171 y MCV de 0,992 a 0,994, y falla M4 y M5, además de M3 en la semilla 20261009. La ideal tiene 90B 0,821, 0,902 y 0,832 y pasa M1, M3, M4 y M5. El MCV de la Markov y de la periódica supera 0,99, de modo que el MCV las deja pasar y el 90B las rechaza. Que la ideal supere el piso 0,8 en las tres semillas no constituye una medida ciega (sección [5.4](#sec:enmiendas)).
+Con fuentes de $10^6$ bits ([Figura](#fig:e1d)), la sesgada ($p(1)=0{,}7$) tiene 90B de 0,322 a 0,323 y falla M1, M3, M4 y M5. La periódica tiene 90B 0 y falla M4. La Markov tiene 90B de 0,170 a 0,171 y MCV de 0,992 a 0,994, y falla M4 y M5, además de M3 en la semilla 20261009. La ideal tiene 90B 0,821, 0,902 y 0,832 y pasa M1, M3, M4 y M5. El MCV de la Markov y de la periódica supera 0,99, de modo que el MCV las deja pasar y el 90B las rechaza. Que la ideal supere el piso 0,8 en las tres semillas no constituye una medida ciega (apéndice D).
 
 ![Control positivo: 90B frente a MCV para cada fuente sintética y semilla, con la entropía real analítica. Bandas: techo 0,5 (rechazo) y piso 0,8 (aceptación) del control P1.](fig/e1d_90b_vs_mcv.pdf){#fig:e1d}
 
@@ -586,6 +440,8 @@ El veredicto es **CUMPLE** en las tres semillas. Los criterios que deciden son T
 
 : E3b, perfil R2 (12 000 transacciones por semilla; fuente: `registro/corridas/C.E3b_<semilla>_e3b_000.json` y `registro/veredictos.jsonl`). El umbral de M7 es 500 ms; el cociente a umbral del p95 es de 0,0003 a 0,0004. El umbral de tasa es 10 000 bit/s y el consumo declarado, 35 200 bit/s. []{#tbl:e3b}
 
+![E3b: (a) percentil 95 de la latencia por transacción en E3 (generar y cifrar la clave) y en E3b (cifrar con una reserva ya cebada), escala logarítmica; las dos magnitudes no son equivalentes. (b) Distribución de las 36 000 latencias de E3b (tres semillas).](fig/e3b_latencia.pdf){#fig:e3b}
+
 **Qué dice y qué no.** La latencia de una transacción con la reserva cebada es de décimas de milisegundo. No es comparable con el p95 de E3: E3 mide generar y cifrar la clave dentro de la transacción (5,5 a 9,4 s), y E3b sólo cifrar con una clave ya generada; una transacción que llegue durante el arranque de la reserva espera unos 6,6 s, y eso incumpliría M7. El máximo de unos 1,4 a 4,2 ms y los cuatro cambios de clave por semilla (de 0,5 a 1,4 ms cada uno) también quedan lejos del umbral. La tasa neta de 177 a 199 kbit/s (entre 5,0 y 5,7 veces el consumo) es la capacidad del productor; lo que entregó en régimen durante la ventana (`reporte.tasa_entregada_ventana_bps`) fue de 47,8 kbit/s en las tres semillas, 1,36 veces el consumo de 35,2 kbit/s. La reserva nunca se agotó. El costo se trasladó, no desapareció: el arranque tarda de 6,6 a 6,7 s hasta tener la primera clave, y el productor usa entre el 31 y el 34 % de un núcleo (el consumidor, el 15 %). Hubo una clave rechazada por M1 a M5 en las semillas 20261007 y 20261008 (se regeneró) y ninguna en la 20261009.
 
 **Limitaciones declaradas.** (1) Todo se midió sobre simulador y no incluye la cola ni la red de IBM Quantum. (2) La demanda de 100 transacciones por segundo y los umbrales de 500 ms y 10 kbit/s vienen del manifiesto del equipo; ningún requisito externo los ancla (⚠️ sin verificar). (3) Las claves se generan con el dimensionado `mcv` de 0.1.0, el que E5 mostró que sobrestima con fuentes dependientes; **E3b no se re-midió con el dimensionado conservador** y no se sabe cómo cambiaría su latencia ni su tasa (⚠️ sin verificar). (4) Una reserva en memoria es un depósito de claves: aumenta la exigencia de custodia, que el repositorio no cubre. (5) Tres semillas de un generador determinista no son réplicas físicas. (6) No se probó con una demanda alta ni con arranques en frío distintos de los tres medidos.
@@ -613,6 +469,8 @@ El veredicto es **CUMPLE** en las tres semillas. Decide el lado defectuoso (D: e
 
 : E5: bits de clave por fuente y dimensionado, rango de las tres semillas (fuente: `registro/corridas/C.E5_<semilla>_e5_NNN.json`; el techo K1, de `registro/veredictos.jsonl`). []{#tbl:e5}
 
+![E5: bits de clave por fuente y dimensionado (media de tres semillas y rango), escala logarítmica. La marca horizontal es el techo teórico de cada fuente defectuosa.](fig/e5_dimensionado.pdf){#fig:e5}
+
 **Hallazgo R.00-1 en cadena completa.** Con el dimensionado de 0.1.0, las nueve claves de fuentes defectuosas (tres fuentes por tres semillas) pasan M1 a M5 y las nueve superan el techo K1. El cociente de la clave `mcv` a K1 va de 1,2 (markov) y 1,6 (markov_fuerte) a 2,5 (periodica), calculado con las cifras de la tabla y los techos del veredicto. Es la medida que faltaba: la batería no detecta el defecto, y una clave aprobada por M1 a M5 puede tener entre 1,2 y 2,5 veces más bits que los que la fuente sostiene. Es el criterio HOY del veredicto, que informa y no decide.
 
 **Qué corrige el dimensionado conservador.** Con el conservador, las tres fuentes defectuosas entregan claves entre el 24 y el 53 % de K1 y el conservador las acorta de 55 a 123 mil bits; la fuente buena conserva del 89,5 al 92,3 % de la clave que daría `mcv` (de 856 a 883 mil bits), y la cadena entera mantiene M6 entre 133 y 158 kbit/s. **`min(MCV, 90B)` por sí solo no alcanza:** con `min_mcv_90b`, la fuente `markov_fuerte` sigue por encima de K1 en las tres semillas (de 1,19 a 1,21 veces su techo), porque Peres reparte la dependencia por el *pool* y el 90B del *pool* da valores moderados aunque la muestra cruda dé 0,04. Por eso el dimensionado conservador suma la contabilidad de la entropía de la fuente.
@@ -635,81 +493,54 @@ El veredicto es **CUMPLE** en las tres semillas. Decide el lado defectuoso (D: e
 | Difusión (informe, pitch, amenazas, roadmap) | F7.01, F7.02, F7.04 | hecho |
 | Revisión adversarial del release 0.1.0 | R.01 | hecho; tres informes recibidos, hallazgos corregidos o declarados (sección [R.01](#sec:r01)) |
 | Release 0.1.0 | REL-0.1.0 | publicado |
-| Release 0.2.0 | R.02, REL-0.2.0 | CERRADO: versión 0.2.0 publicada (tag `v0.2.0`, `docs/releases/EXPEDIENTE_0.2.0.md`) |
+| Revisión y release 0.2.0 | R.02, REL-0.2.0 | hecho: versión 0.2.0 publicada (tag `v0.2.0`, `docs/releases/EXPEDIENTE_0.2.0.md`) |
 
 : Estado de las evidencias. []{#tbl:estado}
 
-# Discusión {#sec:discusion}
+# Calidad del software y reproducibilidad {#sec:calidad}
 
-La evidencia reunida respalda tres afirmaciones. Primera, Aer es pseudoaleatorio (S.03), de modo que atribuirle entropía cuántica sería falso, y el diseño lo impide mediante el rótulo de origen. Segunda, ZNE y PEC no actúan sobre el error de lectura (S.02 y E2), y la mitigación del flujo de bits de un QRNG exige una técnica que conserve bits; el *twirling* con XOR clásico la proporciona. Tercera, el MCV es ciego a la dependencia y el mínimo del 90B es conservador (S.04 y control positivo de E1), por lo que ni la longitud de la clave ni los controles pueden depender de un único estimador o de un umbral absoluto.
+Esta sección resume cómo se mantuvo la calidad de la cadena en el código y cómo puede reproducirse cada cifra.
 
-El veredicto CUMPLE de E1 indica que la cadena entrega claves que pasan la batería con entrada ruidosa. No atribuye ese resultado a la mitigación, porque el hallazgo R.00-1 muestra que Peres y Toeplitz ya bastan. Si el objetivo es aprobar M1 a M5 con este ruido, la mitigación es prescindible. Su aporte es una muestra cruda mitigada con sesgo agregado cercano a cero (E2) y una $h_{\min}$ de entrada algo más alta en el 90B (0,797 frente a 0,765, ambas por debajo de 0,9). Dicho aporte no convierte una clave reprobada en aprobada.
+## Cuatro macro-capas {#sec:capas}
 
-SP 800-22 es una batería estadística y un PRNG la pasa, como demuestra el control negativo en el propio registro. Por eso «certificada» se define como «supera la batería y las cotas de entropía de este repositorio» y no equivale a una certificación formal ni a una prueba de origen. Medir sólo la salida tiene el mismo defecto: Toeplitz elimina lo que el ruido ensució, y por eso las métricas se toman en tres puntos y B1 exige que la cruda falle.
+La arquitectura es hexagonal. El núcleo no importa ningún SDK y todo lo que comunica con un sistema externo vive detrás de un puerto ([Figura](#fig:capas)). Hay cuatro macro-capas ([Tabla](#tbl:capas)); la presentación y la interfaz de línea de comandos son bordes de la lógica y no una quinta capa.
 
-La mitigación por bloques resulta contraproducente para las pruebas locales. El *twirling* simetriza en media pero deja estructura local que M4 y M5 detectan, y las tres semillas lo confirman. Esta es la parte menos satisfactoria del diseño: la decisión de declarar informativas esas pruebas se tomó antes de la corrida registrada y con un diagnóstico de escritorio, y marcar informativa una prueba que podía fallar admite objeciones. Con la preinscripción original, en la que M4 y M5 de la mitigada decidían, E1 habría sido CUMPLE PARCIAL. La decisión se atenúa porque la clave, que es lo que se cifra, se juzga con M1 a M5 completas. Queda abierto si el sesgo local degrada también a Peres, que exige independencia (⚠️ sin verificar).
+![Arquitectura en cuatro macro-capas y dependencias permitidas (flechas). La lógica no depende de la integración, lo transversal es hoja y cada adaptador es independiente de los demás.](fig/capas.pdf){#fig:capas}
 
-El criterio de E2 se diseñó para que una celda fallida no pudiera absolverse con otras semillas, y ninguna falla. Cuatro hechos moderan esa lectura: el *twirling* anula el sesgo global por álgebra, el nivel bajo coincide con el umbral por construcción, el modelo de ruido realista simetriza la lectura y no pone a prueba la mitigación, y el piso del estadístico (≈ 0,0006) es del mismo orden que el residuo, de modo que el residuo máximo de 0,003 informa más sobre la precisión del instrumento que sobre la potencia de la técnica. La conclusión que sostienen los datos es la que la preinscripción afirma: en el modelo sintético, el *twirling* reduce el sesgo de lectura bajo M1 con holgura, sin afirmación sobre hardware real.
+| macro-capa | contenido | paquetes |
+|:----------------|:----------------------------------------------------|:-----------------------------------|
+| Datos | Lo que persiste y cruza fronteras: esquemas versionados, informes, serialización canónica, almacén de sólo añadir | `datos/`, puerto `Almacen` |
+| Lógica | Matemática de la entropía, métricas, casos de uso y orquestador | `dominio/` (puro), `aplicacion/` |
+| Integración | Todo lo que comunica con un sistema externo, uno por puerto, con su SDK confinado | `adaptadores/`, `composicion.py` |
+| Transversales | Configuración, errores, observabilidad, reproducibilidad, seguridad, concurrencia, empaquetado | `transversal/`, `dominio/errores.py` |
 
-E3 es el resultado negativo. La preinscripción lo había señalado como el más probable, y el registro lo conserva sin ajustes: el criterio, el lote y el perfil son los fijados antes de medir. Dos lecturas se separan. Con una clave generada por transacción, la latencia de 5 a 9 s excluye el requisito de 500 ms, y la causa dominante es la ejecución del circuito de Aer con 400 000 disparos y la mitigación por *twirling*, que juntas suman tres cuartas partes del ciclo. Con una reserva de claves ya cargada, el ciclo de cifrado cuesta decenas de microsegundos, pero esa cifra del perfil B describe sólo una operación de AES-GCM y no responde a la pregunta de latencia del sistema completo. Esa pregunta se hizo después, con otro diseño y su propia preinscripción (E3b): con un proceso productor que genera las claves en paralelo, la latencia de la transacción es de décimas de milisegundo y el productor sostiene la demanda declarada. El costo se trasladó al arranque (de 6,6 a 6,7 s) y a la custodia de una reserva en memoria, y E3b sólo vale para simulador y con claves del dimensionado `mcv`. Que M6 supere el umbral 18 veces mientras M7 lo incumple 11 a 19 veces muestra que ambas métricas miden cosas distintas: el sistema produce claves con rapidez suficiente y las entrega tarde. Ninguna de las dos cifras tiene un requisito externo que la ancle (⚠️ sin verificar).
+: Macro-capas de la arquitectura. []{#tbl:capas}
 
-De los tres primeros resultados, sólo E3 podía fallar de verdad, y falló. E3b y E5 cumplieron, con matices: T2 (M7) de E3b era casi trivial por la baja utilización, y el riesgo estaba en T1 y T3; E5 es casi un control por construcción, porque sus fuentes defectuosas eran detectables por el 90B y el lado «rechazada» nunca se ejerce; E5, además, midió con su lado informativo (HOY) que el dimensionado de 0.1.0 fallaría el control negativo, y E3b no tiene un control equivalente sobre la dimensión de las claves que consume. Ninguno de los dos se ha repetido sobre hardware. En E1 y E2, B1, D1 y K4 son identidades analíticas del *twirling*: el sesgo global baja a 0 por álgebra, de modo que no podían salir negativos. Lo que sí podía fallar en ellos era M2 a M5, la separación de fuentes por el instrumento y el residuo local, y M4 y M5 de la mitigada fallaron. El sesgo local de unos 0,038 por bloque (simulación de la revisión R.01, fuera del registro) coexiste con 0,0004 agregado. Esa distinción, junto con el orden verificable entre preinscripción y corrida, los controles y las desviaciones declaradas, es lo que sobrevive a cualquier resultado futuro.
+La fuente de bits es un puerto (D-001) con tres adaptadores: PRNG clásico, Aer e IBM Runtime. La mitigación es otro puerto. El validador y el estimador de entropía tienen cada uno dos implementaciones independientes que se contrastan entre sí (D-006): el validador propio frente a nistrng, y la cota MCV del dominio frente al estimador oficial no-IID. Un adaptador cambia sin tocar a otro, y los SDK pesados son extras opcionales.
 
-# Amenazas a la validez y limitaciones {#sec:limitaciones}
+## Contratos de importación y trinquetes {#sec:contratos}
 
-## Validez de constructo {#sec:val-constructo}
+| contrato | regla | qué previene |
+|:-----------|:-----------------------------------------------------|:--------------------------------------|
+| C1 | Las capas sólo se importan en el sentido permitido | Que la lógica dependa de la integración |
+| C2 | Los adaptadores son independientes entre sí | Acoplar Aer con IBM o con mthree |
+| C3 | El núcleo y la presentación no importan transversal, adaptadores ni entrada | Un núcleo con efectos laterales |
+| C4 | El dominio es puro: sin E/S, reloj, aleatoriedad global ni SDK | Resultados no reproducibles |
+| C5 | Los SDK sólo se importan en adaptadores | Fuga de dependencias pesadas al núcleo |
+| C5b | Los bordes (API, composición, entrada, transversal) no importan un SDK directamente | Que el borde sortee el confinamiento de C5 |
+| C6 | Lo transversal es hoja | Ciclos con configuración y errores |
 
-El simulador no aporta entropía cuántica. Sólo el hardware puede aportarla, y aun así su origen cuántico no se certifica sin pruebas de Bell o autoverificación. «Certificada» significa «supera esta batería». El nivel de madurez tecnológica real corresponde a la afirmación más débil: la fuente cuántica en simulador es TRL 3, y subir exige una corrida en hardware IBM con identificador de trabajo. El nodo T.TRL lo derivó en `docs/TRL.md`: TRL del sistema 3, la fila más baja. Los TRL 4 por componente de esa matriz se apoyan en los CUMPLE de E1, E2 y E5, con las salvedades de este informe; E3b queda en 3 (4 sólo con la reserva cebada).
+: Contratos de importación (siete: C1 a C5, C5b y C6) verificados con import-linter. []{#tbl:contratos}
 
-El parámetro $\varepsilon=2^{-64}$ es una decisión de diseño y no una garantía. SP 800-90B ofrece una cota empírica, y ninguna batería equivale a una certificación FIPS o ISO.
+Sobre los siete contratos operan trinquetes por AST: ninguna captura silenciosa de excepciones genéricas, lectura del entorno sólo en configuración, ninguna credencial en el código, ninguna aleatoriedad global en el dominio, y lo vendorizado sin divergencias. Un trinquete sólo puede apretarse, de modo que un caso nuevo que lo viole rompe la CI. Una prueba siembra un import prohibido para comprobar que el contrato falla cuando debe, porque un contrato que nunca falla no demuestra nada. Un hook de commit rechaza mensajes con atribución automática de autoría.
 
-## Validez interna {#sec:val-interna}
+## Desarrollo guiado por pruebas {#sec:tdd}
 
-La calibración del control P1 se hizo con conocimiento de las semillas y con $n=11$ fuentes, tamaño que no constituye un intervalo de tolerancia; se declara como desviación del protocolo ([sección](#sec:enmiendas)). M4 y M5 de la mitigada son informativas por decisión previa a la corrida registrada, y fallan en las tres semillas. La enmienda se apoyó en un diagnóstico de escritorio sin corrida archivada (la cifra de 7 de 8 semillas que cita la preinscripción no tiene artefacto), y sin ella E1 sería CUMPLE PARCIAL. Tres semillas consecutivas de un generador determinista no son réplicas físicas. El IC95 del sesgo supone disparos independientes y puede subestimar la varianza del *twirling* por bloques.
+La prueba precede a la implementación, y cada decisión de diseño con consecuencia verificable tiene una prueba que la fija. La suite de la versión 0.2.0 recoge 883 casos de prueba, repartidos por capa: dominio, adaptadores, aplicación, arquitectura, transversales, integración y datos. Entre ellas figuran: Toeplitz por FFT exacto a $n\ge2\cdot10^5$ y coincidente con la matriz densa módulo 2; los validadores NIST propio y de nistrng contrastados entre sí y con los vectores publicados; el cifrador contra el vector oficial de GCM; la aritmética de ZNE sobre la escala efectiva; y el control negativo de la propia arquitectura. La CI local (ruff, mypy en modo estricto, import-linter, comprobaciones del DAG y pytest) se ejecuta antes de empujar, y un hook de push la exige.
 
-## Validez externa {#sec:val-externa}
+## Plan, registro y documentación como material suplementario {#sec:suplementario}
 
-Los resultados de E1 y E2 valen para el modelo de ruido sintético. E1 usa un solo nivel de ruido (el medio). El modelo de ruido realista simetriza la lectura y no pone a prueba la mitigación (no se afirma que los dispositivos reales carezcan de asimetría), y el nivel bajo coincide con el umbral. El *cross-talk* no está modelado. Sobre hardware real no se afirma nada.
-
-## Validez de conclusión {#sec:val-conclusion}
-
-El hallazgo R.00-1 impide atribuir a la mitigación la aprobación de la clave. El 90B, con valores menores que el MCV, es una cota conservadora, y adoptarlo para dimensionar acortaría la clave entre 20 y 26 % (90B de la muestra cruda de E1 frente al MCV, en la fuente de E1); en E5, con el 90B del *pool* (`min_mcv_90b`) y la fuente buena, el acortamiento es de 7,5 a 10,5 %, porque el *pool* tras Peres es una magnitud distinta de la muestra cruda; E5 midió el efecto del dimensionado conservador sobre fuentes defectuosas y sobre la buena. Con 3 semillas y 9 celdas por experimento, los veredictos son conjuntivos y no se promedian, pero el tamaño muestral no permite afirmar potencia estadística sobre el rango de ruido real. E1 acumula unos 30 valores $p$ decisivos a $\alpha=0{,}01$ sin corrección. Filtrar claves con una batería (E3 regenera las rechazadas, cerca de 4 %) es una práctica desaconsejada porque reduce el espacio de claves; el efecto es del orden de 0,06 bit y se documenta.
-
-## Alcance y limitaciones {#sec:alcance-limitaciones}
-
-1. Las cifras de E3 y E3b valen para una máquina, un reloj y, en E3, un hilo (en E3b, un hilo por proceso), sin cola ni red de IBM Quantum, y ningún requisito externo ancla 500 ms ni 10 kbit/s. La causa de la mayor lentitud del perfil B en la semilla 20261009 no se investigó, y la carga previa de la máquina (menos de 2,0) incluyó un proceso ajeno de un hilo.
-2. La peor amenaza sin cubrir es un adversario con acceso al *pool* de semillas; también quedan fuera el canal, los canales laterales y la gestión de claves ([Tabla](#tbl:amenazas)).
-3. Peres exige independencia, y el LHL aplica $n\cdot h_{\min}$ como min-entropía del bloque, una heurística estándar que con dependencia no se sigue de una estimación por muestra. La semilla de Toeplitz sale del mismo *pool*. El dimensionado por defecto usa MCV sobre el *pool* y supone bits independientes: una fuente de Markov de min-entropía 0,322 produjo una clave de unos 756 kbit, unas tres veces más de lo que sostiene, que pasa M3 a M5, y E5 lo midió en cadena completa (de 1,2 a 2,5 veces). El dimensionado conservador lo corrige en tres defectos de prueba con respuesta analítica, pero es opt-in, no cubre un defecto adversarial y no se re-midieron E3 ni E3b con él.
-4. PNA y Samplomatic no están implementados; PEC corre con perfil de puerta conocido y no aprendido.
-5. Las dependencias son frágiles: el binario 90B se compila fuera del repositorio (requiere red y compilador, y la optimización nativa impide portarlo entre CPU), y mthree y nistrng se fijan por versión exacta.
-6. El diseño se revisó (R.00) y el release se revisó con tres informes independientes (R.01); sus hallazgos se resumen en la sección siguiente y siguen abiertos los que no se declaran corregidos.
-7. No hay corrida en hardware IBM (D-010); el camino está listo (`qrecauda hardware`, preinscripción P.E4) y C.E4 espera una credencial. El origen cuántico de las claves no se afirma, y el TRL de la fuente cuántica queda en el que sostiene el simulador (3).
-8. El diseño con reserva de claves se validó sólo en simulador (E3b): sin cola ni red de IBM, con una demanda declarada por el equipo, con claves del dimensionado `mcv`, y con una reserva en memoria que es un depósito de claves y aumenta la exigencia de custodia. El perfil B de E3 mide una operación sobre una reserva ya cargada y no decide.
-9. La batería es un subconjunto de 3 de las 15 pruebas de SP 800-22, y el 90B no valida la clave.
-10. La política ante una clave rechazada difiere entre E1 (INVÁLIDA) y E3 (regeneración), y una corrida de E3 se descartó sin conservar cifras.
-
-# Revisión adversarial R.01 {#sec:r01}
-
-Antes del release, tres revisores independientes leyeron el repositorio en el commit `f1e8c3b` y recalcularon cifras del registro. No encontraron discrepancias numéricas en las tablas de E1, E2 y E3, y confirmaron que el veredicto de E3 es sólido. Sus notas globales fueron 6,0 sobre 10 (afirmaciones y estadística), 6,0 (código) y 5,5 (coherencia documental).
-
-| hallazgo | revisor | disposición |
-|:----------------------------------------------|:---------|:----------------------------------------------|
-| Reutilización de (clave, nonce) AES-GCM entre servicios sobre la misma clave; U4 no la veía | código | bloqueante, corregido |
-| El CUMPLE de E1 depende de M4 y M5 informativas; B1, D1 y K4 son identidades analíticas | estadística | matizado en el resumen, la discusión y el pitch |
-| El pipeline aprueba y dimensiona una clave de ≈ 3 veces lo que sostiene una fuente de Markov (MCV ciego) | estadística | limitación declarada en 0.1.0; medida en cadena completa y mitigada por E5 (dimensionado conservador, opt-in) |
-| M2 preinscrito por bloques de 4096 no implementado (se mide sobre la clave entera) | estadística | desviación declarada; el veredicto no cambia |
-| P1 calibrado con las mismas semillas | estadística | rotulado prueba de regresión |
-| Batería de 3 de 15 pruebas, unos 30 valores $p$ sin corrección, semillas no independientes, 90B informativo | estadística | declarado en el resumen y en las secciones de métodos y validez |
-| Informe, pitch y DAG desfasados (nodos, pruebas, contratos, TRL, 14 %) | documental | regenerados desde el registro |
-| «Cada experimento lleva un control negativo» y «ninguna cifra se mueve después» | documental | corregidos en el pitch |
-
-: Hallazgos principales de R.01 y su disposición. []{#tbl:r01}
-
-La reutilización de nonce fue el único hallazgo bloqueante y se corrigió; el resto quedó como corrección de texto o como limitación declarada. Los hallazgos sobre la documentación y la publicación del repositorio se atienden en el release. Las enmiendas de E3 del 2026-10-08 se hicieron el mismo día de la corrida y se declaran como un grado de libertad del investigador (sección [5.4](#sec:enmiendas)): la primera semilla completa de un intento se descartó como INVÁLIDA sin conservar cifras. El veredicto de E3 no depende de ello, porque M7 está entre 8,9 y 19 veces por encima del umbral.
-
-La revisión R.02, previa al release 0.2.0, la hicieron otros tres revisores independientes (afirmaciones 7,5; coherencia 6,0; código 5,5 sobre 10). Sus hallazgos sobre E3b y E5 ya están incorporados en este texto: la comparación entre E3 y E3b no es equivalente, el productor de 177 a 199 kbit/s es capacidad y no lo entregado, T2 de E3b era casi trivial, E5 es casi un control por construcción y E3b queda en TRL 3 (4 sólo con la reserva cebada). La tabla completa de hallazgos y disposiciones está en `docs/informes/REVISION_ADVERSARIAL_0.2.0.md`.
-
-# Reproducibilidad {#sec:repro}
+El repositorio incluye el plan del proyecto como grafo verificable (79 nodos, once reglas comprobadas por máquina, apéndice C), un registro de sólo añadir con el estado de cada nodo y los artefactos de cada corrida, y una wiki de documentación que se publica como bóveda de Obsidian. Los tres se comparten para que un tercero pueda auditar el orden entre preinscripción y corrida y recalcular cada cifra de este informe. Ninguno hace falta para entender los resultados.
 
 ## Qué es reproducible {#sec:repro-que}
 
@@ -759,17 +590,87 @@ Las corridas pesadas toman un candado de máquina, fuerzan BLAS a un hilo y regi
 
 : Procedencia de cifras y figuras (rutas relativas a la raíz del repositorio). []{#tbl:procedencia}
 
+# Discusión {#sec:discusion}
+
+La evidencia reunida respalda tres afirmaciones. Primera, Aer es pseudoaleatorio (S.03), de modo que atribuirle entropía cuántica sería falso, y el diseño lo impide mediante el rótulo de origen. Segunda, ZNE y PEC no actúan sobre el error de lectura (S.02 y E2), y la mitigación del flujo de bits de un QRNG exige una técnica que conserve bits; el *twirling* con XOR clásico la proporciona. Tercera, el MCV es ciego a la dependencia y el mínimo del 90B es conservador (S.04 y control positivo de E1), por lo que ni la longitud de la clave ni los controles pueden depender de un único estimador o de un umbral absoluto.
+
+El veredicto CUMPLE de E1 indica que la cadena entrega claves que pasan la batería con entrada ruidosa. No atribuye ese resultado a la mitigación, porque el hallazgo R.00-1 muestra que Peres y Toeplitz ya bastan. Si el objetivo es aprobar M1 a M5 con este ruido, la mitigación es prescindible. Su aporte es una muestra cruda mitigada con sesgo agregado cercano a cero (E2) y una $h_{\min}$ de entrada algo más alta en el 90B (0,797 frente a 0,765, ambas por debajo de 0,9). Dicho aporte no convierte una clave reprobada en aprobada.
+
+SP 800-22 es una batería estadística y un PRNG la pasa, como demuestra el control negativo en el propio registro. Por eso «certificada» se define como «supera la batería y las cotas de entropía de este repositorio» y no equivale a una certificación formal ni a una prueba de origen. Medir sólo la salida tiene el mismo defecto: Toeplitz elimina lo que el ruido ensució, y por eso las métricas se toman en tres puntos y B1 exige que la cruda falle.
+
+La mitigación por bloques resulta contraproducente para las pruebas locales. El *twirling* simetriza en media pero deja estructura local que M4 y M5 detectan, y las tres semillas lo confirman. Esta es la parte menos satisfactoria del diseño: la decisión de declarar informativas esas pruebas se tomó antes de la corrida registrada y con un diagnóstico de escritorio, y marcar informativa una prueba que podía fallar admite objeciones. Con la preinscripción original, en la que M4 y M5 de la mitigada decidían, E1 habría sido CUMPLE PARCIAL. La decisión se atenúa porque la clave, que es lo que se cifra, se juzga con M1 a M5 completas. Queda abierto si el sesgo local degrada también a Peres, que exige independencia (⚠️ sin verificar).
+
+El criterio de E2 se diseñó para que una celda fallida no pudiera absolverse con otras semillas, y ninguna falla. Cuatro hechos moderan esa lectura: el *twirling* anula el sesgo global por álgebra, el nivel bajo coincide con el umbral por construcción, el modelo de ruido realista simetriza la lectura y no pone a prueba la mitigación, y el piso del estadístico (≈ 0,0006) es del mismo orden que el residuo, de modo que el residuo máximo de 0,003 informa más sobre la precisión del instrumento que sobre la potencia de la técnica. La conclusión que sostienen los datos es la que la preinscripción afirma: en el modelo sintético, el *twirling* reduce el sesgo de lectura bajo M1 con holgura, sin afirmación sobre hardware real.
+
+E3 es el resultado negativo. La preinscripción lo había señalado como el más probable, y el registro lo conserva sin ajustes: el criterio, el lote y el perfil son los fijados antes de medir. Dos lecturas se separan. Con una clave generada por transacción, la latencia de 5 a 9 s excluye el requisito de 500 ms, y la causa dominante es la ejecución del circuito de Aer con 400 000 disparos y la mitigación por *twirling*, que juntas suman tres cuartas partes del ciclo. Con una reserva de claves ya cargada, el ciclo de cifrado cuesta decenas de microsegundos, pero esa cifra del perfil B describe sólo una operación de AES-GCM y no responde a la pregunta de latencia del sistema completo. Esa pregunta se hizo después, con otro diseño y su propia preinscripción (E3b): con un proceso productor que genera las claves en paralelo, la latencia de la transacción es de décimas de milisegundo y el productor sostiene la demanda declarada. El costo se trasladó al arranque (de 6,6 a 6,7 s) y a la custodia de una reserva en memoria, y E3b sólo vale para simulador y con claves del dimensionado `mcv`. Que M6 supere el umbral 18 veces mientras M7 lo incumple 11 a 19 veces muestra que ambas métricas miden cosas distintas: el sistema produce claves con rapidez suficiente y las entrega tarde. Ninguna de las dos cifras tiene un requisito externo que la ancle (⚠️ sin verificar).
+
+De los tres primeros resultados, sólo E3 podía fallar de verdad, y falló. E3b y E5 cumplieron, con matices: T2 (M7) de E3b era casi trivial por la baja utilización, y el riesgo estaba en T1 y T3; E5 es casi un control por construcción, porque sus fuentes defectuosas eran detectables por el 90B y el lado «rechazada» nunca se ejerce; E5, además, midió con su lado informativo (HOY) que el dimensionado de 0.1.0 fallaría el control negativo, y E3b no tiene un control equivalente sobre la dimensión de las claves que consume. Ninguno de los dos se ha repetido sobre hardware. En E1 y E2, B1, D1 y K4 son identidades analíticas del *twirling*: el sesgo global baja a 0 por álgebra, de modo que no podían salir negativos. Lo que sí podía fallar en ellos era M2 a M5, la separación de fuentes por el instrumento y el residuo local, y M4 y M5 de la mitigada fallaron. El sesgo local de unos 0,038 por bloque (simulación de la revisión R.01, fuera del registro) coexiste con 0,0004 agregado. Esa distinción, junto con el orden verificable entre preinscripción y corrida, los controles y las desviaciones declaradas, es lo que sobrevive a cualquier resultado futuro.
+
+# Amenazas a la validez y limitaciones {#sec:limitaciones}
+
+## Validez de constructo {#sec:val-constructo}
+
+El simulador no aporta entropía cuántica. Sólo el hardware puede aportarla, y aun así su origen cuántico no se certifica sin pruebas de Bell o autoverificación. «Certificada» significa «supera esta batería». El nivel de madurez tecnológica real corresponde a la afirmación más débil: la fuente cuántica en simulador es TRL 3, y subir exige una corrida en hardware IBM con identificador de trabajo. El nodo T.TRL lo derivó en `docs/TRL.md`: TRL del sistema 3, la fila más baja. Los TRL 4 por componente de esa matriz se apoyan en los CUMPLE de E1, E2 y E5, con las salvedades de este informe; E3b queda en 3 (4 sólo con la reserva cebada).
+
+El parámetro $\varepsilon=2^{-64}$ es una decisión de diseño y no una garantía. SP 800-90B ofrece una cota empírica, y ninguna batería equivale a una certificación FIPS o ISO.
+
+## Validez interna {#sec:val-interna}
+
+La calibración del control P1 se hizo con conocimiento de las semillas y con $n=11$ fuentes, tamaño que no constituye un intervalo de tolerancia; se declara como desviación del protocolo (apéndice D). M4 y M5 de la mitigada son informativas por decisión previa a la corrida registrada, y fallan en las tres semillas. La enmienda se apoyó en un diagnóstico de escritorio sin corrida archivada (la cifra de 7 de 8 semillas que cita la preinscripción no tiene artefacto), y sin ella E1 sería CUMPLE PARCIAL. Tres semillas consecutivas de un generador determinista no son réplicas físicas. El IC95 del sesgo supone disparos independientes y puede subestimar la varianza del *twirling* por bloques.
+
+## Validez externa {#sec:val-externa}
+
+Los resultados de E1 y E2 valen para el modelo de ruido sintético. E1 usa un solo nivel de ruido (el medio). El modelo de ruido realista simetriza la lectura y no pone a prueba la mitigación (no se afirma que los dispositivos reales carezcan de asimetría), y el nivel bajo coincide con el umbral. El *cross-talk* no está modelado. Sobre hardware real no se afirma nada.
+
+## Validez de conclusión {#sec:val-conclusion}
+
+El hallazgo R.00-1 impide atribuir a la mitigación la aprobación de la clave. El 90B, con valores menores que el MCV, es una cota conservadora, y adoptarlo para dimensionar acortaría la clave entre 20 y 26 % (90B de la muestra cruda de E1 frente al MCV, en la fuente de E1); en E5, con el 90B del *pool* (`min_mcv_90b`) y la fuente buena, el acortamiento es de 7,5 a 10,5 %, porque el *pool* tras Peres es una magnitud distinta de la muestra cruda; E5 midió el efecto del dimensionado conservador sobre fuentes defectuosas y sobre la buena. Con 3 semillas y 9 celdas por experimento, los veredictos son conjuntivos y no se promedian, pero el tamaño muestral no permite afirmar potencia estadística sobre el rango de ruido real. E1 acumula unos 30 valores $p$ decisivos a $\alpha=0{,}01$ sin corrección. Filtrar claves con una batería (E3 regenera las rechazadas, cerca de 4 %) es una práctica desaconsejada porque reduce el espacio de claves; el efecto es del orden de 0,06 bit y se documenta.
+
+## Alcance y limitaciones {#sec:alcance-limitaciones}
+
+1. Las cifras de E3 y E3b valen para una máquina, un reloj y, en E3, un hilo (en E3b, un hilo por proceso), sin cola ni red de IBM Quantum, y ningún requisito externo ancla 500 ms ni 10 kbit/s. La causa de la mayor lentitud del perfil B en la semilla 20261009 no se investigó, y la carga previa de la máquina (menos de 2,0) incluyó un proceso ajeno de un hilo.
+2. La peor amenaza sin cubrir es un adversario con acceso al *pool* de semillas; también quedan fuera el canal, los canales laterales y la gestión de claves ([Tabla](#tbl:amenazas)).
+3. Peres exige independencia, y el LHL aplica $n\cdot h_{\min}$ como min-entropía del bloque, una heurística estándar que con dependencia no se sigue de una estimación por muestra. La semilla de Toeplitz sale del mismo *pool*. El dimensionado por defecto usa MCV sobre el *pool* y supone bits independientes: una fuente de Markov de min-entropía 0,322 produjo una clave de unos 756 kbit, unas tres veces más de lo que sostiene, que pasa M3 a M5, y E5 lo midió en cadena completa (de 1,2 a 2,5 veces). El dimensionado conservador lo corrige en tres defectos de prueba con respuesta analítica, pero es opt-in, no cubre un defecto adversarial y no se re-midieron E3 ni E3b con él.
+4. PNA y Samplomatic no están implementados; PEC corre con perfil de puerta conocido y no aprendido.
+5. Las dependencias son frágiles: el binario 90B se compila fuera del repositorio (requiere red y compilador, y la optimización nativa impide portarlo entre CPU), y mthree y nistrng se fijan por versión exacta.
+6. El diseño se revisó (R.00) y el release se revisó con tres informes independientes (R.01); sus hallazgos se resumen en la sección siguiente y siguen abiertos los que no se declaran corregidos.
+7. No hay corrida en hardware IBM (D-010); el camino está listo (`qrecauda hardware`, preinscripción P.E4) y C.E4 espera una credencial. El origen cuántico de las claves no se afirma, y el TRL de la fuente cuántica queda en el que sostiene el simulador (3).
+8. El diseño con reserva de claves se validó sólo en simulador (E3b): sin cola ni red de IBM, con una demanda declarada por el equipo, con claves del dimensionado `mcv`, y con una reserva en memoria que es un depósito de claves y aumenta la exigencia de custodia. El perfil B de E3 mide una operación sobre una reserva ya cargada y no decide.
+9. La batería es un subconjunto de 3 de las 15 pruebas de SP 800-22, y el 90B no valida la clave.
+10. La política ante una clave rechazada difiere entre E1 (INVÁLIDA) y E3 (regeneración), y una corrida de E3 se descartó sin conservar cifras.
+
+# Revisión adversarial independiente (R.01 y R.02) {#sec:r01}
+
+Antes del release, tres revisores independientes leyeron el repositorio en el commit `f1e8c3b` y recalcularon cifras del registro. No encontraron discrepancias numéricas en las tablas de E1, E2 y E3, y confirmaron que el veredicto de E3 es sólido. Sus notas globales fueron 6,0 sobre 10 (afirmaciones y estadística), 6,0 (código) y 5,5 (coherencia documental).
+
+| hallazgo | revisor | disposición |
+|:----------------------------------------------|:---------|:----------------------------------------------|
+| Reutilización de (clave, nonce) AES-GCM entre servicios sobre la misma clave; U4 no la veía | código | bloqueante, corregido |
+| El CUMPLE de E1 depende de M4 y M5 informativas; B1, D1 y K4 son identidades analíticas | estadística | matizado en el resumen, la discusión y el pitch |
+| El pipeline aprueba y dimensiona una clave de ≈ 3 veces lo que sostiene una fuente de Markov (MCV ciego) | estadística | limitación declarada en 0.1.0; medida en cadena completa y mitigada por E5 (dimensionado conservador, opt-in) |
+| M2 preinscrito por bloques de 4096 no implementado (se mide sobre la clave entera) | estadística | desviación declarada; el veredicto no cambia |
+| P1 calibrado con las mismas semillas | estadística | rotulado prueba de regresión |
+| Batería de 3 de 15 pruebas, unos 30 valores $p$ sin corrección, semillas no independientes, 90B informativo | estadística | declarado en el resumen y en las secciones de métodos y validez |
+| Informe, pitch y DAG desfasados (nodos, pruebas, contratos, TRL, 14 %) | documental | regenerados desde el registro |
+| «Cada experimento lleva un control negativo» y «ninguna cifra se mueve después» | documental | corregidos en el pitch |
+
+: Hallazgos principales de R.01 y su disposición. []{#tbl:r01}
+
+La reutilización de nonce fue el único hallazgo bloqueante y se corrigió; el resto quedó como corrección de texto o como limitación declarada. Los hallazgos sobre la documentación y la publicación del repositorio se atienden en el release. Las enmiendas de E3 del 2026-10-08 se hicieron el mismo día de la corrida y se declaran como un grado de libertad del investigador (apéndice D): la primera semilla completa de un intento se descartó como INVÁLIDA sin conservar cifras. El veredicto de E3 no depende de ello, porque M7 está entre 8,9 y 19 veces por encima del umbral.
+
+La revisión R.02, previa al release 0.2.0, la hicieron otros tres revisores independientes (afirmaciones 7,5; coherencia 6,0; código 5,5 sobre 10). Sus hallazgos sobre E3b y E5 ya están incorporados en este texto: la comparación entre E3 y E3b no es equivalente, el productor de 177 a 199 kbit/s es capacidad y no lo entregado, T2 de E3b era casi trivial, E5 es casi un control por construcción y E3b queda en TRL 3 (4 sólo con la reserva cebada). La tabla completa de hallazgos y disposiciones está en `docs/informes/REVISION_ADVERSARIAL_0.2.0.md`.
+
 # Conclusiones {#sec:conclusiones}
 
-1. Se construyó un pipeline QRNG de punta a punta con límites declarados: el simulador valida el postprocesamiento y no aporta entropía cuántica, y «certificada» significa «supera esta batería».
-2. El plan es un DAG verificable por máquina. Empezó con 59 nodos (versión 0.1.0, cerrados) y a la fecha tiene 78: 72 cerrados (67 hechos y 5 juzgados), 1 bloqueado (C.E4, sin credencial IBM) y 5 pendientes (E4, R.02, REL-0.2.0, R.03 y REL-0.3.0), según `ESTADO.md`.
-3. E1 obtiene CUMPLE en las tres semillas, condicionado a que M4 y M5 de la mitigada sean informativas (fallan en 3/3); sin esas enmiendas sería CUMPLE PARCIAL. El hallazgo R.00-1 muestra que la clave sin mitigar también pasa M1 a M5: la mitigación mejora el sesgo crudo y no es necesaria para aprobar la batería. El control negativo del pipeline completo llegó después, con E5 (conclusión 6).
-4. E2 obtiene CUMPLE en las nueve celdas sintéticas, por una propiedad algebraica del *twirling* que anula el sesgo global. El agregado no mide el sesgo local, ZNE y PEC no modifican el sesgo de lectura, el modelo de ruido realista no pone a prueba la mitigación y el nivel bajo coincide con el umbral.
-5. E3 obtiene NO CUMPLE por M7 en las tres semillas: el percentil 95 de la latencia del ciclo completo es de 9 378, 5 554 y 5 547 ms frente a 500 ms, mientras que M6 cumple con 180 466 a 195 465 bit/s frente a 10 000. Generar una clave por transacción no cumple la latencia, y la mitigación y la fuente suman tres cuartas partes del ciclo. Con una reserva de claves ya cargada, el ciclo de cifrado cuesta 15 a 22 µs de mediana; esa cifra del perfil B no decide. H3 se sostiene en la tasa y no en la latencia de E3.
-6. E1 y E2 cumplen sus criterios preinscritos con poder limitado para fallar, y E3 no cumple. Dos experimentos posteriores, con preinscripción propia, cumplen: E3b (otro diseño, la clave sale de una reserva generada aparte: p95 de 0,17 a 0,18 ms con la reserva cebada, no comparable con E3; capacidad del productor de 177 a 199 kbit/s y entregado en régimen de 47,8 kbit/s; cero esperas; sólo simulador, sin la cola ni la red de IBM y con claves del dimensionado `mcv`; su T2 era casi trivial) y E5 (control negativo del pipeline completo, casi por construcción: con `mcv`, las claves defectuosas pasan M1 a M5 y salen de 1,2 a 2,5 veces más largas que lo que la fuente sostiene; el dimensionado conservador, opt-in, las acorta, y `min(MCV, 90B)` por sí solo no alcanza en markov_fuerte). No se re-midieron E3 ni E3b con el dimensionado conservador (⚠️ sin verificar su efecto sobre la latencia). No hay corrida en hardware IBM (D-010): el camino está listo y ensayado contra un backend falso, la corrida real (C.E4) espera una credencial y no existe ningún resultado en hardware real. El TRL del sistema es 3; el control negativo de E5 está en TRL 4 como componente, sobre simulador; la latencia con reserva (E3b) queda en 3 (4 sólo con la reserva cebada) y el dimensionado conservador, opt-in, en 3. El release 0.2.0 está publicado (tag `v0.2.0`). No se afirma origen cuántico.
-7. La contribución que persiste ante cualquier resultado es el método: preinscripción anterior a la corrida, controles obligatorios, enmiendas fechadas y desviaciones declaradas.
+1. La cadena completa (fuente simulada, mitigación de lectura, extracción, dimensionado, validación y cifrado) entrega claves AES-256-GCM que superan las pruebas M1 a M5 con ruido de lectura asimétrico. El simulador valida el postprocesamiento y no aporta entropía cuántica; «certificada» significa «supera esta batería y estas cotas».
+2. La mitigación por *twirling* reduce el sesgo de lectura con holgura en el modelo sintético y deja un sesgo local por bloque que detectan las pruebas de rachas y de frecuencia por bloques. ZNE y PEC no actúan sobre el error de lectura. La clave aprueba la batería también sin mitigar, de modo que la mitigación mejora la muestra cruda y no es necesaria para aprobar.
+3. Una batería aplicada a la salida de un extractor no mide la calidad de la fuente. Con el dimensionado por MCV, claves de fuentes con dependencia aprueban M1 a M5 y son de 1,2 a 2,5 veces más largas de lo que la fuente sostiene. El dimensionado conservador las acorta por debajo del techo teórico y conserva del 89,5 al 92,3 % de la clave de una fuente buena, pero es opcional, no cubre un defecto adversarial y no se re-midió en los experimentos de latencia.
+4. Generar una clave por transacción incumple el requisito de latencia (percentil 95 de 5,5 a 9,4 s frente a 500 ms), mientras que la tasa lo supera 18 veces. Con una reserva de claves producida aparte, la transacción cuesta décimas de milisegundo. El costo se traslada al arranque (6,6 s) y a la custodia de una reserva en memoria, y el resultado vale para simulador, con una demanda declarada por el equipo.
+5. Tres de los cinco experimentos (E1, E2 y E5) y el criterio de latencia de E3b tienen un poder limitado para fallar, por propiedades algebraicas del *twirling* o por construcción del control. El informe lo declara y conserva el resultado negativo de E3.
+6. El software se mantuvo bajo contratos de arquitectura ejecutables y 883 casos de prueba, y cada cifra de este informe se regenera desde un registro de sólo añadir. Dos revisiones independientes (R.01 y R.02) puntuaron el trabajo entre 5,5 y 7,5 sobre 10, y sus hallazgos están incorporados.
+7. No hay corrida en hardware de IBM. El camino está implementado y ensayado contra un backend falso, la corrida está preinscrita (E4) y su ejecución espera una credencial. El nivel de madurez tecnológica del sistema es 3, y no se afirma origen cuántico.
 
-El trabajo siguiente, en este orden, consiste en correr C.E4 con la preinscripción P.E4 en cuanto haya una credencial de IBM (fuente real, `job_id`, contraste con Aer y comparación de la mitigación del muestreador de IBM con el *twirling* propio); re-medir E3b con el dimensionado conservador de E5 y decidir si pasa a ser el predeterminado; medir la latencia con la cola y la red de IBM dentro; y cerrar M2 por bloques (hallazgo abierto de R.01).
+El trabajo siguiente, en este orden, consiste en ejecutar E4 en hardware de IBM (identificador de trabajo, contraste con el simulador y comparación del *twirling* propio con la mitigación del muestreador de IBM); re-medir E3b con el dimensionado conservador y decidir si pasa a ser el predeterminado; medir la latencia con la cola y la red de IBM dentro; y cerrar la medición de M2 por bloques, hallazgo abierto de R.01.
 
 # Referencias {.unnumbered}
 
@@ -824,7 +725,112 @@ Las referencias omitidas son el procedimiento original de von Neumann (1951) y l
 
 : Decisiones de diseño D-001 a D-010 (`docs/decisiones/`). []{#tbl:decisiones}
 
-# Apéndice B. Mapa de fuentes del repositorio {.unnumbered}
+# Apéndice B. Discrepancias con el manifiesto fundacional {.unnumbered}
+
+El manifiesto del equipo gobierna el objetivo del proyecto. Su método choca en nueve puntos con lo que permiten las bibliotecas o la estadística. Cada punto se declaró antes de actuar, y una décima discrepancia surgió de la revisión adversarial del diseño ([Tabla](#tbl:discrepancias)).
+
+| \# | El manifiesto dice | Lo que se encontró o decidió | Estado |
+|:-----|:-------------------------------------|:-------------------------------------|:--------------------------|
+| 1 | «No dependemos de hardware real» y, a la vez, «procesadores físicos de IBM» | Son dos alcances: el backend es un puerto (D-001), con simulador por defecto y hardware opcional | decidido |
+| 2 | Aer con ruido produce «entropía cuántica» | El muestreo de Aer es un PRNG; `Origen.SIMULADOR_AER` no reclama origen cuántico (D-002; S.03) | demostrado |
+| 3 | TREX + ZNE + PEC mitigan el *bitstream* del muestreador | ZNE y PEC se definen sobre valores esperados; `resilience_level` es opción del estimador (S.02) | verificado |
+| 4 | «TREX vía mthree» | Son técnicas distintas; mthree entrega cuasi-probabilidades, no bits (D-009) | verificado |
+| 5 | Min-entropía > 0,9 prueba la calidad | Tras Toeplitz vale casi 1 por construcción; la informativa es la de entrada | decidido |
+| 6 | «Claves certificadas» | SP 800-22 no certifica origen ni impredecibilidad; hay control negativo (D-007) | decidido |
+| 7 | «TRL 4» | La rúbrica exige $n\ge3$, protocolo preinscrito y auditable; el TRL real es el de la afirmación más débil (fuente en simulador: TRL 3) | cerrado por T.TRL: TRL del sistema 3 |
+| 8 | El MCV decide la longitud y la «certifica» | El MCV es ciego a la dependencia: Markov con permanencia 0,8 (min-entropía real 0,322 bit/bit, analítico) da MCV 0,992 (S.04, C.E1d); el dimensionado sigue usando MCV | demostrado; E5 lo mide en cadena completa y el dimensionado conservador (opt-in) lo corrige en las tres fuentes de prueba; el predeterminado sigue siendo `mcv` |
+| 9 | M1 < 1 % y M2 > 0,9 como umbrales | Con $N=800\,000$ el monobit exige sesgo menor que 0,0014 (siete veces más estricto que M1) y M2 sobre 256 bits no supera 0,785 (analítico, P.E0) | decidido |
+| 10 | (revisión R.00) | Medir M1 a M5 sólo sobre la salida de Toeplitz haría pasar a cualquier fuente; se miden en tres puntos (cruda, mitigada y clave); hallazgo R.00-1 | decidido y confirmado en E1 |
+
+: Discrepancias con el manifiesto fundacional. []{#tbl:discrepancias}
+
+# Apéndice C. El plan como grafo verificable {.unnumbered}
+
+Material suplementario. El plan del proyecto es un grafo dirigido acíclico generado por un script; el estado de cada nodo vive en un registro de sólo añadir y una herramienta de validación rechaza cualquier estado que contradiga las reglas. El plan no se edita a mano, y una prueba comprueba que el fichero versionado coincide con la regeneración. Este apéndice documenta la estructura y las reglas; no hace falta para seguir los resultados.
+
+El plan de la versión 0.1.0 tenía 59 nodos y 132 aristas, con una única hoja (el producto 0.1.0) y una profundidad máxima de 15 niveles. Las tablas y la figura son una instantánea de 0.1.0. A la fecha (versión 0.2.0) el plan tiene 79 nodos y 194 aristas: 70 hechos, 5 juzgados (E1, E2, E3, E3b y E5), 1 bloqueado (la corrida en hardware de IBM, sin credencial) y 3 pendientes (el juicio de esa corrida, su revisión y la versión 0.3.0). Se organiza en ocho fases más la revisión final ([Tabla](#tbl:fases)). Cada nodo declara su tipo ([Tabla](#tbl:tipos)), sus dependencias, su entrega (rutas del repositorio), el criterio de cierre y los requisitos que cubre. La [Figura](#fig:dag) muestra el estado real al cierre de 0.1.0: 54 nodos hechos, 3 juzgados (E1, E2 y E3) y 2 pendientes (la revisión R.01, lista, y el release 0.1.0, bloqueado por ella).
+
+![El plan como DAG, por fases y coloreado por el estado real (instantánea de 0.1.0: plan de 59 nodos y registro de estado de ese momento; a la fecha el plan tiene 78 nodos). Borde grueso: eureka; discontinuo: preinscripción; punteado: corrida o medición. Verde: hecho; azul: juzgado; naranja: listo; blanco: pendiente.](fig/dag.pdf){#fig:dag}
+
+| fase | contenido | nodos |
+|:----------|:---------------------------------------------------------------------------------|------------:|
+| F0 | Fundación: repositorio, decisiones, contratos de importación, DAG, hooks, CI local, revisión adversarial R.00 | 11 |
+| F1 | Dominio: bits, extractores (von Neumann, Peres, Toeplitz con LHL), entropía y métricas | 3 |
+| F2 | Puertos, bala trazadora, transversales, presentación, almacén, correr y juzgar | 7 |
+| F3 | Fuente y ruido: spikes S.01 a S.04, circuito sobre Aer, modelo de ruido, transpilación, IBM opcional | 10 |
+| F4 | Mitigación: *twirling* de lectura (F4.01) y ZNE/PEC sobre ⟨Z⟩ (F4.02) | 2 |
+| F5 | Validación: batería NIST SP 800-22 y min-entropía SP 800-90B | 2 |
+| F6 | Cifrado AES-256-GCM y transacción de peaje o Metro | 2 |
+| E | Experimentos: parámetros P.E0, preinscripciones P.E1 a P.E3, corridas, veredictos E1 a E3 | 13 |
+| F7 | Difusión: amenazas, integración, TRL, wiki, informe | 7 |
+| R | Revisión adversarial del release (R.01) y release 0.1.0 | 2 |
+
+: Fases del plan y número de nodos de cada una. []{#tbl:fases}
+
+| tipo | nodos | uso |
+|:---------------------------|----------:|:------------------------------------------------------------------|
+| infra | 13 | repositorio, contratos, CI, hooks, transversales, integración |
+| adaptador | 11 | un sistema externo detrás de un puerto (Aer, IBM, mthree, nistrng, cifrado, disco) |
+| doc | 7 | documentos con entrega comprobable (amenazas, TRL, informe) |
+| corrida | 5 | ejecución preinscrita cuyo artefacto entra al registro |
+| insumo | 4 | spikes de viabilidad (S.01 a S.04) |
+| decision | 3 | decisión con consecuencia en el plan (parámetros P.E0, hardware) |
+| dominio, aplicacion | 3 + 3 | lógica pura y casos de uso |
+| preinscripcion | 3 | fija umbrales, controles y desenlaces antes de correr |
+| eureka | 3 | veredicto de un experimento; depende de sus corridas |
+| revision | 2 | revisión adversarial independiente |
+| medicion | 1 | medición de tiempos con candado de máquina (C.E3) |
+| release | 1 | versión 0.1.0; exige revisión propia |
+
+: Tipos de nodo. []{#tbl:tipos}
+
+La validación del plan comprueba once reglas ([Tabla](#tbl:reglas-dag)). Las más relevantes para la credibilidad de los resultados son cuatro: el cierre de un nodo exige un commit que modifique su entrega; el registro de estado sólo admite añadidos; cada experimento tiene exactamente una preinscripción de la que descienden sus corridas; y cada release exige una revisión adversarial propia.
+
+| regla | efecto |
+|:---------------------------------------------------|:---------------------------------------------------|
+| Acíclico, con dependencias existentes y una sola hoja | Impide ciclos, nodos huérfanos y destinos ambiguos |
+| Monotonía: un nodo no puede estar avanzado sobre dependencias abiertas | Impide declarar un resultado antes que sus insumos |
+| Cerrar exige un commit que toque la entrega del nodo | La evidencia es un commit verificable y no una declaración |
+| Registro de sólo añadir: cada versión de `registro/*.jsonl` extiende a la anterior y el estado de un nodo es su última línea | El pasado no se reescribe; un resultado negativo no se borra |
+| Eureka con una sola preinscripción; sus corridas descienden de ella; el eureka depende de al menos una | Impide veredictos sin preinscripción o con varias a elegir |
+| Revisión adversarial propia por release (no vale la que ya sirvió a una release anterior) | Impide reutilizar una revisión vieja |
+| Nodos protegidos: no se borran, no cambian de tipo, no dejan de cubrir un eureka sin declararlo | Impide «resolver» un problema quitando el nodo que lo prueba |
+| `juzgado` sólo para eurekas y con veredicto en el registro | Todo veredicto deja rastro |
+| Los nodos abiertos no citan decisiones congeladas ni frases de alarma; el criterio de cierre tiene longitud acotada | Impide reabrir lo decidido y criterios vagos |
+| Cobertura: todo requisito del manifiesto lo cubre algún nodo | Impide requisitos olvidados |
+| El plan versionado es la regeneración del script y cada versión se valida contra la anterior | Impide eludir las reglas commiteando generador y plan a la vez |
+
+: Reglas del DAG que `dag.py validar` y la CI local comprueban. []{#tbl:reglas-dag}
+
+Cada experimento tiene así tres nodos encadenados: una preinscripción, una o varias corridas que descienden de ella y un nodo de veredicto que depende de las corridas. El documento de estado legible se genera desde el plan y el registro y nunca se edita.
+
+**Revisión independiente por versión.** Cada versión publicada desciende de una revisión adversarial propia, hecha por revisores que leen el repositorio sin el historial de la conversación y recalculan cifras del registro. La revisión del diseño (R.00) puntuó la arquitectura de capas con 6/10 y el plan hacia TRL 4 con 3,5/10; la del release 0.1.0 (R.01) y la del 0.2.0 (R.02) se resumen en la [sección](#sec:r01). Los hallazgos aceptados entran al tablero de incidencias antes que al plan.
+
+# Apéndice D. Enmiendas fechadas y desviaciones del protocolo {.unnumbered}
+
+Todas las enmiendas de la tabla son anteriores a la corrida registrada a la que afectan, y ninguna cambia un umbral de M1 a M7. La única edición de una preinscripción posterior a su corrida es de redacción: `d9c9c6d` (fila final de la tabla). Sí cambian el estatus de dos métricas (M4 y M5 de la mitigada, de decisivas a informativas) y dos umbrales de control (P1, de 0,9 a un piso de 0,8 y un techo de 0,5; la carga previa de E3, de 1,0 a 2,0). Las tres del 2026-10-08 afectan a las condiciones de la medición de E3 (carga previa, clave rechazada, reposo) y no a las definiciones de M6 y M7; la segunda es la única que modifica lo que se mide, y lo hace en contra de la corrida, porque el tiempo del intento rechazado se cuenta. Cada una abre una oportunidad de sesgo del investigador y por eso se documenta ([Tabla](#tbl:enmiendas)).
+
+| fecha | doc. | enmienda | commit | motivo y alcance |
+|:---------|:------|:----------------------------------|:---------------------|:----------------------------------|
+| 2026-10-07 | E3 | El guard de cifrado juzga sólo M1 a M5; M6 y M7 las juzga C.E3 de extremo a extremo | `8984147`, `09da88c`, `5a72939` | Las M6 y M7 internas se miden hasta Toeplitz y podrían impedir cifrar; no se salta el guard ni se relaja un umbral |
+| 2026-10-07 | E3 | M1 a M5 en el punto «mitigada» pasan a informativas | `5a72939` | Misma causa que en E1; los criterios T1 a T4 no leen M1 a M5 |
+| 2026-10-07 | E1 | M5 sobre la mitigada pasa a informativa | `dae22a6` | Diagnóstico de escritorio sin corrida registrada ⚠️ (la preinscripción cita una falla en 7 de 8 semillas, sin artefacto archivado) |
+| 2026-10-07 | E1 (1) | M4 sobre la mitigada pasa a informativa; M-1 decide con M1 y M3 | `1a06602` | Misma causa; la clave sigue decidiendo con M1 a M5 |
+| 2026-10-08 | E3 | Carga previa de la máquina: de menos de 1,0 a menos de 2,0, con la corrida fijada a un núcleo libre | `15bd897` | El umbral era arbitrario y un proceso ajeno de un hilo mantenía la carga entre 1,4 y 2,0 durante horas; la validez de «un hilo» sigue decidiendo |
+| 2026-10-08 | E3 | Una clave rechazada por M1 a M5 se regenera y el tiempo del intento rechazado suma a $t_{rep}$ | `8cc0ec1` | Con $\alpha=0{,}01$ por prueba una clave válida falla alguna con probabilidad no nula; cinco rechazos seguidos invalidan la corrida. Se hizo el mismo día de la corrida, tras un primer intento real que cayó en el monobit; ese intento no conserva cifras |
+| 2026-10-08 | E3 | Reposo de hasta 900 s entre semillas antes de comprobar la carga | `41cd058` | La medición de una semilla eleva la carga de 1 min en ≈ 1 y habría invalidado la siguiente por autocontaminación |
+| 2026-10-07 | E1 (2) | P1 cambia de «ideal con 90B $>0{,}9$» a separación del instrumento: piso 0,8 y techo 0,5 | `37b89ca`, `447c907` | Desviación declarada, descrita a continuación. La segunda enmienda de E1 es ésta, tras una calibración con las semillas declaradas |
+| 2026-10-08 | E3 | Redacción: la nota sobre E1 pasa de «M4 decisiva con alerta analítica» a «M4 y M5 informativas por enmienda» | `d9c9c6d` | **Posterior** a C.E3 (`fdb4386`, 14:46; `d9c9c6d`, 15:08): sólo edita texto de `docs/preinscripciones/E3.md`; no cambia umbrales, criterios ni T1 a T4 |
+
+: Enmiendas fechadas; todas anteriores a la corrida salvo la de redacción de `d9c9c6d`. []{#tbl:enmiendas}
+
+La enmienda del control P1 constituye una desviación del protocolo que debe declararse con detalle. El 90B de la fuente ideal se midió antes de correr E1, pero sobre las semillas declaradas (20261007, 20261008 y 20261009) y ocho más (20261010 a 20261017), con $10^6$ bits por fuente y semilla. La fuente ideal dio 90B entre 0,821 y 0,903 (sólo 2 de 11 superan 0,9), la Markov entre 0,170 y 0,172, la sesgada entre 0,321 y 0,324, y la periódica 0. El criterio original (ideal con 90B mayor que 0,9) fallaba en 9 de 11 fuentes ideales. El instrumento resultaba inválido por una propiedad suya, ya que el mínimo de diez estimadores es una cota conservadora incluso con $h=1$, y no por la fuente. Además, el 0,9 de M2 corresponde a la clave de salida tras Toeplitz, otra magnitud. El piso 0,8 es el mínimo observado (0,821) redondeado hacia abajo a la décima; el techo 0,5 deja un hueco de 0,3.
+
+Quien fijó el piso conocía los valores de las tres semillas declaradas (0,821; 0,902 y 0,832). En consecuencia, P1 pasaría en ellas salvo cambio de código, la calibración no fue ciega, y la cola por debajo de 0,8 en una semilla futura no está medida (⚠️ sin verificar). Con la media y la desviación de las 11 fuentes, la probabilidad de que una fuente ideal nueva quede bajo 0,8 ronda el 2 % (analítico, revisión R.01). P1 es por tanto una prueba de regresión del instrumento.
+
+**Enmiendas hechas el mismo día de la corrida.** Las tres enmiendas de E3 del 2026-10-08 se escribieron después de que un primer intento real de C.E3 tropezara con la carga de la máquina y con una clave rechazada. La primera semilla completa de ese intento se descartó como INVÁLIDA y no se conservaron sus cifras, contra la letra de la regla de que las corridas anteriores permanecen en el registro. Es un grado de libertad del investigador y se declara como tal. El veredicto de E3 no depende de ello: M7 supera el umbral entre 8,9 y 19 veces incluso en la repetición más rápida, y las enmiendas lo penalizan en vez de favorecerlo. E1 aplicó el criterio contrario ante el mismo evento (clave rechazada: INVÁLIDA, sin repetir), de modo que la política no es homogénea entre experimentos. La pregunta que P1 responde pasa a ser una separación (¿distingue el estimador lo bueno de lo malo?) y deja de ser si la ideal alcanza 0,9.
+
+# Apéndice E. Mapa de fuentes del repositorio {.unnumbered}
 
 | tema | fuente (relativa a la raíz del repositorio) |
 |:-------------------------------------------|:-----------------------------------------------------------|

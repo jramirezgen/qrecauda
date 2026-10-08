@@ -604,8 +604,109 @@ def fig_e3() -> None:
     guardar(fig, "e3_latencia")
 
 
+def _coma(v, d=2):
+    return f"{v:.{d}f}".replace(".", ",")
+
+
+def fig_e3b() -> None:
+    semillas = (20261007, 20261008, 20261009)
+    e3 = {s: json.load(open(RAIZ / f"registro/corridas/C.E3_{s}_e3_000.json")) for s in semillas}
+    e3b = {s: json.load(open(RAIZ / f"registro/corridas/C.E3b_{s}_e3b_000.json")) for s in semillas}
+    cols = {20261007: AZUL, 20261008: NARANJA, 20261009: VERDE}
+    fig, (a, b) = plt.subplots(1, 2, figsize=(6.5, 2.7), gridspec_kw={"width_ratios": [1, 1.25], "wspace": 0.38})
+    # (a) p95 por semilla: E3 frente a E3b, escala log
+    w = 0.36
+    for i, s in enumerate(semillas):
+        v3, vb = e3[s]["m7_p95_ms"], e3b[s]["reporte"]["latencias_ms"]
+        v3b = float(e3b[s]["p95_ms"])
+        a.bar(i - w / 2, v3, w, color=GRIS, ec="black", lw=0.4, label="E3: generar y cifrar" if i == 0 else None)
+        a.bar(i + w / 2, v3b, w, color=CIELO, ec="black", lw=0.4, label="E3b: cifrar con reserva cebada" if i == 0 else None)
+        a.text(i - w / 2, v3 * 1.25, _coma(v3 / 1000, 1) + " s", ha="center", fontsize=5.8)
+        a.text(i + w / 2 + 0.02, v3b * 1.3, _coma(v3b, 2) + " ms", ha="left", fontsize=5.6, rotation=90, va="bottom")
+    a.axhline(500, color=BERMELLON, lw=1.0, ls="--")
+    a.text(2.62, 500, "M7\n500 ms", color=BERMELLON, fontsize=6.0, ha="left", va="center")
+    a.set_yscale("log")
+    a.set_ylim(0.05, 1e5)
+    a.set_yticks([0.1, 1, 10, 100, 1000, 10000])
+    a.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}".replace(",", " ") if v >= 1 else _coma(v, 1)))
+    a.set_xlim(-0.55, 3.2)
+    a.set_xticks(range(3))
+    a.set_xticklabels([str(s) for s in semillas], fontsize=6.0)
+    a.set_ylabel("p95 de latencia por transacción (ms)")
+    a.legend(loc="upper right", frameon=False, fontsize=5.4, handlelength=1.0, labelspacing=0.3, bbox_to_anchor=(1.0, 1.0))
+    a.set_title("(a) p95, no equivalentes", loc="left", fontsize=7.5)
+    # (b) distribución de las latencias de E3b
+    todas = {s: np.array(e3b[s]["reporte"]["latencias_ms"]) for s in semillas}
+    cat = np.concatenate(list(todas.values()))
+    bins = np.logspace(np.log10(cat.min()), np.log10(cat.max()), 60)
+    b.hist([todas[s] for s in semillas], bins=bins, stacked=True, color=[cols[s] for s in semillas], ec="black", lw=0.2,
+           label=[str(s) for s in semillas])
+    p95 = float(np.percentile(cat, 95))
+    b.axvline(p95, color=TINTA, lw=1.0, ls=":")
+    b.text(p95 * 1.08, 0.97, f"p95 = {_coma(p95, 2)} ms", transform=b.get_xaxis_transform(), fontsize=6.0, va="top")
+    b.axvline(500, color=BERMELLON, lw=1.0, ls="--")
+    b.text(450, 0.97, "M7: 500 ms", transform=b.get_xaxis_transform(), color=BERMELLON, fontsize=6.0, va="top", ha="right")
+    b.set_xscale("log")
+    b.set_xlim(0.04, 1000)
+    b.set_xticks([0.1, 1, 10, 100, 1000])
+    b.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}".replace(",", " ") if v >= 1 else _coma(v, 1)))
+    b.set_xlabel("latencia por transacción (ms, escala logarítmica); n = " + f"{len(cat):,}".replace(",", " "))
+    b.set_ylabel("transacciones")
+    b.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}".replace(",", " ")))
+    b.legend(loc="center right", frameon=False, fontsize=5.8, handlelength=1.0, title="semilla", title_fontsize=5.8, bbox_to_anchor=(0.80, 0.55))
+    b.set_title("(b) E3b, tres semillas apiladas", loc="left", fontsize=7.5)
+    guardar(fig, "e3b_latencia")
+
+
+def fig_e5() -> None:
+    import re
+    semillas = (20261007, 20261008, 20261009)
+    fuentes = ["buena", "markov", "markov_fuerte", "periodica"]
+    nombres = {"buena": "buena", "markov": "Markov", "markov_fuerte": "Markov fuerte", "periodica": "periódica"}
+    dims = [("mcv", "MCV", CIELO), ("min_mcv_90b", "mín(MCV, 90B)", NARANJA), ("conservador", "conservador", VERDE)]
+    bits: dict = defaultdict(list)
+    for f in sorted(glob.glob(str(RAIZ / "registro/corridas/C.E5_*_e5_*.json"))):
+        d = json.load(open(f))
+        for r in d["resultados"]:
+            bits[(d["fuente"], r["dimensionado"])].append(r["bits_clave"])
+    techo: dict = {}
+    for x in leer_jsonl(RAIZ / "registro/veredictos.jsonl"):
+        if x["eureka"] != "E5":
+            continue
+        for c in x["criterios"]:
+            m = re.match(r"D/(\w+)/", c["id"])
+            t = re.search(r"techo K1 (\d+)", c["detalle"])
+            if m and t:
+                techo[m.group(1)] = int(t.group(1))
+    fig, ax = plt.subplots(figsize=(6.5, 2.7))
+    w = 0.26
+    for j, (clave, nom, col) in enumerate(dims):
+        for i, fu in enumerate(fuentes):
+            v = np.array(bits[(fu, clave)], dtype=float)
+            assert len(v) == len(semillas), (fu, clave, len(v))
+            x = i + (j - 1) * w
+            ax.bar(x, v.mean(), w, color=col, ec="black", lw=0.4, label=nom if i == 0 else None)
+            ax.errorbar(x, v.mean(), yerr=[[v.mean() - v.min()], [v.max() - v.mean()]], color=TINTA, lw=0.7, capsize=1.5, capthick=0.7)
+            ax.text(x, v.max() * 1.12, f"{v.mean() / 1000:.0f}".replace(".", ",") + " k", ha="center", fontsize=5.0,
+                    bbox=dict(fc="white", ec="none", pad=0.4), zorder=6)
+    for i, fu in enumerate(fuentes):
+        if fu in techo:
+            ax.hlines(techo[fu], i - 0.42, i + 0.42, color=BERMELLON, lw=1.4, ls="--", zorder=5,
+                      label="techo K1 teórico" if fu == "markov" else None)
+    ax.set_yscale("log")
+    ax.set_ylim(2e4, 3e6)
+    ax.set_yticks([3e4, 1e5, 3e5, 1e6])
+    ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}".replace(",", " ")))
+    ax.set_xticks(range(len(fuentes)))
+    ax.set_xticklabels([nombres[f] for f in fuentes])
+    ax.set_ylabel("bits de clave (escala logarítmica)")
+    ax.set_xlabel("fuente (media de tres semillas; barra: mínimo y máximo)")
+    ax.legend(loc="upper right", frameon=False, fontsize=6.0, ncol=2, handlelength=1.2, columnspacing=1.0, bbox_to_anchor=(1.0, 1.04))
+    guardar(fig, "e5_dimensionado")
+
+
 FIGS = {"pipeline": fig_pipeline, "capas": fig_capas, "dag": fig_dag, "cronologia": fig_cronologia,
-        "e2": fig_e2, "e1": fig_e1, "e1d": fig_e1d, "e3": fig_e3}
+        "e2": fig_e2, "e1": fig_e1, "e1d": fig_e1d, "e3": fig_e3, "e3b": fig_e3b, "e5": fig_e5}
 
 if __name__ == "__main__":
     _fuentes()
