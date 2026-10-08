@@ -114,6 +114,10 @@ n("F5.01", "F5", "adaptador", "Batería NIST SP 800-22 con nistrng y contraste c
 n("F5.02", "F5", "adaptador", "Min-entropía SP 800-90B y contraste con la cota MCV del dominio", ["F1.03", "S.04"], "src/qrecauda/adaptadores/min_entropia.py, tests/adaptadores/test_min_entropia.py",
   "implementa EstimadorDeEntropia con la herramienta que eligió S.04: una fuente de Markov con permanencia 0,8 da h ≤ 0,4 y longitud_segura recorta la clave; una IID sesgada da h ≈ −log2(p_max); exige ≥ 10^6 muestras o falla con EntropiaInsuficiente", ["M2"])
 
+n("F5.05", "F5", "aplicacion", "Dimensionado conservador: el mínimo entre MCV, 90B y la contabilidad de entropía de la fuente", ["F5.02", "F2.03"],
+  "src/qrecauda/dominio/entropia.py, src/qrecauda/aplicacion/pipeline.py, tests/dominio/test_entropia_conservadora.py y tests/aplicacion/test_pipeline_conservador.py",
+  "el pipeline acepta un estimador que toma el mínimo de las cotas (MCV sobre todo el pool, 90B sobre un prefijo declarado) y un estimador de fuente que acota la entropía total por la de la muestra cruda; sin ellos se comporta exactamente como en 0.1.0 (regresión); con una fuente Markov o periódica la clave sale más corta que con MCV y nunca más larga; sin muestra suficiente para el 90B aborta con EntropiaInsuficiente", ["M2"])
+
 # ───────────── F6 · Caso de uso peruano ─────────────
 n("F6.01", "F6", "adaptador", "Cifrado AES-256-GCM con clave QRNG", ["F2.01"], "src/qrecauda/adaptadores/aes_gcm.py, tests/adaptadores/test_aes_gcm.py",
   "clave de 256 bits y nonce de 96 bits cortados de bloques consecutivos distintos de la clave certificada; un cursor de consumo impide entregar dos veces el mismo trozo; ida y vuelta, rechazo de un texto alterado y de un nonce repetido con la misma clave", ["O6"])
@@ -160,6 +164,15 @@ n("C.E3b", "E", "medicion", "E3b · latencia y sostenibilidad con la clave de un
   "tasa neta del productor, p95 de las latencias, esperas y CPU/pared de cada proceso medidos con reloj monotónico a λ tx/s durante la duración declarada, en tres semillas, con la máquina registrada y los dos procesos en sus núcleos", ["E3b", "M6", "M7"])
 n("E3b", "E", "eureka", "¡EUREKA 3b! La latencia de transacción cumple M7 con la clave de una reserva generada aparte", ["C.E3b"], "registro/veredictos.jsonl",
   "T1 (la tasa neta del productor supera M6 y el consumo), T2 (p95 < 500 ms) y T3 (cero esperas) cumplen en las tres semillas, o el veredicto dice cuál no y por cuánto", ["E3b"])
+n("P.E5", "E", "preinscripcion", "Preinscripción E5: el control negativo del pipeline completo con fuentes defectuosas", ["E1", "F5.05", "P.E0"], "docs/preinscripciones/E5.md y declaraciones/E5.toml",
+  "fuentes defectuosas (Markov con persistencia y periódica) y la fuente buena atraviesan la cadena completa; criterios por ambos lados (la defectuosa se rechaza o su clave se acorta por debajo de un techo analítico y de una fracción de la buena; la buena no se rechaza ni pierde más de una fracción declarada ni baja de M6), controles de validez, la medición HOY con MCV y el efecto del dimensionado sobre M6, todo fijado antes de medir", ["E5"])
+n("F5.06", "F5", "aplicacion", "Ejecutor de E5: defectos sobre Aer con twirling real y el juez del control negativo", ["P.E5", "F5.05", "F3.05", "F5.01"],
+  "src/qrecauda/adaptadores/defectos.py, src/qrecauda/aplicacion/ejecutor_e5.py, src/qrecauda/aplicacion/juez.py, src/qrecauda/datos/informe.py, tests/aplicacion/test_ejecutor_e5.py y tests/adaptadores/test_defectos.py",
+  "un defecto (persistencia de Markov o patrón periódico) se aplica a la salida de Aer y a la del twirling real; el ejecutor corre la cadena con tres dimensionados sobre las mismas muestras y entrega artefactos tipados; el juez recalcula techo analítico, fracciones y controles de los datos crudos", ["L-integracion"])
+n("C.E5", "E", "medicion", "E5 · control negativo del pipeline completo y efecto del dimensionado conservador", ["P.E5", "F5.06", "F5.02", "F3.05", "F5.01"], "registro/corridas/C.E5.json",
+  "tres semillas; por fuente (buena, Markov, Markov fuerte, periódica) y por dimensionado (MCV, mínimo MCV-90B, conservador) la longitud de clave, M1–M5, h estimadas y tasa, con la máquina quieta y a un hilo", ["E5", "M6"])
+n("E5", "E", "eureka", "¡EUREKA 5! La cadena rechaza o acorta la clave de una fuente defectuosa y no rechaza la buena", ["C.E5"], "registro/veredictos.jsonl",
+  "los criterios de P.E5 cumplen en las tres semillas por ambos lados, o el veredicto dice cuál no y por cuánto", ["E5"])
 n("F7.06", "F7", "infra", "Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado", ["F6.02", "F3.05"], "tests/integracion/test_e2e_aer.py",
   "la cadena completa corre sin red en la CI local y el texto descifrado es igual al original", ["L-integracion"])
 n("T.TRL", "F7", "doc", "Matriz de TRL por componente, derivada de la evidencia", ["F0.02", "F3.06", "F7.06", "E1", "E2", "E3"], "docs/TRL.md y tests/arquitectura/test_trl.py",
@@ -178,7 +191,7 @@ n("R.01", "R", "revision", "Revisión adversarial propia previa al release 0.1.0
   "un agente independiente intentó romper las claims con las eurekas y las mediciones ya hechas; cada hallazgo verificado contra el texto y registrado; esta revisión es distinta de R.00", ["A-honestidad"])
 n("REL-0.1.0", "R", "release", "Release 0.1.0: pipeline QRNG reproducible en simulador (rótulo de TRL según T.TRL)", ["R.01", "F7.02", "F7.04", "F0.09", "F7.05"], "docs/releases/EXPEDIENTE_0.1.0.md, CHANGELOG.md y tests/arquitectura/test_release_sin_dudas.py",
   "expediente con alcance, arquitectura, pruebas, validación contra línea base, despliegue y límites; el título dice lo que T.TRL sostiene; un test falla si queda un ⚠️ sin verificar vigente en FUNDAMENTO o en las decisiones", ["T-empaquetado"])
-n("R.02", "R", "revision", "Revisión adversarial propia previa al release 0.2.0", ["E3b", "F6.03", "T.TRL"], "docs/informes/REVISION_ADVERSARIAL_0.2.0.md",
+n("R.02", "R", "revision", "Revisión adversarial propia previa al release 0.2.0", ["E3b", "F6.03", "T.TRL", "E5", "F5.05"], "docs/informes/REVISION_ADVERSARIAL_0.2.0.md",
   "un agente independiente intentó romper E3b y la reserva asíncrona con la medición ya hecha; cada hallazgo verificado contra el texto y registrado; es distinta de R.01", ["A-honestidad"])
 n("REL-0.2.0", "R", "release", "Release 0.2.0: la reserva asíncrona de claves y la latencia de E3b", ["REL-0.1.0", "R.02", "E3b", "T.TRL"], "docs/releases/EXPEDIENTE_0.2.0.md y CHANGELOG.md",
   "expediente con el alcance añadido a 0.1.0, el veredicto de E3b tal como salió (CUMPLE o NO_CUMPLE), la arquitectura de la reserva, las pruebas, el rótulo de TRL que T.TRL sostiene y los límites; E3 sigue como la dejó su veredicto", ["T-empaquetado"])

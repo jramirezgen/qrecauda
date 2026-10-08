@@ -567,6 +567,22 @@
    "estado": "pendiente"
   },
   {
+   "id": "F5.05",
+   "fase": "F5",
+   "tipo": "aplicacion",
+   "titulo": "Dimensionado conservador: el mínimo entre MCV, 90B y la contabilidad de entropía de la fuente",
+   "depende_de": [
+    "F5.02",
+    "F2.03"
+   ],
+   "entrega": "src/qrecauda/dominio/entropia.py, src/qrecauda/aplicacion/pipeline.py, tests/dominio/test_entropia_conservadora.py y tests/aplicacion/test_pipeline_conservador.py",
+   "hecho_cuando": "el pipeline acepta un estimador que toma el mínimo de las cotas (MCV sobre todo el pool, 90B sobre un prefijo declarado) y un estimador de fuente que acota la entropía total por la de la muestra cruda; sin ellos se comporta exactamente como en 0.1.0 (regresión); con una fuente Markov o periódica la clave sale más corta que con MCV y nunca más larga; sin muestra suficiente para el 90B aborta con EntropiaInsuficiente",
+   "cubre": [
+    "M2"
+   ],
+   "estado": "pendiente"
+  },
+  {
    "id": "F6.01",
    "fase": "F6",
    "tipo": "adaptador",
@@ -917,6 +933,76 @@
    "estado": "pendiente"
   },
   {
+   "id": "P.E5",
+   "fase": "E",
+   "tipo": "preinscripcion",
+   "titulo": "Preinscripción E5: el control negativo del pipeline completo con fuentes defectuosas",
+   "depende_de": [
+    "E1",
+    "F5.05",
+    "P.E0"
+   ],
+   "entrega": "docs/preinscripciones/E5.md y declaraciones/E5.toml",
+   "hecho_cuando": "fuentes defectuosas (Markov con persistencia y periódica) y la fuente buena atraviesan la cadena completa; criterios por ambos lados (la defectuosa se rechaza o su clave se acorta por debajo de un techo analítico y de una fracción de la buena; la buena no se rechaza ni pierde más de una fracción declarada ni baja de M6), controles de validez, la medición HOY con MCV y el efecto del dimensionado sobre M6, todo fijado antes de medir",
+   "cubre": [
+    "E5"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F5.06",
+   "fase": "F5",
+   "tipo": "aplicacion",
+   "titulo": "Ejecutor de E5: defectos sobre Aer con twirling real y el juez del control negativo",
+   "depende_de": [
+    "P.E5",
+    "F5.05",
+    "F3.05",
+    "F5.01"
+   ],
+   "entrega": "src/qrecauda/adaptadores/defectos.py, src/qrecauda/aplicacion/ejecutor_e5.py, src/qrecauda/aplicacion/juez.py, src/qrecauda/datos/informe.py, tests/aplicacion/test_ejecutor_e5.py y tests/adaptadores/test_defectos.py",
+   "hecho_cuando": "un defecto (persistencia de Markov o patrón periódico) se aplica a la salida de Aer y a la del twirling real; el ejecutor corre la cadena con tres dimensionados sobre las mismas muestras y entrega artefactos tipados; el juez recalcula techo analítico, fracciones y controles de los datos crudos",
+   "cubre": [
+    "L-integracion"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "C.E5",
+   "fase": "E",
+   "tipo": "medicion",
+   "titulo": "E5 · control negativo del pipeline completo y efecto del dimensionado conservador",
+   "depende_de": [
+    "P.E5",
+    "F5.06",
+    "F5.02",
+    "F3.05",
+    "F5.01"
+   ],
+   "entrega": "registro/corridas/C.E5.json",
+   "hecho_cuando": "tres semillas; por fuente (buena, Markov, Markov fuerte, periódica) y por dimensionado (MCV, mínimo MCV-90B, conservador) la longitud de clave, M1–M5, h estimadas y tasa, con la máquina quieta y a un hilo",
+   "cubre": [
+    "E5",
+    "M6"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "E5",
+   "fase": "E",
+   "tipo": "eureka",
+   "titulo": "¡EUREKA 5! La cadena rechaza o acorta la clave de una fuente defectuosa y no rechaza la buena",
+   "depende_de": [
+    "C.E5"
+   ],
+   "entrega": "registro/veredictos.jsonl",
+   "hecho_cuando": "los criterios de P.E5 cumplen en las tres semillas por ambos lados, o el veredicto dice cuál no y por cuánto",
+   "cubre": [
+    "E5"
+   ],
+   "estado": "pendiente"
+  },
+  {
    "id": "F7.06",
    "fase": "F7",
    "tipo": "infra",
@@ -1072,7 +1158,9 @@
    "depende_de": [
     "E3b",
     "F6.03",
-    "T.TRL"
+    "T.TRL",
+    "E5",
+    "F5.05"
    ],
    "entrega": "docs/informes/REVISION_ADVERSARIAL_0.2.0.md",
    "hecho_cuando": "un agente independiente intentó romper E3b y la reserva asíncrona con la medición ya hecha; cada hallazgo verificado contra el texto y registrado; es distinta de R.01",
