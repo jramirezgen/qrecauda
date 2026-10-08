@@ -70,3 +70,5 @@
 {"nodo":"F7.07","estado":"hecho","evidencia":"04568ab","fecha":"2026-10-08"}
 {"nodo":"F7.08","estado":"hecho","evidencia":"9e1b0a7","fecha":"2026-10-08"}
 {"nodo":"C.E4","estado":"bloqueado","nota":"sin credencial IBM","fecha":"2026-10-08"}
+{"nodo":"C.E5","estado":"hecho","evidencia":"4349489","fecha":"2026-10-08"}
+{"nodo":"E5","estado":"hecho","evidencia":"f379ec0","fecha":"2026-10-08"}

@@ -9,9 +9,9 @@ Plan v1 · 2026-10-07
 | estado | nodos |
 |---|---|
 | bloqueado | 1 |
-| hecho | 66 |
+| hecho | 68 |
 | juzgado | 4 |
-| pendiente | 7 |
+| pendiente | 5 |
 
 ## En curso, bloqueados y pausados
 
@@ -19,7 +19,7 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- **C.E5** E5 · control negativo del pipeline completo y efecto del dimensionado conservador
+- **R.02** Revisión adversarial propia previa al release 0.2.0
 
 ## Hechos y juzgados
 
@@ -83,6 +83,8 @@ Plan v1 · 2026-10-07
 | E3b | juzgado | `e1f47ce` | ¡EUREKA 3b! La latencia de transacción cumple M7 con la clave de una reserva generada aparte |
 | P.E5 | hecho | `7a05bea` | Preinscripción E5: el control negativo del pipeline completo con fuentes defectuosas |
 | F5.06 | hecho | `f923eb4` | Ejecutor de E5: defectos sobre Aer con twirling real y el juez del control negativo |
+| C.E5 | hecho | `4349489` | E5 · control negativo del pipeline completo y efecto del dimensionado conservador |
+| E5 | hecho | `f379ec0` | ¡EUREKA 5! La cadena rechaza o acorta la clave de una fuente defectuosa y no rechaza la buena |
 | F7.06 | hecho | `013fd62` | Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado |
 | T.TRL | hecho | `8039a6d` | Matriz de TRL por componente, derivada de la evidencia |
 | F7.05 | hecho | `7db7730` | Wiki repo: mapas, bases e incidencias publicados en la bóveda |
