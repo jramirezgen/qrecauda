@@ -8,9 +8,8 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 55 |
+| hecho | 56 |
 | juzgado | 3 |
-| pendiente | 1 |
 
 ## En curso, bloqueados y pausados
 
@@ -18,7 +17,7 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- **REL-0.1.0** Release 0.1.0: pipeline QRNG reproducible en simulador (rótulo de TRL según T.TRL)
+- ninguno
 
 ## Hechos y juzgados
 
@@ -82,3 +81,4 @@ Plan v1 · 2026-10-07
 | F7.02 | hecho | `db1b5cd` | Pitch de 10 slides |
 | F7.04 | hecho | `ca8cc07` | Roadmap TRL 4 → TRL 5 → piloto → producción |
 | R.01 | hecho | `9048da9` | Revisión adversarial propia previa al release 0.1.0 |
+| REL-0.1.0 | hecho | `ea0d08a` | Release 0.1.0: pipeline QRNG reproducible en simulador (rótulo de TRL según T.TRL) |
