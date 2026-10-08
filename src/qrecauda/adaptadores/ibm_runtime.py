@@ -24,6 +24,7 @@ origen es `SIMULADOR_AER`, nunca `HARDWARE_IBM`: un ensayo no puede reclamar ori
 from __future__ import annotations
 
 import logging
+import sys
 import warnings
 from collections.abc import Callable
 from contextlib import nullcontext
@@ -43,7 +44,7 @@ from qrecauda.datos.hardware import CalibracionQubit, RegistroIbm
 from qrecauda.dominio.bits import Bits
 from qrecauda.dominio.errores import EntradaInvalida, FuenteNoDisponible
 from qrecauda.dominio.muestra import Muestra, Origen, Procedencia
-from qrecauda.dominio.presupuesto_qpu import EstimacionQpu, estimar_segundos_qpu, exigir_presupuesto
+from qrecauda.dominio.presupuesto_qpu import EstimacionQpu, estimar_segundos_qpu, exigir_presupuesto, validar_tope_qpu
 from qrecauda.transversal.seguridad import Secreto, describir
 
 # El servicio local fabrica TODOS los backends falsos y uno avisa de que sus errores no son típicos: ruido sin relación con el ensayo.
@@ -55,11 +56,14 @@ CANAL = "ibm_quantum_platform"
 MIN_QUBITS_DEL_BACKEND = 8  # al elegir «el menos ocupado» sólo se consideran backends con al menos estos qubits operativos
 BACKEND_DE_ENSAYO = "fake_sherbrooke"
 
-# Fallos esperables del SDK y de la red (requests.* hereda de OSError). Todo lo demás es un error de programación y sube tal cual.
-_FALLOS_DEL_SDK = (QiskitError, IBMError, OSError, TimeoutError, RuntimeError, ValueError, TypeError, KeyError, AttributeError, IndexError)
+# Fallos esperables del SDK y de la red (requests.* hereda de OSError). Todo lo demás (TypeError, KeyError, IndexError, AttributeError…)
+# es un error de programación y sube tal cual: disfrazarlo de «comprueba red y token» manda al usuario a buscar donde no es (R.02).
+_FALLOS_DEL_SDK = (QiskitError, IBMError, OSError, TimeoutError, RuntimeError, ValueError)
+# Lo que puede salir MAL al leer la forma de un resultado remoto (dato externo, no código nuestro): se traduce sólo ahí.
+_FORMA_DE_RESULTADO = (KeyError, IndexError, AttributeError, TypeError)
 
 Transpilar = Callable[[QuantumCircuit, Any], Any]  # devuelve el circuito ISA, o algo con `.circuito`, `.via` y `.motivo`
-Conectar = Callable[[Secreto], Any]
+Conectar = Callable[..., Any]  # (secreto) o (secreto, instancia) si se pidió una instancia
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,14 +87,15 @@ def fabricas_reales() -> Fabricas:
     )
 
 
-def conectar_real(secreto: Secreto) -> Any:
-    """Único punto que abre una conexión con IBM. Sólo aquí el valor del secreto sale de su envoltorio."""
+def conectar_real(secreto: Secreto, instancia: str = "") -> Any:
+    """Único punto que abre una conexión con IBM. Sólo aquí el valor del secreto sale de su envoltorio.
+    `instancia` (CRN o nombre) se pasa tal cual al servicio; vacía ⇒ la que IBM elija por omisión."""
     from qiskit_ibm_runtime import QiskitRuntimeService
 
-    return QiskitRuntimeService(channel=CANAL, token=secreto.revelar())
+    return QiskitRuntimeService(channel=CANAL, token=secreto.revelar(), instance=instancia or None)
 
 
-def conectar_ensayo(_: Secreto) -> Any:
+def conectar_ensayo(_: Secreto, instancia: str = "") -> Any:
     """El servicio LOCAL de qiskit-ibm-runtime: backends falsos, sin red y sin cuota. El secreto ni se mira."""
     from qiskit_ibm_runtime import QiskitRuntimeService
 
@@ -112,9 +117,10 @@ class FuenteIbm:
     """Implementa `FuenteDeBits`: H^⊗n + medición ejecutados en un backend real con SamplerV2 en modo trabajo, Batch o Session."""
 
     __slots__ = (
-        "_backend", "_conectar", "_ensayo", "_espera_max_s", "_fabricas", "_gastado_s", "_instancia", "_mascaras", "_max_qpu_s", "_modo",
-        "_preparados", "_registros", "_ruta", "_semilla", "_servicio", "_token", "_transpilar",
-    )  # fmt: skip
+        "_avisada_cuota", "_backend", "_conectar", "_ensayo", "_espera_max_s", "_exigir_duracion", "_fabricas", "_gastado_s",
+        "_instancia", "_mascaras", "_max_qpu_s", "_modo", "_preparados", "_registros", "_ruta", "_semilla", "_servicio", "_token",
+        "_transpilar",
+)  # fmt: skip
 
     def __init__(
         self,
@@ -123,7 +129,7 @@ class FuenteIbm:
         *,
         transpilar: Transpilar,
         backend: str = "",
-        modo: str = "batch",
+        modo: str = "trabajo",
         conectar: Conectar = conectar_real,
         fabricas: Fabricas | None = None,
         mascaras: int = 0,
@@ -132,18 +138,21 @@ class FuenteIbm:
         espera_max_s: float | None = None,
         instancia: str = "",
         ensayo: bool = False,
+        exigir_duracion: bool = True,
     ) -> None:
         if modo not in MODOS:
             raise EntradaInvalida(f"modo {modo!r} fuera de {MODOS}")
         if mascaras < 0:
             raise EntradaInvalida(f"las máscaras del twirling no pueden ser negativas, llegó {mascaras}")
-        if max_segundos_qpu is not None and max_segundos_qpu <= 0:
-            raise EntradaInvalida(f"max_segundos_qpu debe ser positivo, llegó {max_segundos_qpu}")
+        if max_segundos_qpu is not None:
+            validar_tope_qpu(max_segundos_qpu)
         self._token, self._ruta = token, ruta
         self._transpilar, self._backend, self._modo = transpilar, backend, modo
         self._conectar, self._fabricas = conectar, fabricas
         self._mascaras, self._semilla, self._max_qpu_s = mascaras, semilla, max_segundos_qpu
         self._espera_max_s, self._instancia, self._ensayo = espera_max_s, instancia, ensayo
+        self._exigir_duracion = exigir_duracion and not ensayo  # sólo los dobles de las pruebas la relajan; un ensayo no gasta cuota
+        self._avisada_cuota = False
         self._servicio: Any = None  # la conexión se abre en el primer uso, no al construir
         self._preparados: dict[int, _Preparado] = {}
         self._registros: list[RegistroIbm] = []
@@ -288,7 +297,7 @@ class FuenteIbm:
         if not self._mascaras:
             mascaras = np.zeros((0, qubits), dtype=np.uint8)
         nombre_creg = prep.base.cregs[0].name
-        job_id, job = "", None
+        job_id, job, reservado = "", None, 0.0
         error: FuenteNoDisponible | None = None
         try:
             if self._modo == "trabajo":
@@ -296,22 +305,34 @@ class FuenteIbm:
             else:
                 contexto = (fabricas.batch if self._modo == "batch" else fabricas.session)(prep.backend)
             with contexto as modo:
-                job = fabricas.sampler(mode=modo).run([(c, None, por_pub) for c in circuitos])
+                # Sólo `.run()` y `.result()` van en el filtro de fallos del SDK: lo demás es código nuestro y sube tal cual.
+                job = self._en_sdk(
+                    f"enviar el trabajo a {prep.nombre}", lambda: fabricas.sampler(mode=modo).run([(c, None, por_pub) for c in circuitos])
+                )
                 job_id = str(job.job_id() or "")
                 if not job_id:
                     raise FuenteNoDisponible(
                         f"{prep.nombre} no devolvió job_id: sin trabajo real no hay hardware y la muestra no se acepta como HARDWARE_IBM"
                     )
+                if not self._ensayo:  # desde que existe el job_id la cuota puede estar corriendo: se cuenta YA y se reconcilia con usage()
+                    reservado = estimado.segundos
+                    self._gastado_s += reservado
                 _log.info("trabajo %s enviado a %s (%s, %d PUBs × %d shots)", job_id, prep.nombre, self._modo, n_pubs, por_pub)
-                resultado = job.result(timeout=self._espera_max_s) if self._espera_max_s and not self._ensayo else job.result()
-                datos = [_a_disparos(resultado[i].data[nombre_creg].get_bitstrings(), qubits, por_pub, job_id) for i in range(n_pubs)]
-        except FuenteNoDisponible:
-            raise
-        except _FALLOS_DEL_SDK as e:
-            error = self._fallo(f"el trabajo{f' {job_id}' if job_id else ''} en {prep.nombre} no entregó una muestra", e, job_id)
+                espera = self._espera_max_s if self._espera_max_s and not self._ensayo else None
+                resultado = self._en_sdk(
+                    f"obtener la muestra del trabajo {job_id} en {prep.nombre}",
+                    lambda: job.result(timeout=espera) if espera else job.result(),
+                    job_id,
+                )
+                datos = [self._leer_pub(resultado, i, nombre_creg, qubits, por_pub, job_id) for i in range(n_pubs)]
+        except BaseException as e:  # incluye KeyboardInterrupt: un trabajo que nadie espera ya sigue gastando cola y cuota
+            self._cancelar(job, job_id)
+            if not isinstance(e, FuenteNoDisponible):
+                raise
+            error = e
         if error is not None:
             raise error  # fuera del `except`: sin __context__, la excepción original (que podría citar el token) no viaja
-        registro = self._registrar(job, job_id, prep, circuitos, n_pubs, por_pub, estimado)
+        registro = self._registrar(job, job_id, prep, circuitos, n_pubs, por_pub, estimado, reservado)
         self._registros.append(registro)
         if self._mascaras:  # el twirling se deshace aquí: XOR clásico con la máscara de cada PUB (la cruda lleva ceros)
             datos = [d ^ fila for d, fila in zip(datos, np.vstack([np.zeros((1, qubits), dtype=np.uint8), mascaras]), strict=True)]
@@ -343,11 +364,42 @@ class FuenteIbm:
             try:
                 duracion = float(isa.estimate_duration(backend.target, unit="s"))
             except (QiskitError, AttributeError, TypeError, ValueError):
-                duracion = 0.0  # un backend sin `target` o sin duraciones: la estimación usa sólo el retardo de repetición
+                duracion = 0.0  # un backend sin `target` o sin duraciones: la estimación usaría sólo el retardo de repetición
+            if self._exigir_duracion and not duracion > 0.0:
+                raise FuenteNoDisponible(
+                    f"no se pudo estimar la duración del circuito en {getattr(backend, 'name', '?')} (salió {duracion}): "
+                    f"sin ella el tope de QPU "
+                    f"subestima el coste y no protege la cuota; elige un backend cuyo target declare duraciones de puerta y de lectura"
+                )
+            self._comprobar_backend(backend)
             self._preparados[qubits] = _Preparado(backend, str(getattr(backend, "name", "")), isa, via, motivo, fisicos, duracion)
         return self._preparados[qubits]
 
+    def _comprobar_backend(self, backend: Any) -> None:
+        """Con twirling, la X nativa tiene que existir en el target del backend: si no, el trabajo con máscaras no sería ISA.
+        Un límite que el backend no declara (doble, simulador) no se inventa: se omite."""
+        if not self._mascaras:
+            return
+        ops = getattr(getattr(backend, "target", None), "operation_names", None)
+        if ops is not None and "x" not in ops:
+            raise FuenteNoDisponible(
+                f"el target de {getattr(backend, 'name', '?')} no tiene la puerta «x»: el twirling de lectura inserta una X nativa "
+                f"antes de medir y el trabajo no sería ISA; usa --mascaras 0 o elige otro backend"
+            )
+
+    @staticmethod
+    def _comprobar_limites(backend: Any, n_pubs: int, por_pub: int) -> None:
+        """Los PUBs y los disparos por PUB caben en lo que el backend declara (`max_circuits`, `max_shots`), ANTES de enviar nada."""
+        for atributo, valor, que in (("max_circuits", n_pubs, "PUBs"), ("max_shots", por_pub, "disparos por PUB")):
+            tope = getattr(backend, atributo, None)
+            if isinstance(tope, int) and not isinstance(tope, bool) and tope > 0 and valor > tope:
+                raise FuenteNoDisponible(
+                    f"el trabajo lleva {valor} {que} y {getattr(backend, 'name', '?')} declara {atributo}={tope}: "
+                    f"baja los shots o parte el trabajo"
+                )
+
     def _estimacion(self, prep: _Preparado, n_pubs: int, por_pub: int) -> EstimacionQpu:
+        self._comprobar_limites(prep.backend, n_pubs, por_pub)
         rep = getattr(prep.backend, "default_rep_delay", None)
         return estimar_segundos_qpu(n_pubs * por_pub, n_pubs, prep.duracion_s, float(rep) if rep else None)
 
@@ -357,13 +409,24 @@ class FuenteIbm:
             return None
         usar = getattr(self._abrir_servicio(), "usage", None)
         if usar is None:
+            self._avisar_sin_cuota("el servicio no expone usage()")
             return None
         try:
             resto = usar().get("usage_remaining_seconds")
         except _FALLOS_DEL_SDK as e:
-            _log.warning("no se pudo leer la cuota del servicio (%s): sólo manda el tope pedido", type(e).__name__)
+            self._avisar_sin_cuota(f"no se pudo leer usage() ({type(e).__name__})")
             return None
-        return None if resto is None else float(resto)
+        if resto is None:
+            self._avisar_sin_cuota("usage() no trae la clave «usage_remaining_seconds»")
+            return None
+        return float(resto)
+
+    def _avisar_sin_cuota(self, motivo: str) -> None:
+        """Sin la cuota restante sólo manda el tope pedido: se dice por stderr (una vez), no se calla (R.02)."""
+        _log.warning("cuota restante desconocida: %s; sólo manda el tope pedido", motivo)
+        if not self._avisada_cuota:
+            self._avisada_cuota = True
+            print(f"AVISO: cuota restante de QPU desconocida ({motivo}); sólo manda el tope --max-segundos-qpu.", file=sys.stderr)
 
     def _elegir_backend(self, qubits: int) -> Any:
         servicio = self._abrir_servicio()
@@ -391,17 +454,20 @@ class FuenteIbm:
 
     def _abrir_servicio(self) -> Any:
         if self._servicio is None:
-            self._servicio = self._en_sdk("conectar con IBM Quantum", lambda: self._conectar(self._token))
+            conectar = (lambda: self._conectar(self._token, self._instancia)) if self._instancia else (lambda: self._conectar(self._token))
+            self._servicio = self._en_sdk("conectar con IBM Quantum", conectar)
         return self._servicio
 
     # ------------------------------------------------------------------ registro
 
     def _registrar(
-        self, job: Any, job_id: str, prep: _Preparado, circuitos: list[QuantumCircuit], n_pubs: int, por_pub: int, estimado: EstimacionQpu
-    ) -> RegistroIbm:
+        self, job: Any, job_id: str, prep: _Preparado, circuitos: list[QuantumCircuit], n_pubs: int, por_pub: int, estimado: EstimacionQpu,
+        reservado: float = 0.0,
+    ) -> RegistroIbm:  # fmt: skip
         creado, cola, ejecucion = _tiempos(job)
         uso = _uso(job)
-        self._gastado_s += uso if uso else (0.0 if self._ensayo else estimado.segundos)
+        if uso:  # lo medido por IBM sustituye a lo reservado al recibir el job_id (la estimación sigue valiendo si IBM aún no lo calculó)
+            self._gastado_s += uso - reservado
         fecha, calibracion = _calibracion(prep.backend, prep.fisicos)
         import qiskit_ibm_runtime as rt
 
@@ -416,31 +482,66 @@ class FuenteIbm:
 
     # ------------------------------------------------------------------ errores
 
-    def _en_sdk(self, que: str, accion: Callable[[], Any]) -> Any:
+    def _en_sdk(self, que: str, accion: Callable[[], Any], job_id: str = "") -> Any:
         error: FuenteNoDisponible | None = None
         try:
             return accion()
         except FuenteNoDisponible:
             raise
         except _FALLOS_DEL_SDK as e:
-            error = self._fallo(f"no se pudo {que}", e)
+            error = self._fallo(f"no se pudo {que}", e, job_id)
         raise error  # fuera del `except`: sin __context__ (ver `_enviar`)
 
+    def _leer_pub(self, resultado: Any, i: int, creg: str, qubits: int, esperados: int, job_id: str) -> NDArray[np.uint8]:
+        """Los disparos del PUB `i`. La forma del resultado es un dato EXTERNO: si no es la esperada es un fallo del servicio, no un bug."""
+        try:
+            cadenas = resultado[i].data[creg].get_bitstrings()
+        except _FORMA_DE_RESULTADO as e:
+            raise FuenteNoDisponible(
+                f"el trabajo {job_id} devolvió un resultado con forma inesperada ({type(e).__name__}) en el PUB {i}"
+            ) from None
+        return _a_disparos(cadenas, qubits, esperados, job_id)
+
+    def _cancelar(self, job: Any, job_id: str) -> None:
+        """Pide la cancelación de un trabajo que ya no se espera. Nunca falla: si no se puede, queda dicho en el log y en el mensaje."""
+        cancelar = getattr(job, "cancel", None)
+        if job is None or not job_id or cancelar is None:
+            return
+        try:
+            cancelar()
+            _log.warning("trabajo %s: cancelación pedida porque ya no se espera su resultado", job_id)
+        except Exception as e:  # noqa: BLE001 - cancelar es un esfuerzo: el error real es el que ya viaja
+            _log.warning("trabajo %s: no se pudo cancelar (%s)", job_id, type(e).__name__)
+
     def _fallo(self, que: str, e: BaseException, job_id: str = "") -> FuenteNoDisponible:
-        """Mensaje accionable y SIN secreto: el texto del SDK se depura; se lanza fuera del `except` (sin encadenar la causa)."""
-        detalle = str(e).replace(self._token.revelar(), describir(self._token.revelar()))
+        """Mensaje accionable y SIN secreto: el texto del SDK se depura; se lanza fuera del `except` (sin encadenar la causa).
+        Un error de la API HTTP no vuelca su detalle (el cuerpo puede traer ids o credencial): sólo tipo y status."""
+        status = _status_http(e)
+        if status is not None or isinstance(e, IBMError):
+            detalle = f"{type(e).__name__} (HTTP {status if status is not None else '?'}; el detalle de la respuesta no se muestra)"
+        else:
+            detalle = f"{type(e).__name__}: " + str(e).replace(self._token.revelar(), describir(self._token.revelar()))
         pista = (
-            f" El trabajo {job_id} puede seguir en la cola de IBM: recupéralo con QiskitRuntimeService.job({job_id!r})."
+            f" Se pidió cancelar el trabajo {job_id}; si sigue en la cola de IBM, recupéralo con QiskitRuntimeService.job({job_id!r})."
             if job_id and not self._ensayo
             else ""
         )
         return FuenteNoDisponible(
-            f"{que}: {type(e).__name__}: {detalle}. "
+            f"{que}: {detalle}. "
             f"Comprueba la conexión de red, que el token de {self._ruta} sea válido y que tengas acceso al backend.{pista}"
         )
 
 
 # ------------------------------------------------------------------ funciones puras sobre circuitos y resultados
+
+
+def _status_http(e: BaseException) -> int | None:
+    """El código HTTP de un error de la API (`requests` lo cuelga en `.response`; otros SDK en `.status_code`), o None si no es de HTTP."""
+    for fuente in (getattr(e, "response", None), e):
+        v = getattr(fuente, "status_code", None)
+        if isinstance(v, int) and not isinstance(v, bool):
+            return v
+    return None
 
 
 def _con_mascara(isa: QuantumCircuit, mascara: NDArray[np.uint8]) -> QuantumCircuit:

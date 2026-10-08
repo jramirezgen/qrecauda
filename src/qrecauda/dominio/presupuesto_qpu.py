@@ -9,6 +9,7 @@ Puro: sin SDK ni red.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from qrecauda.dominio.errores import EntradaInvalida, PresupuestoQpuExcedido
@@ -18,6 +19,16 @@ REP_DELAY_POR_OMISION_S = (
 )
 SOBRECARGA_POR_TRABAJO_S = 3.0  # ⚠️ sin verificar: margen fijo por trabajo (carga, calibración de arranque); deliberadamente conservador
 TOPE_POR_OMISION_S = 60.0  # lo que se permite gastar si el usuario no dice otra cosa: un minuto de QPU
+TOPE_MAXIMO_S = 86_400.0  # un día de QPU: por encima no hay cuota que lo respalde, es un error de dedo (R.02: 1e12 «pasaba»)
+
+
+def validar_tope_qpu(tope_s: float) -> float:
+    """El tope de QPU debe ser un número finito, positivo y razonable: `nan` compara falso con todo (el aborto nunca saltaría) e `inf`/1e12
+    lo desactivan. Devuelve el tope tal cual; si no vale, `EntradaInvalida` con el valor que llegó."""
+    es_numero = isinstance(tope_s, int | float) and not isinstance(tope_s, bool)
+    if not es_numero or not math.isfinite(tope_s) or tope_s <= 0 or tope_s > TOPE_MAXIMO_S:
+        raise EntradaInvalida(f"el tope de segundos de QPU debe ser un número finito en (0, {TOPE_MAXIMO_S:.0f}], llegó {tope_s!r}")
+    return float(tope_s)
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,8 +57,10 @@ def estimar_segundos_qpu(
 
 def exigir_presupuesto(*, estimado_s: float, tope_s: float | None, restante_s: float | None, ya_gastado_s: float) -> None:
     """Aborta con `PresupuestoQpuExcedido` si lo ya gastado más lo estimado pasa el tope o lo que queda de cuota. No gasta nada."""
-    if tope_s is not None and tope_s <= 0:
-        raise EntradaInvalida(f"el tope de segundos de QPU debe ser positivo, llegó {tope_s}")
+    if tope_s is not None:
+        validar_tope_qpu(tope_s)
+    if not math.isfinite(estimado_s) or estimado_s < 0:
+        raise EntradaInvalida(f"la estimación de QPU debe ser finita y no negativa, llegó {estimado_s!r}")
     total = ya_gastado_s + estimado_s
     if tope_s is not None and total > tope_s:
         raise PresupuestoQpuExcedido(

@@ -131,6 +131,7 @@ def _fuente(tmp_path: Any, servicio: _Servicio | None = None, **kw: Any) -> tupl
     ruta = tmp_path / "token.txt"
     ruta.write_text(TOKEN + "\n")
     kw.setdefault("transpilar", _identidad)
+    kw.setdefault("exigir_duracion", False)  # los dobles no traen target con duraciones; el caso real tiene su test propio
     kw.setdefault("conectar", lambda secreto: srv)
     kw.setdefault("fabricas", _fabricas())
     return FuenteIbm.desde_ruta(ruta, **kw), srv
@@ -209,9 +210,17 @@ def test_el_pub_lleva_el_circuito_transpilado_y_los_shots(tmp_path: Any) -> None
     assert pub[0] is marcado and tuple(pub[1:]) == (None, 5)
 
 
-def test_por_defecto_batch_y_se_cierra(tmp_path: Any) -> None:
+def test_por_defecto_modo_trabajo_sin_batch_ni_session(tmp_path: Any) -> None:
+    """R.02: el plan abierto no admite Batch ni Session (⚠️ sin verificar contra el servicio real): el modo por omisión es «trabajo»."""
     _Sampler.cadenas = ["0"] * 3
     fuente, srv = _fuente(tmp_path)
+    fuente.generar(1, 3)
+    assert _Modo.creados == []
+
+
+def test_batch_si_se_pide_y_se_cierra(tmp_path: Any) -> None:
+    _Sampler.cadenas = ["0"] * 3
+    fuente, srv = _fuente(tmp_path, modo="batch")
     fuente.generar(1, 3)
     (modo,) = _Modo.creados
     assert modo.tipo == "batch" and modo.backend is srv.backend_ and modo.cerrado

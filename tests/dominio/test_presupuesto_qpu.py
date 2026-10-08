@@ -8,6 +8,7 @@ from qrecauda.dominio.presupuesto_qpu import (
     SOBRECARGA_POR_TRABAJO_S,
     estimar_segundos_qpu,
     exigir_presupuesto,
+    validar_tope_qpu,
 )
 
 
@@ -56,3 +57,16 @@ def test_sin_tope_ni_cuota_conocida_pasa_pero_no_aprueba_nada_mas():
 def test_un_tope_no_positivo_es_entrada_invalida():
     with pytest.raises(EntradaInvalida):
         exigir_presupuesto(estimado_s=1.0, tope_s=0.0, restante_s=None, ya_gastado_s=0.0)
+
+
+@pytest.mark.parametrize("malo", [float("nan"), float("inf"), float("-inf"), 0.0, -1.0, 1e12, 86_401.0])
+def test_un_tope_que_no_es_finito_positivo_y_razonable_aborta_con_error_claro(malo: float) -> None:
+    """R.02: `nan` hacía que `total > tope` fuese siempre falso (el aborto nunca saltaba); `inf` y 1e12 lo desactivaban."""
+    with pytest.raises(EntradaInvalida, match="tope"):
+        validar_tope_qpu(malo)
+    with pytest.raises(EntradaInvalida, match="tope"):
+        exigir_presupuesto(estimado_s=1.0, tope_s=malo, restante_s=None, ya_gastado_s=0.0)
+
+
+def test_un_tope_valido_se_devuelve_igual() -> None:
+    assert validar_tope_qpu(120) == 120.0 and validar_tope_qpu(86_400.0) == 86_400.0

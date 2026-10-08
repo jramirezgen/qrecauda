@@ -41,6 +41,7 @@ class _Trabajo:
     def __init__(self, job_id: str, resultado: Any, metricas: dict[str, Any] | None = None, uso: float = 0.0) -> None:
         self._id, self._r, self._m, self._uso = job_id, resultado, metricas, uso
         self.timeout_visto: Any = "no llamado"
+        self.cancelado = False
 
     def job_id(self) -> str:
         return self._id
@@ -50,6 +51,9 @@ class _Trabajo:
         if isinstance(self._r, BaseException):
             raise self._r
         return self._r
+
+    def cancel(self) -> None:
+        self.cancelado = True
 
     def metrics(self) -> dict[str, Any]:
         if self._m is None:
@@ -77,7 +81,7 @@ class _Servicio:
 
     def usage(self) -> dict[str, Any]:
         if self.restante is None:
-            raise AttributeError
+            raise RuntimeError("usage() no disponible")
         return {"usage_remaining_seconds": self.restante}
 
 
@@ -124,6 +128,7 @@ def _fuente(tmp_path: Path, samplers: _Samplers, servicio: _Servicio | None = No
     srv, creados = servicio or _Servicio(), []
     fab = Fabricas(lambda b: _Contexto("batch", creados), lambda b: _Contexto("session", creados), samplers, "9.9.9")
     kw.setdefault("transpilar", lambda qc, backend: qc)
+    kw.setdefault("exigir_duracion", False)  # los dobles no traen target con duraciones; el caso real tiene su test propio
     f = FuenteIbm.desde_ruta(ruta, conectar=lambda s: srv, fabricas=fab, **kw)
     return f, creados
 
@@ -481,3 +486,178 @@ def test_un_registro_de_un_esquema_futuro_se_rechaza(ensayo: tuple[FuenteIbm, An
     d["esquema"] = 99
     with pytest.raises(EsquemaFuturo):
         RegistroIbm.desde_mapa(d)
+
+
+# ------------------------------------------------------------------ R.02: gasto desde el job_id, cancelación y errores de programación
+
+
+def test_el_gasto_se_cuenta_desde_el_job_id_aunque_el_resultado_falle(tmp_path: Path) -> None:
+    """R.02: un trabajo enviado que no entrega muestra pudo gastar cuota; el tope de la corrida no puede olvidarlo."""
+    s = _Samplers(resultado=TimeoutError("agotado"))
+    f, _ = _fuente(tmp_path, s, espera_max_s=1.0)
+    estimado = f.estimar_qpu(1, 4).segundos
+    with pytest.raises(FuenteNoDisponible):
+        f.generar(1, 4)
+    assert f.gastado_estimado_s == pytest.approx(estimado)
+
+
+def test_el_timeout_cancela_el_trabajo_y_el_error_lo_dice(tmp_path: Path) -> None:
+    s = _Samplers(resultado=TimeoutError("agotado"))
+    f, _ = _fuente(tmp_path, s, espera_max_s=1.0)
+    with pytest.raises(FuenteNoDisponible, match="cancelar el trabajo job-000"):
+        f.generar(1, 4)
+    assert s.trabajos[0].cancelado
+
+
+def test_un_resultado_malformado_tambien_cancela(tmp_path: Path) -> None:
+    s = _Samplers(resultado=[])  # lista vacía ⇒ `or` la sustituye; fuerza la forma mala con un objeto sin `.data`
+    s.resultado = [object()]
+    f, _ = _fuente(tmp_path, s)
+    with pytest.raises(FuenteNoDisponible, match="forma inesperada"):
+        f.generar(1, 4)
+    assert s.trabajos[0].cancelado
+
+
+def test_el_uso_real_reconcilia_lo_reservado_sin_duplicar(tmp_path: Path) -> None:
+    f, _ = _fuente(tmp_path, _Samplers(uso=0.7))
+    f.generar(1, 10)
+    f.generar(1, 10)
+    assert f.gastado_estimado_s == pytest.approx(1.4)
+
+
+def test_un_error_de_programacion_en_run_no_se_disfraza_de_red_y_token(tmp_path: Path) -> None:
+    """R.02: TypeError/KeyError/IndexError/AttributeError son bugs nuestros; «comprueba la red y el token» mandaría a buscar donde no es."""
+
+    class _Roto:
+        def __init__(self, mode: Any) -> None: ...
+
+        def run(self, pubs: list[Any]) -> Any:
+            raise TypeError("bug de programación")
+
+    f, _ = _fuente(tmp_path, _Roto)  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match="bug de programación"):
+        f.generar(1, 4)
+
+
+def test_un_error_de_programacion_al_transpilar_sube_tal_cual(tmp_path: Path) -> None:
+    def mala(qc: QuantumCircuit, backend: Any) -> QuantumCircuit:
+        raise KeyError("clave que no existe")
+
+    f, _ = _fuente(tmp_path, _Samplers(), transpilar=mala)
+    with pytest.raises(KeyError):
+        f.generar(1, 4)
+
+
+def test_ctrl_c_mientras_se_espera_cancela_el_trabajo(tmp_path: Path) -> None:
+    s = _Samplers(resultado=KeyboardInterrupt())
+    f, _ = _fuente(tmp_path, s)
+    with pytest.raises(KeyboardInterrupt):
+        f.generar(1, 4)
+    assert s.trabajos[0].cancelado
+
+
+# ------------------------------------------------------------------ R.02: instancia, cuota, duración, límites del backend y HTTP
+
+
+def test_la_instancia_llega_al_servicio(tmp_path: Path) -> None:
+    llamadas: list[tuple[Any, ...]] = []
+    srv = _Servicio()
+    ruta = tmp_path / "t.txt"
+    ruta.write_text(TOKEN)
+    fab = Fabricas(lambda b: _Contexto("batch", []), lambda b: _Contexto("session", []), _Samplers(), "9.9.9")
+    f = FuenteIbm.desde_ruta(
+        ruta, transpilar=lambda qc, b: qc, exigir_duracion=False, fabricas=fab, instancia="crn:v1:bluemix:public:quantum-computing:x",
+        conectar=lambda s, instancia: (llamadas.append((instancia,)), srv)[1],
+    )  # fmt: skip
+    f.generar(1, 4)
+    assert llamadas == [("crn:v1:bluemix:public:quantum-computing:x",)]
+
+
+def test_conectar_real_pasa_la_instancia_a_quiskit_runtime_service(monkeypatch: pytest.MonkeyPatch) -> None:
+    import qiskit_ibm_runtime
+
+    vistos: dict[str, Any] = {}
+
+    class _Falso:
+        def __init__(self, **kw: Any) -> None:
+            vistos.update(kw)
+
+    monkeypatch.setattr(qiskit_ibm_runtime, "QiskitRuntimeService", _Falso)
+    from qrecauda.adaptadores.ibm_runtime import conectar_real
+
+    conectar_real(Secreto(TOKEN), "mi-instancia")
+    assert vistos["instance"] == "mi-instancia" and vistos["channel"] == "ibm_quantum_platform"
+    conectar_real(Secreto(TOKEN))
+    assert vistos["instance"] is None
+
+
+def test_sin_la_clave_de_cuota_restante_se_avisa_por_stderr(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    class _SinClave(_Servicio):
+        def usage(self) -> dict[str, Any]:
+            return {"otra_cosa": 1}
+
+    f, _ = _fuente(tmp_path, _Samplers(), servicio=_SinClave())
+    f.generar(1, 4)
+    f.generar(1, 4)
+    err = capsys.readouterr().err
+    assert err.count("AVISO") == 1 and "usage_remaining_seconds" in err
+
+
+def test_en_real_una_duracion_cero_aborta_en_vez_de_subestimar(tmp_path: Path) -> None:
+    f, _ = _fuente(tmp_path, _Samplers(), exigir_duracion=True)  # el doble no trae target con duraciones
+    with pytest.raises(FuenteNoDisponible, match="duración"):
+        f.generar(1, 4)
+
+
+def test_el_ensayo_no_exige_duracion() -> None:
+    f = FuenteIbm.para_ensayo(transpilar=_transpilar_real, mascaras=0, semilla=1, max_segundos_qpu=5.0)
+    assert f.estimar_qpu(2, 8).segundos > 0
+
+
+def test_max_shots_y_max_circuits_del_backend_se_respetan_antes_de_enviar(tmp_path: Path) -> None:
+    class _Limitado(_Backend):
+        max_shots = 10
+        max_circuits = 2
+
+    srv = _Servicio()
+    srv.backend_ = _Limitado()  # type: ignore[assignment]
+    s = _Samplers()
+    f, _ = _fuente(tmp_path, s, servicio=srv)
+    with pytest.raises(FuenteNoDisponible, match="max_shots=10"):
+        f.generar(1, 11)
+    g, _ = _fuente(tmp_path, s, servicio=srv, mascaras=3)
+    with pytest.raises(FuenteNoDisponible, match="max_circuits=2"):
+        g.generar(1, 8)
+    assert not s.pubs
+
+
+def test_sin_la_puerta_x_en_el_target_el_twirling_aborta_antes_de_enviar(tmp_path: Path) -> None:
+    class _Target:
+        operation_names = ("sx", "rz", "cz", "measure")
+
+    class _SinX(_Backend):
+        target = _Target()
+
+    srv = _Servicio()
+    srv.backend_ = _SinX()  # type: ignore[assignment]
+    s = _Samplers()
+    f, _ = _fuente(tmp_path, s, servicio=srv, mascaras=3)
+    with pytest.raises(FuenteNoDisponible, match="«x»"):
+        f.generar(1, 8)
+    assert not s.pubs
+
+
+def test_un_error_http_no_vuelca_su_detalle(tmp_path: Path) -> None:
+    class _Respuesta:
+        status_code = 403
+
+    class _Http(OSError):  # requests.HTTPError hereda de OSError
+        response = _Respuesta()
+
+    secreto_en_cuerpo = "cuerpo-con-datos-sensibles-crn-123"
+    s = _Samplers(resultado=_Http(secreto_en_cuerpo))
+    f, _ = _fuente(tmp_path, s)
+    with pytest.raises(FuenteNoDisponible) as e:
+        f.generar(1, 4)
+    msg = str(e.value)
+    assert "HTTP 403" in msg and "_Http" in msg and secreto_en_cuerpo not in msg
