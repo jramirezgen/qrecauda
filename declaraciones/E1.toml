@@ -28,7 +28,9 @@ m2 = "salida: mediana de bloques de 4096 (P.E0 [validacion]); entrada: h_min del
 [decisiones_previas]                             # tomadas ANTES de correr; ver E1.md
 m5_en_mitigada = "informativa"                   # decisión delegada 2026-10-07: el twirling por bloques de 200 deja sesgo local que M5 detecta
 m5_decide_en = ["clave", "cruda_de_c_e1a"]       # M5 decide sobre la CLAVE y sobre la cruda de la fuente ideal (C.E1a), no sobre la mitigada
-m4_en_mitigada = "decide"                        # ⚠️ alerta analítica en E1.md: puede compartir la causa de M5; NO se relaja sin enmienda
+m4_en_mitigada = "informativa"                   # ENMENDADO 2026-10-07 (antes "decide"): misma causa que M5; ver «Enmienda fechada» en E1.md. Sin cambio de umbral
+m3_en_mitigada = "decide"                        # sigue decidiendo (ya lo hacía)
+clave_decide = ["M1", "M2", "M3", "M4", "M5"]    # la clave sigue decidiendo M1–M5 completas
 estimador_90b_en_mitigada = "informativo"            # el 90B de cruda/mitigada se mide y se reporta; el umbral 0,9 sólo decide en C.E1d y en M2 de salida
 
 [criterios.c_e1a]                                # PRNG, 3 semillas
@@ -42,7 +44,7 @@ sesgo_cruda_vs_analitico_tolerancia = 0.002      # control D1: el detector ve el
 clave_se_reporta = true                          # que Toeplitz limpie la cruda es un hallazgo, no un criterio de E1b
 
 [criterios.c_e1c]                                # Aer ruidoso mitigado, por semilla
-mitigada_pasa = ["M1", "M3", "M4"]               # M5 informativa (decisión previa)
+mitigada_pasa = ["M1", "M3"]                     # M4 y M5 informativas (decisión previa y enmienda 2026-10-07)
 clave_pasa = ["M1", "M2", "M3", "M4", "M5"]      # M5 sobre la clave sí decide
 
 [criterios.c_e1d]                                # control positivo, por semilla; fuentes de 1 000 000 de bits (mínimo del 90B)
