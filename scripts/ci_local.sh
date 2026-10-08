@@ -2,7 +2,7 @@
 # CI local: correrlo ANTES de empujar. Sale distinto de cero si algo falla.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-uv sync --group dev --extra cuantico --extra mitigacion --extra validacion --extra cifrado --quiet
+uv sync --group dev --extra cuantico --extra mitigacion --extra validacion --extra cifrado --extra informe --quiet
 uv run ruff check src tests
 uv run ruff format --check src tests
 uv run mypy
