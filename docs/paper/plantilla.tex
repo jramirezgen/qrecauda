@@ -1,0 +1,198 @@
+% Plantilla de pandoc del informe técnico de QRecauda (xelatex). Propia, sin dependencias de red.
+% Banda de título a sangre, resumen en caja, secciones numeradas, pies de figura y tabla numerados, sin índice.
+% Variables: title, subtitle, author, date, keywords, licencia, estado, abstract, serie.
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames*,x11names*}{xcolor}
+\documentclass[10pt,a4paper]{article}
+
+% ── geometría y color ─────────────────────────────────────────────────────────────────────────
+\usepackage[a4paper,left=2.3cm,right=2.3cm,top=2.5cm,bottom=2.4cm,headheight=18pt,headsep=0.9cm,footskip=1.1cm]{geometry}
+\usepackage{xcolor}
+% Paleta Okabe-Ito (accesible a daltonismo) + azul de la banda
+\definecolor{oiorange}{HTML}{E69F00}
+\definecolor{oisky}{HTML}{56B4E9}
+\definecolor{oigreen}{HTML}{009E73}
+\definecolor{oiyellow}{HTML}{F0E442}
+\definecolor{oiblue}{HTML}{0072B2}
+\definecolor{oivermillion}{HTML}{D55E00}
+\definecolor{oipurple}{HTML}{CC79A7}
+\definecolor{bandblue}{HTML}{0B2F4A}
+\definecolor{inkgray}{HTML}{3A3A3A}
+\definecolor{softgray}{HTML}{6B6B6B}
+\definecolor{boxbg}{HTML}{EAF3FA}
+\definecolor{rulegray}{HTML}{C9CED3}
+
+% ── tipografía ────────────────────────────────────────────────────────────────────────────────
+\usepackage{amssymb,amsmath}
+\usepackage{unicode-math}
+\defaultfontfeatures{Scale=MatchLowercase}
+\defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\setmainfont{TeX Gyre Pagella}
+\setsansfont{TeX Gyre Heros}[Scale=MatchLowercase]
+\setmonofont{DejaVu Sans Mono}[Scale=0.84]
+\setmathfont{TeX Gyre Pagella Math}
+\newfontfamily\fallbackfont{DejaVu Sans}
+\usepackage{newunicodechar}
+\newunicodechar{⟨}{\ensuremath{\langle}}
+\newunicodechar{⟩}{\ensuremath{\rangle}}
+\newunicodechar{→}{\ensuremath{\rightarrow}}
+\newunicodechar{⊗}{\ensuremath{\otimes}}
+\newunicodechar{⌊}{\ensuremath{\lfloor}}
+\newunicodechar{⌋}{\ensuremath{\rfloor}}
+\newunicodechar{≈}{\ensuremath{\approx}}
+\newunicodechar{≤}{\ensuremath{\leq}}
+\newunicodechar{≥}{\ensuremath{\geq}}
+\newunicodechar{≠}{\ensuremath{\neq}}
+\newunicodechar{−}{\ensuremath{-}}
+\newunicodechar{∣}{\ensuremath{\mid}}
+\newunicodechar{×}{\ensuremath{\times}}
+\newunicodechar{Δ}{\ensuremath{\Delta}}
+\newunicodechar{ε}{\ensuremath{\varepsilon}}
+\newunicodechar{χ}{\ensuremath{\chi}}
+\newunicodechar{λ}{\ensuremath{\lambda}}
+\newunicodechar{α}{\ensuremath{\alpha}}
+\newunicodechar{σ}{\ensuremath{\sigma}}
+\newunicodechar{μ}{\ensuremath{\mu}}
+\newunicodechar{γ}{\ensuremath{\gamma}}
+\newunicodechar{✓}{{\fallbackfont ✓}}
+\newunicodechar{✗}{{\fallbackfont ✗}}
+\newunicodechar{·}{\ifmmode\cdot\else{\fontspec{TeX Gyre Pagella}·}\fi}
+\usepackage{setspace}
+\setstretch{1.07}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em plus 0.15em minus 0.1em}
+\setlength{\emergencystretch}{3em}
+\widowpenalty=10000 \clubpenalty=10000
+\raggedbottom
+
+% ── enlaces y metadatos del PDF ───────────────────────────────────────────────────────────────
+\usepackage{xurl}
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+$if(title-meta)$  pdftitle={$title-meta$},
+$endif$$if(author-meta)$  pdfauthor={$author-meta$},
+$endif$  pdflang={es},
+$if(keywords)$  pdfkeywords={$for(keywords)$$keywords$$sep$, $endfor$},
+$endif$$if(subject)$  pdfsubject={$subject$},
+$endif$  colorlinks=true, linkcolor=oiblue, citecolor=oiblue, urlcolor=oiblue, filecolor=oiblue,
+  pdfcreator={xelatex}}
+\urlstyle{same}
+
+% ── tablas, figuras, listas ───────────────────────────────────────────────────────────────────
+\usepackage{longtable,booktabs,array,calc}
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\renewcommand{\arraystretch}{1.16}
+\setlength{\tabcolsep}{4.5pt}
+\setlength{\LTpre}{0.6em}\setlength{\LTpost}{0.9em}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\makeatletter\def\fps@figure{tbp}\makeatother
+\usepackage[font={small,color=inkgray},labelfont={bf,sf,color=bandblue},labelsep=period,justification=raggedright,singlelinecheck=false,skip=5pt]{caption}
+\captionsetup[table]{position=above}
+\captionsetup[figure]{position=below}
+\usepackage{enumitem}
+\setlist{itemsep=0.15em,topsep=0.3em,parsep=0pt,leftmargin=1.5em}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{listings}
+\newcommand{\passthrough}[1]{#1}
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,breakatwhitespace=false,columns=fullflexible,keepspaces=true,
+  frame=lines,rulecolor=\color{rulegray},backgroundcolor=\color{boxbg!55},xleftmargin=0.6em,xrightmargin=0.3em,
+  framesep=4pt,aboveskip=0.6em,belowskip=0.5em,showstringspaces=false}
+\usepackage[normalem]{ulem}
+\pdfstringdefDisableCommands{\renewcommand{\sout}{}}
+
+% referencias bibliográficas con sangría francesa
+\newenvironment{referencias}{\begingroup\small\setlength{\parindent}{0pt}\setlength{\parskip}{0.35em}\setlength{\leftskip}{1.9em}\setlength{\parindent}{-1.9em}\raggedright}{\par\endgroup}
+
+% ── secciones numeradas, sin índice ───────────────────────────────────────────────────────────
+\usepackage{titlesec}
+\setcounter{secnumdepth}{3}
+\titleformat{\section}{\sffamily\bfseries\Large\color{bandblue}}{\thesection}{0.7em}{}[{\color{rulegray}\titlerule[0.6pt]}]
+\titleformat{\subsection}{\sffamily\bfseries\large\color{bandblue}}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\sffamily\bfseries\normalsize\color{inkgray}}{\thesubsubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{1.9ex plus 0.5ex minus 0.2ex}{1.0ex plus 0.2ex}
+\titlespacing*{\subsection}{0pt}{1.6ex plus 0.4ex minus 0.2ex}{0.5ex plus 0.1ex}
+\titlespacing*{\subsubsection}{0pt}{1.3ex plus 0.3ex minus 0.1ex}{0.3ex plus 0.1ex}
+\newcommand{\secsep}{}
+
+% ── cabecera y pie ────────────────────────────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.35pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{rulegray}\leaders\hrule height \headrulewidth\hfill}}
+\fancyhead[L]{\sffamily\scriptsize\color{softgray} QRecauda · informe técnico}
+\fancyhead[R]{\sffamily\scriptsize\color{softgray} $author$}
+\fancyfoot[C]{\sffamily\scriptsize\color{softgray}\thepage}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\fancyfoot[C]{\sffamily\scriptsize\color{softgray}\thepage}}
+
+% ── símbolo de «sin verificar» ────────────────────────────────────────────────────────────────
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\newcommand{\warnsym}{{\tikz[baseline=-0.4ex]{\draw[oivermillion,fill=oivermillion!14,line width=0.45pt,line join=round] (0,0)--(1.55ex,0)--(0.775ex,1.4ex)--cycle;
+  \node[inner sep=0pt,text=oivermillion,font=\sffamily\bfseries\fontsize{4.6pt}{4.6pt}\selectfont] at (0.775ex,0.5ex) {!};}}}
+
+% ── banda de título y resumen en caja ─────────────────────────────────────────────────────────
+\usepackage[skins,breakable]{tcolorbox}
+\newsavebox{\bandabox}
+\newlength{\bandalto}
+\newcommand{\bandacontenido}{%
+  {\sffamily
+   {\scriptsize\bfseries\color{oisky}\MakeUppercase{$if(serie)$$serie$$else$Informe técnico$endif$}\par}\vspace{0.7em}
+   {\fontsize{19}{23}\selectfont\bfseries\color{white}$title$\par}
+$if(subtitle)$   \vspace{0.45em}{\large\color{white!85!bandblue}$subtitle$\par}
+$endif$   \vspace{0.9em}
+   {\color{oiorange}\rule{3.2cm}{1.4pt}}\par\vspace{0.7em}
+   {\normalsize\bfseries\color{white}$for(author)$$author$$sep$, $endfor$}{\color{white!75!bandblue}\ \ ·\ \ $date$}\par\vspace{0.7em}
+$if(keywords)$   {\footnotesize\color{white!88!bandblue}\textbf{Palabras clave:}\ $for(keywords)$$keywords$$sep$ · $endfor$\par}\vspace{0.55em}
+$endif$$if(licencia)$   {\scriptsize\color{white!70!bandblue}$licencia$\par}
+$endif$   \vspace{0.1em}}%
+}
+\newcommand{\bandatitulo}{%
+  \sbox{\bandabox}{\parbox{\textwidth}{\bandacontenido}}%
+  \setlength{\bandalto}{\ht\bandabox+\dp\bandabox}%
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[bandblue] (current page.north west) rectangle ($$(current page.north east)+(0,-\bandalto-2.35cm)$$);
+    \fill[oiorange] ($$(current page.north west)+(0,-\bandalto-2.35cm)$$) rectangle ($$(current page.north east)+(0,-\bandalto-2.35cm-2.2pt)$$);
+    \node[anchor=north west,inner sep=0pt,text width=\textwidth] at ($$(current page.north west)+(2.3cm,-1.2cm)$$) {\bandacontenido};
+  \end{tikzpicture}%
+  \vspace*{\bandalto-0.55cm}%
+}
+\newtcolorbox{resumencaja}{enhanced,breakable,colback=boxbg,colframe=oiblue,boxrule=0pt,leftrule=3pt,arc=0pt,
+  left=10pt,right=10pt,top=7pt,bottom=7pt,fonttitle=\sffamily\bfseries\small,coltitle=bandblue,attach boxed title to top left={xshift=0pt,yshift=0pt},
+  boxed title style={colback=boxbg,boxrule=0pt,arc=0pt,top=0pt,bottom=0pt,left=0pt},title=Resumen,before upper={\small\setstretch{1.04}\setlength{\parskip}{0.4em}}}
+
+$if(lang)$
+\usepackage{polyglossia}
+\setmainlanguage[]{spanish}
+\gappto\captionsspanish{\renewcommand{\tablename}{Tabla}\renewcommand{\figurename}{Figura}}
+$endif$
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\newcommand{\ctaux}{}
+\title{$title$}
+\author{$for(author)$$author$$sep$ \and $endfor$}
+\date{$date$}
+
+\begin{document}
+\thispagestyle{plain}
+\bandatitulo
+\suppressfloats[t]
+
+$if(abstract)$
+\begin{resumencaja}
+$abstract$
+\end{resumencaja}
+\vspace{0.4em}
+$endif$
+$body$
+\end{document}
