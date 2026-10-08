@@ -51,9 +51,10 @@ class InformeCorrida:
     commit: str
     entorno: Mapping[str, str] = field(default_factory=dict)  # versiones exactas (transversal/reproducibilidad)
     esquema: int = ESQUEMA_INFORME
+    reporte: Mapping[str, object] = field(default_factory=dict)  # lo que la preinscripción manda reportar sin decidir (JSON puro); opcional
 
     def a_mapa(self) -> dict[str, object]:
-        return {
+        mapa: dict[str, object] = {
             "esquema": self.esquema,
             "corrida": self.corrida,
             "eureka": self.eureka,
@@ -79,6 +80,9 @@ class InformeCorrida:
             "commit": self.commit,
             "entorno": dict(self.entorno),
         }
+        if self.reporte:
+            mapa["reporte"] = dict(self.reporte)
+        return mapa
 
     @classmethod
     def desde_mapa(cls, d: Mapping[str, object]) -> InformeCorrida:
@@ -109,6 +113,7 @@ class InformeCorrida:
                 commit=str(d["commit"]),
                 entorno=dict(d["entorno"]),  # type: ignore[call-overload]
                 esquema=v,
+                reporte=dict(d.get("reporte", {})),  # type: ignore[call-overload]
             )
         except (KeyError, ValueError, TypeError) as exc:
             raise EntradaInvalida(f"informe malformado: {exc}") from exc
@@ -186,3 +191,32 @@ class ExperimentoE3:
                        dict(d.get("reporte", {})))  # type: ignore[call-overload]  # fmt: skip
         except (KeyError, ValueError, TypeError) as exc:
             raise EntradaInvalida(f"experimento E3 malformado: {exc}") from exc
+
+
+@dataclass(frozen=True, slots=True)
+class MedidaDeFuente:
+    """C.E1d: una fuente SINTÉTICA (sesgada, periódica, Markov o ideal) medida por M1/M3/M4/M5, la cota MCV y el 90B."""
+
+    corrida: str  # «C.E1d»
+    semilla: int
+    fuente: str  # «sesgada» | «periodica» | «markov» | «ideal»
+    bits: int
+    medidas: tuple[Medida, ...]  # M1, M3, M4, M5 sobre la fuente entera
+    mcv: float  # cota MCV de dominio.entropia (la que la discrepancia 8 dice ciega)
+    h_90b: float  # `ea_non_iid` (SP 800-90B)
+    esquema: int = 1
+
+    def a_mapa(self) -> dict[str, object]:
+        return {
+            "esquema": self.esquema, "corrida": self.corrida, "semilla": self.semilla, "fuente": self.fuente,
+            "bits": self.bits, "medidas": _medidas_a_lista(self.medidas), "mcv": self.mcv, "h_90b": self.h_90b,
+        }  # fmt: skip
+
+    @classmethod
+    def desde_mapa(cls, d: Mapping[str, object]) -> MedidaDeFuente:
+        v = leer_esquema(d, 1, que="medida de fuente")
+        try:
+            return cls(str(d["corrida"]), int(d["semilla"]), str(d["fuente"]), int(d["bits"]),  # type: ignore[call-overload]
+                       _medidas_desde_lista(d["medidas"]), float(d["mcv"]), float(d["h_90b"]), v)  # type: ignore[arg-type]  # fmt: skip
+        except (KeyError, ValueError, TypeError) as exc:
+            raise EntradaInvalida(f"medida de fuente malformada: {exc}") from exc

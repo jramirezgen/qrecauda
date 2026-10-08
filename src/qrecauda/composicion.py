@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -18,8 +18,9 @@ from qrecauda.adaptadores.declaracion_toml import cargar_declaracion
 from qrecauda.adaptadores.estadistica import ValidadorEstadistico
 from qrecauda.adaptadores.git import HistorialGit
 from qrecauda.adaptadores.libro_jsonl import LibroJsonl
-from qrecauda.adaptadores.prng import FuentePrng
+from qrecauda.adaptadores.prng import FuenteMarkov, FuentePeriodica, FuentePrng
 from qrecauda.adaptadores.sonda_local import SondaLocal
+from qrecauda.aplicacion.ejecutor_e1 import EjecutorE1
 from qrecauda.aplicacion.ejecutor_e2 import EjecutorE2
 from qrecauda.aplicacion.ejecutor_e3 import EjecutorE3
 from qrecauda.aplicacion.juez import CorrerYJuzgar
@@ -27,8 +28,18 @@ from qrecauda.aplicacion.pipeline import ParametrosPipeline, Resultado
 from qrecauda.aplicacion.pipeline import ejecutar as _ejecutar_pipeline
 from qrecauda.aplicacion.transaccion import ServicioDeTransacciones
 from qrecauda.datos import Declaracion, InformeCorrida, ManifiestoDeCorrida, Medicion, RuidoDeLectura, VeredictoDeEureka
+from qrecauda.dominio.bits import Bits
 from qrecauda.dominio.errores import CorridaInvalida, EntradaInvalida, FuenteNoDisponible
-from qrecauda.puertos import Bitacora, Ejecutor, EstimadorDeSesgo, FuenteDeBits, Historial, Mitigador, Validador
+from qrecauda.puertos import (
+    Bitacora,
+    Ejecutor,
+    EstimadorDeEntropia,
+    EstimadorDeSesgo,
+    FuenteDeBits,
+    Historial,
+    Mitigador,
+    Validador,
+)
 from qrecauda.transversal.concurrencia import candado
 from qrecauda.transversal.configuracion import Configuracion, omp_num_threads
 from qrecauda.transversal.observabilidad import RelojMonotonico
@@ -270,8 +281,73 @@ def ejecutor_e3_de(raiz: Path, bitacora: Bitacora | None = None) -> Ejecutor:
     return _EnMaquina(ejecutor, candado_de_maquina(raiz), _exigir_omp_un_hilo, 0.0)
 
 
+# ------------------------------------------------------------------ C.E1: las cuatro corridas por semilla
+
+
+def _fuentes_de_control(decl: Declaracion, semilla: int) -> dict[str, FuenteDeBits]:
+    """C.E1d: las cuatro fuentes sintéticas con los parámetros de la declaración (como el spike S.04); nada se teclea aquí."""
+    d: Mapping[str, Any] = decl.tabla("criterios")["c_e1d"]  # type: ignore[assignment]
+    return {
+        "sesgada": FuentePrng(semilla, sesgo=float(d["sesgada_p1"]) - 0.5),
+        "periodica": FuentePeriodica(str(d["periodica"])),
+        "markov": FuenteMarkov(semilla, float(d["markov_permanencia"])),
+        "ideal": FuentePrng(semilla),
+    }
+
+
+def _proporciones_nist(bits: Bits, secuencias: int, longitud: int, alfa: float) -> dict[str, dict[str, object]]:
+    """SP 800-22 §4.2.1 sobre `secuencias` tramos consecutivos de `longitud` bits, por prueba (M3, M4, M5). Sólo se reporta."""
+    try:
+        from qrecauda.adaptadores.nist import p_frecuencia_por_bloques, p_monobit, p_runs, proporcion_aprobados
+    except ImportError as e:
+        raise FuenteNoDisponible(f"la proporción NIST necesita el extra «validacion»: {e}") from e
+    salida: dict[str, dict[str, object]] = {}
+    for nombre, prueba in (("M3", p_monobit), ("M4", p_runs), ("M5", p_frecuencia_por_bloques)):
+        pr = proporcion_aprobados([prueba(bits[i * longitud : (i + 1) * longitud]) for i in range(secuencias)], alfa)
+        salida[nombre] = {
+            "aprobados": pr.aprobados, "total": pr.total, "proporcion": pr.proporcion,
+            "minimo": pr.minimo, "maximo": pr.maximo, "cumple": pr.cumple,
+        }  # fmt: skip
+    return salida
+
+
+def _comprobar_e1(decl: Declaracion) -> None:
+    """Antes de la primera semilla (que cuesta minutos): el binario del 90B tiene que estar, no descubrirlo tras el Aer."""
+    try:
+        from qrecauda.adaptadores.min_entropia import BINARIO_POR_DEFECTO, INSTRUCCION_BUILD
+    except ImportError as e:  # pragma: no cover - el módulo no importa nada opcional
+        raise FuenteNoDisponible(f"E1 necesita el 90B: {e}") from e
+    if not BINARIO_POR_DEFECTO.is_file():
+        raise FuenteNoDisponible(f"E1 necesita el 90B (C.E1c y C.E1d): falta {BINARIO_POR_DEFECTO}; compílalo con: {INSTRUCCION_BUILD}")
+
+
+def ejecutor_e1_de(
+    raiz: Path,
+    bitacora: Bitacora | None = None,
+    estimador_90b: EstimadorDeEntropia | None = None,
+    historial: Historial | None = None,
+) -> Ejecutor:
+    """C.E1: las cuatro corridas de E1 por semilla (PRNG, Aer sin mitigar, Aer con twirling, fuentes de control) bajo el candado.
+
+    `estimador_90b` e `historial` sólo se pasan en las pruebas (el 90B real exige ≥ 1 M de bits; `raiz` puede no ser un repo git)."""
+    previo = (lambda decl: None) if estimador_90b is not None else _comprobar_e1
+    if estimador_90b is None:
+        try:
+            from qrecauda.adaptadores.min_entropia import EstimadorNist90B
+        except ImportError as e:  # pragma: no cover
+            raise FuenteNoDisponible(f"E1 necesita el 90B: {e}") from e
+        estimador_90b = EstimadorNist90B()
+    ejecutor = EjecutorE1(
+        _LaboratorioAer(max_parallel_threads=1), FuentePrng, _fuentes_de_control, validador_de(Configuracion(validador="nist")),
+        estimador_90b, RelojMonotonico(), historial or HistorialGit(raiz), entorno, _proporciones_nist, bitacora,
+    )  # fmt: skip
+    return _EnMaquina(ejecutor, candado_de_maquina(raiz), previo, None)
+
+
 def ejecutor_de(raiz: Path, decl: Declaracion) -> Ejecutor:
-    """E2 → C.E2 sobre Aer; E3 → C.E3 sobre la cadena completa; el resto, el pipeline real por semilla (informes)."""
+    """E1 → C.E1 (cuatro corridas); E2 → C.E2 sobre Aer; E3 → C.E3 sobre la cadena completa; el resto, el pipeline real por semilla."""
+    if decl.eureka == "E1":
+        return ejecutor_e1_de(raiz)
     if decl.eureka == "E2":
         return ejecutor_e2_de(raiz)
     if decl.eureka == "E3":

@@ -12,6 +12,7 @@ import hashlib
 import math
 from collections.abc import Mapping
 
+from qrecauda.aplicacion import criterios_e1 as e1
 from qrecauda.datos import (
     Criterio,
     Declaracion,
@@ -19,14 +20,32 @@ from qrecauda.datos import (
     ExperimentoE3,
     InformeCorrida,
     ManifiestoDeCorrida,
+    MedidaDeFuente,
     VeredictoDeEureka,
     serializar,
 )
 from qrecauda.dominio.errores import CorridaInvalida
-from qrecauda.dominio.metricas import Metrica, medir
+from qrecauda.dominio.metricas import Medida, Metrica, medir
 from qrecauda.puertos import Almacen, Ejecutor, Historial, LibroDeVeredictos
 
 CONTROLES_E2 = ("C1", "C2", "C3")  # C4 (puerta ZNE/PEC) y C5 (contraste) se reportan, no invalidan (P.E2)
+
+
+Artefacto = InformeCorrida | ExperimentoE2 | ExperimentoE3 | MedidaDeFuente
+
+
+def _corridas_hijas(decl: Declaracion) -> tuple[str, ...]:
+    """Las corridas que una declaración reparte bajo su `nodo_corrida` único (E1: C.E1a…C.E1d); () si no declara ninguna."""
+    ids = decl.tablas.get("corridas", {}).get("ids")
+    return tuple(str(x) for x in ids) if isinstance(ids, list) else ()
+
+
+def _cita_bien(tipo: str, corrida: str, decl: Declaracion, hijas: tuple[str, ...]) -> bool:
+    if corrida == decl.nodo_corrida:
+        return True
+    if hijas:
+        return tipo in ("informe", "fuente") and corrida in hijas
+    return tipo == "informe"  # sin corridas declaradas, el informe del respaldo genérico no se valida (comportamiento previo)
 
 
 def _controles_requeridos(decl: Declaracion) -> tuple[str, ...]:
@@ -51,24 +70,35 @@ class CorrerYJuzgar:
             raise CorridaInvalida(f"la preinscripción de {decl.eureka} tiene cambios sin commit: se fija ANTES de correr")
         pre, commit = self._historial.ultimo_commit(decl.rutas), self._historial.commit_actual()
         artefactos: list[tuple[str, str, str]] = []
+        por_corrida: dict[str, list[tuple[str, str, str]]] = {}  # la corrida que cita cada artefacto → sus artefactos
+        hijas = _corridas_hijas(decl)
         controles: dict[str, bool] = {}
         for semilla in decl.semillas:
             med = self._ejecutor.ejecutar(decl, semilla)
-            lotes: tuple[tuple[str, tuple[InformeCorrida | ExperimentoE2 | ExperimentoE3, ...]], ...] = (
+            lotes: tuple[tuple[str, tuple[Artefacto, ...]], ...] = (
                 ("informe", med.informes),
                 ("e2", med.e2),
                 ("e3", med.e3),
+                ("fuente", med.fuentes),
             )
             for tipo, lote in lotes:
                 for i, a in enumerate(lote):
-                    if a.corrida != decl.nodo_corrida and tipo != "informe":
+                    if not _cita_bien(tipo, a.corrida, decl, hijas):
                         raise CorridaInvalida(f"la medición cita la corrida {a.corrida!r}, la declaración es {decl.nodo_corrida!r}")
                     nombre = f"{decl.nodo_corrida}_{semilla}_{tipo}_{i:03d}"
-                    artefactos.append((nombre, tipo, self._almacen.guardar(nombre, a.a_mapa())))
+                    entrada = (nombre, tipo, self._almacen.guardar(nombre, a.a_mapa()))
+                    artefactos.append(entrada)
+                    por_corrida.setdefault(a.corrida, []).append(entrada)
             for k, ok in med.controles.items():
                 controles[k] = controles.get(k, True) and ok
         if not artefactos:
             raise CorridaInvalida(f"el ejecutor no produjo ningún artefacto para {decl.eureka}")
+        vacias = [c for c in hijas if not por_corrida.get(c)]
+        if vacias:
+            raise CorridaInvalida(f"la corrida {vacias[0]} declarada no produjo ningún artefacto: el plan exige su ruta propia")
+        for hija in hijas:  # las rutas del plan (registro/corridas/E1a.json…): un manifiesto por corrida declarada, ANTES del único
+            sub = ManifiestoDeCorrida(hija, decl.eureka, pre, commit, self._entorno, tuple(por_corrida[hija]), controles)
+            self._almacen.guardar(hija.removeprefix("C."), sub.a_mapa())
         manifiesto = ManifiestoDeCorrida(decl.nodo_corrida, decl.eureka, pre, commit, self._entorno, tuple(artefactos), controles)
         self._almacen.guardar(decl.nodo_corrida, manifiesto.a_mapa())  # último: una corrida a medias no deja manifiesto
         return manifiesto
@@ -91,8 +121,10 @@ class CorrerYJuzgar:
                 raise CorridaInvalida(f"falta el control {k}: sin él no hay veredicto")
             if not m.controles[k]:
                 raise CorridaInvalida(f"el control {k} falla: corrida inválida, no es un veredicto (incidencia)")
-        e2, e3, informes = self._leer(m)
-        if decl.eureka == "E2":
+        e2, e3, informes, fuentes = self._leer(m)
+        if decl.eureka == "E1":
+            v = _juzgar_e1(decl, m, informes, fuentes)
+        elif decl.eureka == "E2":
             v = _juzgar_e2(decl, m, e2)
         elif decl.eureka == "E3":
             v = _juzgar_e3(decl, m, e3)
@@ -101,10 +133,11 @@ class CorrerYJuzgar:
         self._libro.anadir(v.a_mapa())
         return v
 
-    def _leer(self, m: ManifiestoDeCorrida) -> tuple[list[ExperimentoE2], list[ExperimentoE3], list[InformeCorrida]]:
+    def _leer(self, m: ManifiestoDeCorrida) -> tuple[list[ExperimentoE2], list[ExperimentoE3], list[InformeCorrida], list[MedidaDeFuente]]:
         e2: list[ExperimentoE2] = []
         e3: list[ExperimentoE3] = []
         informes: list[InformeCorrida] = []
+        fuentes: list[MedidaDeFuente] = []
         for nombre, tipo, sha in m.artefactos:
             crudo = self._almacen.leer(nombre)
             if hashlib.sha256(serializar(crudo).encode()).hexdigest() != sha:
@@ -113,9 +146,11 @@ class CorrerYJuzgar:
                 e2.append(ExperimentoE2.desde_mapa(crudo))
             elif tipo == "e3":
                 e3.append(ExperimentoE3.desde_mapa(crudo))
+            elif tipo == "fuente":
+                fuentes.append(MedidaDeFuente.desde_mapa(crudo))
             else:
                 informes.append(InformeCorrida.desde_mapa(crudo))
-        return e2, e3, informes
+        return e2, e3, informes, fuentes
 
 
 # ---------------------------------------------------------------------- criterios
@@ -192,6 +227,175 @@ def _juzgar_e2(decl: Declaracion, m: ManifiestoDeCorrida, celdas: list[Experimen
         primero = next(n for n in sinteticos if n in fallos) if any(n in fallos for n in sinteticos) else next(iter(fallos))
         return _veredicto(decl, m, "CUMPLE_PARCIAL", f"deja de cumplir en el nivel {primero}", cs)
     return _veredicto(decl, m, "CUMPLE", "K1–K4 en todas las celdas sintéticas", cs)
+
+
+def _juzgar_e1(
+    decl: Declaracion, m: ManifiestoDeCorrida, informes: list[InformeCorrida], fuentes: list[MedidaDeFuente]
+) -> VeredictoDeEureka:
+    """E1 (docs/preinscripciones/E1.md, con la enmienda 2026-10-07): las cuatro corridas por semilla, la tabla de desenlaces tal cual.
+
+    Precedencia (⚠️ la tabla la deja implícita; se declara): INVÁLIDA (N1/D1/P1 recalculados de los datos) > NULO (B1 falla en alguna
+    semilla) > NO CUMPLE (M-2 falla en alguna) > CUMPLE PARCIAL (M-2 pasa en todas y M-1 falla en alguna) > CUMPLE.
+    """
+    a_id, b_id, c_id, d_id = decl.lista("corridas", "ids")
+    esp = {"C.E1a": a_id, "C.E1b": b_id, "C.E1c": c_id}
+    por = {(i.corrida, i.semilla): i for i in informes}
+    if len(por) != len(informes) or {(k, s) for k in esp.values() for s in decl.semillas} != set(por):
+        faltan = sorted({(k, s) for k in esp.values() for s in decl.semillas} - set(por))
+        raise CorridaInvalida(
+            f"E1 se juzga con una corrida {list(esp.values())} por cada semilla declarada {decl.semillas}; falta o sobra: {faltan}"
+        )
+    por_f = {(f.semilla, f.fuente): f for f in fuentes}
+    if len(por_f) != len(fuentes) or set(por_f) != {(s, k) for s in decl.semillas for k in e1.FUENTES_E1D}:
+        raise CorridaInvalida(f"{d_id} se juzga con las fuentes {e1.FUENTES_E1D} en cada semilla declarada {decl.semillas}")
+    analitico = decl.numero("ruido", "sesgo_analitico")
+    tolerancia = float(decl.tabla("criterios")["c_e1b"]["sesgo_cruda_vs_analitico_tolerancia"])  # type: ignore[index]
+    minimo_nist = decl.numero("informativo", "proporcion_nist_minimo")
+    cs: list[Criterio] = []
+    b1_mal: list[int] = []
+    m1_mal: list[tuple[int, str]] = []
+    m2_mal: list[tuple[int, str]] = []
+    claves_b_pasan = 0
+    for s in decl.semillas:
+        a, b, c = por[(a_id, s)], por[(b_id, s)], por[(c_id, s)]
+        f = {k: por_f[(s, k)] for k in e1.FUENTES_E1D}
+        # controles recalculados de los datos: lo que el ejecutor dijo en el manifiesto no se toma de palabra
+        if not e1.n1_cumple(a):
+            raise CorridaInvalida(
+                f"N1 falla en la semilla {s}: la batería rechaza la fuente ideal ({a_id}); los datos desmienten el manifiesto"
+            )
+        if not e1.d1_cumple(b, analitico, tolerancia):
+            raise CorridaInvalida(f"D1 falla en la semilla {s}: el sesgo medido de la cruda no coincide con el inyectado ({b_id})")
+        if not e1.p1_cumple(f):
+            raise CorridaInvalida(f"P1 falla en la semilla {s}: {[k for k, ok in e1.p1_detalle(f).items() if not ok]} ({d_id})")
+        cruda_b = e1.etapa(b, "cruda")
+        cs.append(
+            Criterio(f"{a_id}/{s}", True, "la cruda pasa M1, M3, M4, M5 y la clave M1–M5 (esperado: no prueba origen cuántico, D-007)")
+        )
+        cs.append(
+            Criterio(f"D1/{s}", True, f"|M1 cruda − {analitico}| = {abs(e1.medida(cruda_b, e1.M1).valor - analitico):.4g} ≤ {tolerancia}")
+        )
+        cs.append(Criterio(f"P1/{s}", True, "sesgada, periódica y Markov rechazadas; ideal aceptada; MCV de la Markov ≥ 0,9"))
+        b1 = e1.b1_cumple(b)
+        if not b1:
+            b1_mal.append(s)
+        cs.append(
+            Criterio(
+                f"B1/{s}",
+                b1,
+                f"cruda de {b_id}: M1={e1.medida(cruda_b, e1.M1).valor:.6g}, "
+                f"M3 p={e1.medida(cruda_b, e1.M3).valor:.6g} (debe fallar M1 o M3)",
+            )
+        )
+        mit = e1.etapa(c, "mitigada")
+        ok1, ok2 = e1.m1_cumple(c), e1.m2_cumple(c)
+        cs.append(
+            Criterio(f"M-1/{s}", ok1, f"mitigada de {c_id}: M1={e1.medida(mit, e1.M1).valor:.6g}, M3 p={e1.medida(mit, e1.M3).valor:.6g}")
+        )
+        cs.append(Criterio(f"M-2/{s}", ok2, f"clave de {c_id}: M1–M5; fallan {e1.fallan(c.veredicto.medidas, e1.CLAVE) or 'ninguna'}"))
+        if not ok1:
+            m1_mal.append((s, ", ".join(e1.fallan(mit, (e1.M1, e1.M3)))))
+        if not ok2:
+            m2_mal.append((s, ", ".join(e1.fallan(c.veredicto.medidas, e1.CLAVE))))
+        cs.extend(_informativos_e1(s, b, c, mit, cruda_b, minimo_nist, b_id, c_id))
+        claves_b_pasan += e1.pasan(b.veredicto.medidas, e1.CLAVE)
+    hallazgo = f" Hallazgo R.00-1 (no decide): la clave de {b_id} pasa M1–M5 en {claves_b_pasan}/{len(decl.semillas)} semillas."
+    if b1_mal:
+        extra = f" Además falla M-2 en {[s for s, _ in m2_mal]}." if m2_mal else ""
+        return _veredicto(
+            decl,
+            m,
+            "NULO",
+            f"B1 falla en las semillas {b1_mal}: el ruido medio no deteriora la cruda al punto de que M1/M3 lo vean; "
+            f"E1 no dice nada sobre la mitigación.{extra}{hallazgo}",
+            cs,
+        )
+    if m2_mal:
+        quien = "; ".join(f"semilla {s}: {que}" for s, que in m2_mal)
+        return _veredicto(
+            decl, m, "NO_CUMPLE", f"M-2 falla en la clave de {c_id} ({quien}). No se repite ni se sustituye la semilla.{hallazgo}", cs
+        )
+    if m1_mal:
+        quien = "; ".join(f"semilla {s}: {que}" for s, que in m1_mal)
+        return _veredicto(decl, m, "CUMPLE_PARCIAL", f"la clave pasa M1–M5, la mitigada no ({quien}).{hallazgo}", cs)
+    return _veredicto(
+        decl,
+        m,
+        "CUMPLE",
+        f"el pipeline entrega claves que pasan M1–M5 con entrada ruidosa; esto no certifica origen cuántico.{hallazgo}",
+        cs,
+    )
+
+
+def _informativos_e1(
+    s: int,
+    b: InformeCorrida,
+    c: InformeCorrida,
+    mit: tuple[Medida, ...],
+    cruda_b: tuple[Medida, ...],
+    minimo_nist: float,
+    b_id: str,
+    c_id: str,
+) -> list[Criterio]:
+    """Lo que E1 reporta y NO decide (`decide=False`): M4/M5 de la mitigada, 90B, proporción NIST, la clave de E1b, M4/M5 de la cruda."""
+    ms = {k: e1.medida(mit, k) for k in (e1.M4, e1.M5)}
+    out = [
+        Criterio(
+            f"inf:M4_M5_mitigada/{s}",
+            all(x.cumple for x in ms.values()),
+            f"mitigada de {c_id}: M4 p={ms[e1.M4].valor:.6g}, M5 p={ms[e1.M5].valor:.6g} (informativas desde la enmienda 2026-10-07)",
+            False,
+        ),
+        Criterio(
+            f"inf:M4_M5_cruda_{b_id.lower().replace('.', '_')}/{s}",
+            e1.pasan(cruda_b, (e1.M4, e1.M5)),
+            f"cruda de {b_id}: M4 p={e1.medida(cruda_b, e1.M4).valor:.6g}, M5 p={e1.medida(cruda_b, e1.M5).valor:.6g}",
+            False,
+        ),
+        Criterio(
+            f"inf:clave_{b_id.lower().replace('.', '_')}/{s}",
+            e1.pasan(b.veredicto.medidas, e1.CLAVE),
+            f"la clave de {b_id} {'pasa' if e1.pasan(b.veredicto.medidas, e1.CLAVE) else 'falla'} M1–M5 (hallazgo R.00-1)",
+            False,
+        ),
+    ]
+    rc, rb = c.reporte, b.reporte
+    h_cruda_c, h_mit, h_cruda_b = rc.get("h_90b_cruda"), rc.get("h_90b_mitigada"), rb.get("h_90b_cruda")
+    umbral = e1.UMBRAL_90B
+    ok90 = all(isinstance(h, int | float) and h > umbral for h in (h_cruda_b, h_cruda_c, h_mit))
+    out.append(
+        Criterio(
+            f"inf:90B/{s}",
+            ok90,
+            f"90B cruda de {b_id}={h_cruda_b}, cruda de {c_id}={h_cruda_c}, mitigada de {c_id}={h_mit}; "
+            f"h_min de entrada={c.h_min_entrada:.6g} (umbral {umbral} sólo decide en C.E1d y vía M2)",
+            False,
+        )
+    )
+    prop = rc.get("proporcion_nist")
+    if isinstance(prop, dict) and prop:
+        partes = [f"{k}: {v['aprobados']}/{v['total']}" for k, v in prop.items()]
+        ok = all(v["proporcion"] >= minimo_nist for v in prop.values())
+        out.append(
+            Criterio(
+                f"inf:nist_proporcion/{s}",
+                ok,
+                f"clave de {c_id}, proporción de secuencias que aprueban ({', '.join(partes)}); mínimo {minimo_nist}",
+                False,
+            )
+        )
+    else:
+        out.append(Criterio(f"inf:nist_proporcion/{s}", False, f"no medida en {c_id}", False))
+    sb, sc = b.sha256_muestra_cruda, c.sha256_muestra_cruda
+    out.append(
+        Criterio(
+            f"inf:cruda_igual/{s}",
+            sb == sc,
+            f"la cruda de {c_id} {'reproduce' if sb == sc else 'NO reproduce'} la de {b_id} (sha256)",
+            False,
+        )
+    )
+    return out
 
 
 def _juzgar_informes(decl: Declaracion, m: ManifiestoDeCorrida, informes: list[InformeCorrida]) -> VeredictoDeEureka:

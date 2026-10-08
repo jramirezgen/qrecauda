@@ -75,11 +75,12 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 | `Metrica`, `Umbral` | M1…M7 y su cota; `Medida` es un valor medido contra su umbral. |
 | `Veredicto` | conjunción de `Medida`; vacío no aprueba. `calidad_de_clave_aprobada` juzga sólo M1–M5 (`METRICAS_DE_CLAVE`): es lo que exige cifrar; M6/M7 las juzga E3. |
 | `ParametrosPipeline`, `Resultado` | entrada y salida del orquestador; `Resultado.etapas` lleva las medidas en la muestra cruda, la mitigada y la clave. |
-| `InformeCorrida` | artefacto versionado de una corrida; lo guarda el `Almacen`. |
+| `InformeCorrida` | artefacto versionado de una corrida; lo guarda el `Almacen`. Opcional: `reporte` (lo que la preinscripción manda reportar sin decidir: 90B, proporción NIST, huella de la mitigada). |
+| `MedidaDeFuente` | C.E1d: una fuente sintética (sesgada, periódica, Markov, ideal) con M1/M3/M4/M5, la cota MCV y el 90B; con ellas el juez recalcula el control P1. |
 | `ExperimentoE2` | una celda de E2: sesgo de lectura antes y después de una técnica, a un nivel de ruido, con su intervalo. Opcional: `sesgo_maximo_por_qubit` (P.E2, nivel realista). |
 | `ExperimentoE3` | E3: tasa (M6) y latencia (M7) con la máquina en que se midieron. Opcional: `reporte` (lo que P.E3 manda reportar sin decidir: t_rep por repetición, etapas, CPU/pared, perfil B). |
 | `RuidoDeLectura` | qué ruido de lectura pide un experimento: canal sintético `(p(1\|0), p(0\|1))`, ninguno (`sin_ruido`) o el realista. Sus valores salen de `PARAMETROS.toml`, no de constantes. |
-| `EjecutorE2`, `EjecutorE3` | implementan el puerto `Ejecutor` para E2 (celdas por semilla y nivel, IC por bootstrap, controles C1–C5) y E3 (perfil A que decide, perfil B que no, controles U1–U5 y T4). Miden; el juez decide. |
+| `EjecutorE1`, `EjecutorE2`, `EjecutorE3` | implementan el puerto `Ejecutor` para E1 (por semilla: C.E1a PRNG, C.E1b Aer sin mitigar, C.E1c con twirling y C.E1d fuentes de control; controles N1, D1, P1), E2 (celdas por semilla y nivel, IC por bootstrap, controles C1–C5) y E3 (perfil A que decide, perfil B que no, controles U1–U5 y T4). Miden; el juez decide. |
 | `ErrorQRecauda` | raíz de los errores; hijas: `EntradaInvalida`, `EntropiaInsuficiente`, `FuenteNoDisponible`, `EsquemaFuturo`, `AutenticacionFallida` (cifrado o datos asociados no autentican), `NonceRepetido` (mismo nonce con la misma clave), `CorridaInvalida` (ver abajo), `CandadoOcupado` (otra corrida pesada sostiene el candado de máquina), cada una con su código de salida. |
 | `Declaracion` | una eureka fijada antes de correr (`declaraciones/*.toml` fundido con `PARAMETROS.toml`): de ella salen semillas, umbrales y las rutas de su preinscripción. |
 | `Medicion` | lo que el `Ejecutor` entrega por semilla: informes/experimentos tipados y el resultado de los controles. |
