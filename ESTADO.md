@@ -4,12 +4,13 @@
 
 Plan v1 · 2026-10-07
 
-## Nodos del plan (59)
+## Nodos del plan (65)
 
 | estado | nodos |
 |---|---|
-| hecho | 56 |
+| hecho | 58 |
 | juzgado | 3 |
+| pendiente | 4 |
 
 ## En curso, bloqueados y pausados
 
@@ -17,7 +18,7 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- ninguno
+- **C.E3b** E3b · latencia y sostenibilidad con la clave de una reserva generada aparte
 
 ## Hechos y juzgados
 
@@ -60,6 +61,7 @@ Plan v1 · 2026-10-07
 | F5.02 | hecho | `42b54c9` | Min-entropía SP 800-90B y contraste con la cota MCV del dominio |
 | F6.01 | hecho | `aea23de` | Cifrado AES-256-GCM con clave QRNG |
 | F6.02 | hecho | `a7cd133` | Transacción de peaje/Metro cifrada con la clave certificada |
+| F6.03 | hecho | `e5c5aaa` | Reserva asíncrona de claves: productor en otro proceso y consumidor con registro de consumo |
 | P.E0 | hecho | `f8e21d0` | Parámetros y aritmética de la cadena, fijados antes de medir |
 | P.E1 | hecho | `dae22a6` | Preinscripción E1: el pipeline entrega claves que cumplen M1–M5 con entrada ruidosa |
 | C.E1a | hecho | `89cdaba` | E1a · control: PRNG clásico pasa M1–M5 (la batería no distingue origen) |
@@ -74,6 +76,7 @@ Plan v1 · 2026-10-07
 | C.E3 | hecho | `fdb4386` | E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado |
 | E3 | juzgado | `fdb4386` | ¡EUREKA 3! Tasa y latencia dentro de umbral con la transacción cifrada |
 | F7.03 | hecho | `d9609a1` | Modelo de amenazas |
+| P.E3b | hecho | `88d1d45` | Preinscripción E3b: la latencia de transacción con la clave de una reserva generada aparte |
 | F7.06 | hecho | `013fd62` | Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado |
 | T.TRL | hecho | `8039a6d` | Matriz de TRL por componente, derivada de la evidencia |
 | F7.05 | hecho | `7db7730` | Wiki repo: mapas, bases e incidencias publicados en la bóveda |
