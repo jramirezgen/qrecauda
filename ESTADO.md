@@ -8,9 +8,9 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 49 |
+| hecho | 50 |
 | juzgado | 3 |
-| pendiente | 7 |
+| pendiente | 6 |
 
 ## En curso, bloqueados y pausados
 
@@ -18,8 +18,8 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- **F3.06** Acceso a hardware IBM: corrida real o constancia de no acceso
 - **F7.01** Notebook reproducible con versiones exactas
+- **T.TRL** Matriz de TRL por componente, derivada de la evidencia
 
 ## Hechos y juzgados
 
@@ -54,6 +54,7 @@ Plan v1 · 2026-10-07
 | F3.02 | hecho | `5312674` | Modelo de ruido del backend: lectura asimétrica, relajación y cross-talk |
 | F3.03 | hecho | `5312674` | Transpilación guiada (AIRouting / StagedPassManager) con salida local |
 | F3.04 | hecho | `80d6cc5` | SamplerV2 sobre hardware IBM con Batch/Session (opcional) |
+| F3.06 | hecho | `071484c` | Acceso a hardware IBM: corrida real o constancia de no acceso |
 | F3.05 | hecho | `bcd0dd2` | Composición y configuración de la demo con Aer ruidoso y mitigación |
 | F4.01 | hecho | `a9bd306` | Mitigación de lectura (TREX / mthree) como puerto Mitigador |
 | F4.02 | hecho | `ce52c0d` | ZNE y PEC/PNA sobre el observable de sesgo ⟨Z⟩ |
