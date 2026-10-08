@@ -11,20 +11,25 @@ from collections.abc import Mapping
 from qrecauda.datos.corrida import Criterio, ManifiestoDeCorrida, Medicion, VeredictoDeEureka
 from qrecauda.datos.declaracion import Declaracion
 from qrecauda.datos.esquema import leer_esquema
-from qrecauda.datos.informe import ESQUEMA_INFORME, ExperimentoE2, ExperimentoE3, InformeCorrida, MedidaDeFuente
+from qrecauda.datos.informe import ESQUEMA_INFORME, ExperimentoE2, ExperimentoE3, ExperimentoE3b, InformeCorrida, MedidaDeFuente
+from qrecauda.datos.reserva import ClaveEntregada, InformeDelProductor, MetaClave
 from qrecauda.datos.ruido import RuidoDeLectura
 from qrecauda.dominio.errores import EntradaInvalida
 
 __all__ = [
     "ESQUEMA_INFORME",
+    "ClaveEntregada",
     "Criterio",
     "Declaracion",
     "ExperimentoE2",
     "ExperimentoE3",
+    "ExperimentoE3b",
     "InformeCorrida",
+    "InformeDelProductor",
     "ManifiestoDeCorrida",
     "MedidaDeFuente",
     "Medicion",
+    "MetaClave",
     "RuidoDeLectura",
     "VeredictoDeEureka",
     "leer_esquema",

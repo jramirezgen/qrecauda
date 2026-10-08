@@ -12,12 +12,16 @@ import hashlib
 import math
 from collections.abc import Mapping
 
+import numpy as np
+
 from qrecauda.aplicacion import criterios_e1 as e1
+from qrecauda.aplicacion.ejecutor_e3b import p_latencia, tasa_neta_bps
 from qrecauda.datos import (
     Criterio,
     Declaracion,
     ExperimentoE2,
     ExperimentoE3,
+    ExperimentoE3b,
     InformeCorrida,
     ManifiestoDeCorrida,
     MedidaDeFuente,
@@ -25,13 +29,13 @@ from qrecauda.datos import (
     serializar,
 )
 from qrecauda.dominio.errores import CorridaInvalida
-from qrecauda.dominio.metricas import Medida, Metrica, medir
+from qrecauda.dominio.metricas import UMBRALES, Medida, Metrica, medir
 from qrecauda.puertos import Almacen, Ejecutor, Historial, LibroDeVeredictos
 
 CONTROLES_E2 = ("C1", "C2", "C3")  # C4 (puerta ZNE/PEC) y C5 (contraste) se reportan, no invalidan (P.E2)
 
 
-Artefacto = InformeCorrida | ExperimentoE2 | ExperimentoE3 | MedidaDeFuente
+Artefacto = InformeCorrida | ExperimentoE2 | ExperimentoE3 | ExperimentoE3b | MedidaDeFuente
 
 
 def _corridas_hijas(decl: Declaracion) -> tuple[str, ...]:
@@ -53,6 +57,8 @@ def _controles_requeridos(decl: Declaracion) -> tuple[str, ...]:
         return CONTROLES_E2
     if decl.eureka == "E3":
         return (*decl.lista("criterios", "t3_controles"), "T4")  # T4: «un hilo» (CPU/pared ≤ 1,10)
+    if decl.eureka == "E3b":
+        return (*decl.lista("criterios", "controles"), "T4")  # T4: un hilo por proceso, productor y consumidor
     req = decl.tablas.get("controles", {}).get("requeridos", [])
     return tuple(str(x) for x in req) if isinstance(req, list) else ()
 
@@ -79,6 +85,7 @@ class CorrerYJuzgar:
                 ("informe", med.informes),
                 ("e2", med.e2),
                 ("e3", med.e3),
+                ("e3b", med.e3b),
                 ("fuente", med.fuentes),
             )
             for tipo, lote in lotes:
@@ -121,21 +128,26 @@ class CorrerYJuzgar:
                 raise CorridaInvalida(f"falta el control {k}: sin él no hay veredicto")
             if not m.controles[k]:
                 raise CorridaInvalida(f"el control {k} falla: corrida inválida, no es un veredicto (incidencia)")
-        e2, e3, informes, fuentes = self._leer(m)
+        e2, e3, e3b, informes, fuentes = self._leer(m)
         if decl.eureka == "E1":
             v = _juzgar_e1(decl, m, informes, fuentes)
         elif decl.eureka == "E2":
             v = _juzgar_e2(decl, m, e2)
         elif decl.eureka == "E3":
             v = _juzgar_e3(decl, m, e3)
+        elif decl.eureka == "E3b":
+            v = _juzgar_e3b(decl, m, e3b)
         else:
             v = _juzgar_informes(decl, m, informes)
         self._libro.anadir(v.a_mapa())
         return v
 
-    def _leer(self, m: ManifiestoDeCorrida) -> tuple[list[ExperimentoE2], list[ExperimentoE3], list[InformeCorrida], list[MedidaDeFuente]]:
+    def _leer(
+        self, m: ManifiestoDeCorrida
+    ) -> tuple[list[ExperimentoE2], list[ExperimentoE3], list[ExperimentoE3b], list[InformeCorrida], list[MedidaDeFuente]]:
         e2: list[ExperimentoE2] = []
         e3: list[ExperimentoE3] = []
+        e3b: list[ExperimentoE3b] = []
         informes: list[InformeCorrida] = []
         fuentes: list[MedidaDeFuente] = []
         for nombre, tipo, sha in m.artefactos:
@@ -146,11 +158,13 @@ class CorrerYJuzgar:
                 e2.append(ExperimentoE2.desde_mapa(crudo))
             elif tipo == "e3":
                 e3.append(ExperimentoE3.desde_mapa(crudo))
+            elif tipo == "e3b":
+                e3b.append(ExperimentoE3b.desde_mapa(crudo))
             elif tipo == "fuente":
                 fuentes.append(MedidaDeFuente.desde_mapa(crudo))
             else:
                 informes.append(InformeCorrida.desde_mapa(crudo))
-        return e2, e3, informes, fuentes
+        return e2, e3, e3b, informes, fuentes
 
 
 # ---------------------------------------------------------------------- criterios
@@ -177,6 +191,116 @@ def _juzgar_e3(decl: Declaracion, m: ManifiestoDeCorrida, exps: list[Experimento
     if malos:
         return _veredicto(decl, m, "NO_CUMPLE", f"no cumple: {', '.join(malos)}", cs)
     return _veredicto(decl, m, "CUMPLE", "T1–T4 en todas las semillas declaradas", cs)
+
+
+def _juzgar_e3b(decl: Declaracion, m: ManifiestoDeCorrida, exps: list[ExperimentoE3b]) -> VeredictoDeEureka:
+    """E3b (docs/preinscripciones/E3b.md): T1 sostenibilidad, T2 latencia, T3 sin esperas, en R2 y en cada semilla declarada.
+
+    Nada se toma de palabra del ejecutor: p95, tasa neta y esperas se RECALCULAN de las latencias y de las claves con su ventana, y si
+    el resumen del informe no coincide con lo recalculado, o los umbrales repetidos en el TOML no son los de `dominio.metricas`,
+    la corrida no es juzgable. Precedencia: INVÁLIDA (excepción) > NO_CUMPLE (T1, T2 o T3 en alguna semilla) > CUMPLE.
+    """
+    por_semilla = {e.semilla: e for e in exps}
+    if set(por_semilla) != set(decl.semillas) or len(exps) != len(decl.semillas):
+        raise CorridaInvalida(f"E3b se juzga en las semillas declaradas {decl.semillas}, una vez cada una; hay {sorted(por_semilla)}")
+    lam, dur = decl.numero("demanda", "tx_por_s"), decl.numero("demanda", "duracion_s")
+    esperadas, bits_tx = int(decl.numero("demanda", "transacciones")), decl.numero("demanda", "bits_por_transaccion")
+    consumo = decl.numero("demanda", "consumo_bps")
+    if esperadas != round(lam * dur) or consumo != lam * bits_tx:
+        raise CorridaInvalida("[demanda] de E3b es incoherente: transacciones ≠ λ·duración o consumo_bps ≠ λ·bits por transacción")
+    tasa_u, lat_u = decl.numero("criterios", "t1_tasa_neta_mayor_que_bps"), decl.numero("criterios", "t2_p95_menor_que_ms")
+    if (tasa_u, lat_u) != (UMBRALES[Metrica.TASA].valor, UMBRALES[Metrica.LATENCIA].valor):
+        raise CorridaInvalida(
+            f"los umbrales de E3b ({tasa_u}, {lat_u}) no son los de M6/M7 en dominio.metricas: no se juzga contra un criterio movido"
+        )
+    p = decl.numero("criterios", "p_latencia")
+    max_esperas = int(decl.numero("criterios", "t3_esperas_maximas"))
+    cs: list[Criterio] = []
+    for s in decl.semillas:
+        e = por_semilla[s]
+        r = e.reporte
+        lat = [float(x) for x in r["latencias_ms"]]  # type: ignore[attr-defined]
+        claves = list(r["claves"])  # type: ignore[call-overload]
+        agotada = bool(r.get("reserva_agotada", False))
+        esperas = int(r["esperas"])  # type: ignore[call-overload]
+        p95, tasa = p_latencia(lat, p), tasa_neta_bps(claves)
+        if (e.demanda_tx_por_s, e.duracion_s) != (lam, dur):
+            raise CorridaInvalida(f"semilla {s}: se midió con λ={e.demanda_tx_por_s} y {e.duracion_s} s, la declaración pide {lam} y {dur}")
+        if (
+            (e.transacciones, len(lat)) != (len(lat), len(lat))
+            or not math.isclose(e.p95_ms, p95)
+            or not math.isclose(e.tasa_neta_bps, tasa)
+        ):
+            raise CorridaInvalida(f"semilla {s}: el resumen del informe no coincide con lo recalculado de sus datos crudos")
+        if e.transacciones != len(lat) or e.esperas != esperas:
+            raise CorridaInvalida(f"semilla {s}: el número de transacciones o de esperas del informe no coincide con sus datos")
+        m6, m7 = medir(Metrica.TASA, tasa), medir(Metrica.LATENCIA, p95)
+        ok1 = m6.cumple and tasa > consumo
+        en_ventana = sum(1 for c in claves if c["en_ventana"])
+        cs.append(
+            Criterio(
+                f"T1/{s}",
+                ok1,
+                f"tasa neta del productor={tasa:.6g} bit/s (M6: cociente a umbral {tasa / m6.umbral:.2f}, debe ser > 1; "
+                f"consumo {consumo:.6g}: cociente {tasa / consumo:.2f}, debe ser > 1) con {en_ventana} claves en la ventana",
+            )
+        )
+        cs.append(
+            Criterio(
+                f"T2/{s}",
+                m7.cumple,
+                f"M7 p95={p95:.6g} ms sobre {len(lat)} transacciones; cociente a umbral {p95 / m7.umbral:.4f} (debe ser < 1)",
+            )
+        )
+        ok3 = esperas <= max_esperas and not agotada and len(lat) == esperadas
+        cs.append(
+            Criterio(
+                f"T3/{s}",
+                ok3,
+                f"esperas={esperas} (máx {max_esperas}), espera total={float(r.get('espera_ms', 0.0)):.6g} ms, "  # type: ignore[arg-type]
+                f"reserva {'AGOTADA' if agotada else 'no agotada'}, transacciones {len(lat)}/{esperadas}",
+            )
+        )
+        cs.extend(_informativos_e3b(s, e, r, lat))
+    malos = [c.id for c in cs if c.decide and not c.cumple]
+    if malos:
+        return _veredicto(decl, m, "NO_CUMPLE", f"no cumple: {', '.join(malos)}", cs)
+    return _veredicto(decl, m, "CUMPLE", "T1–T3 en todas las semillas declaradas (T4 y U1–U5 pasaron como controles)", cs)
+
+
+def _lista(r: Mapping[str, object], clave: str) -> list[object]:
+    v = r.get(clave, [])
+    return list(v) if isinstance(v, list) else []
+
+
+def _informativos_e3b(s: int, e: ExperimentoE3b, r: Mapping[str, object], lat: list[float]) -> list[Criterio]:
+    """Lo que E3b reporta y NO decide (`decide=False`): R1, cola de la distribución, cambios de clave, rechazos y bloqueos."""
+    cambios = [float(c["ms"]) for c in _lista(r, "cambios_de_clave")]  # type: ignore[index]
+    rechazos = sum(int(x) for x in _lista(r, "claves_rechazadas"))  # type: ignore[call-overload]
+    return [
+        Criterio(f"inf:R1_arranque/{s}", True, f"R1 (informativo): {e.arranque_ms:.6g} ms hasta la primera clave en la reserva", False),
+        Criterio(
+            f"inf:cola/{s}",
+            True,
+            f"latencia: mediana={float(np.median(lat)):.6g} ms, p99={p_latencia(lat, 99):.6g} ms, máx={max(lat):.6g} ms"
+            if lat
+            else "sin transacciones",
+            False,
+        ),
+        Criterio(
+            f"inf:cambios_de_clave/{s}",
+            True,
+            f"{len(cambios)} cambios de clave en R2, ms de cada uno: {[round(c, 3) for c in cambios]}",
+            False,
+        ),
+        Criterio(
+            f"inf:productor/{s}",
+            True,
+            f"rechazos M1–M5: {rechazos}; cpu/pared productor={e.cpu_pared_productor:.4g}, consumidor={e.cpu_pared_consumidor:.4g}",
+            False,
+        ),
+        Criterio(f"inf:rotulo/{s}", True, f"rótulos {r.get('rotulos')}, orígenes {r.get('origenes')} (D-002: sin origen cuántico)", False),
+    ]
 
 
 def _juzgar_e2(decl: Declaracion, m: ManifiestoDeCorrida, celdas: list[ExperimentoE2]) -> VeredictoDeEureka:

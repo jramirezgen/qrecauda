@@ -194,6 +194,53 @@ class ExperimentoE3:
 
 
 @dataclass(frozen=True, slots=True)
+class ExperimentoE3b:
+    """E3b, una semilla: la latencia de la transacción con la clave de una reserva generada aparte (R2) y lo que el productor sostuvo.
+
+    Los campos escalares son un resumen; el juez recalcula p95, tasa neta y esperas de `reporte` (latencias y claves con su ventana).
+    """
+
+    corrida: str
+    semilla: int
+    demanda_tx_por_s: float
+    duracion_s: float
+    transacciones: int  # las realizadas en R2 (las declaradas salen de la declaración)
+    arranque_ms: float  # R1, informativo
+    tasa_neta_bps: float  # T1: productor, claves terminadas dentro de la ventana de R2
+    consumo_bps: float
+    p95_ms: float  # T2
+    esperas: int  # T3
+    cpu_pared_productor: float  # T4
+    cpu_pared_consumidor: float  # T4
+    maquina: Mapping[str, str]
+    esquema: int = 1
+    reporte: Mapping[str, object] = field(default_factory=dict)
+
+    def a_mapa(self) -> dict[str, object]:
+        mapa: dict[str, object] = {
+            "esquema": self.esquema, "corrida": self.corrida, "semilla": self.semilla, "demanda_tx_por_s": self.demanda_tx_por_s,
+            "duracion_s": self.duracion_s, "transacciones": self.transacciones, "arranque_ms": self.arranque_ms,
+            "tasa_neta_bps": self.tasa_neta_bps, "consumo_bps": self.consumo_bps, "p95_ms": self.p95_ms, "esperas": self.esperas,
+            "cpu_pared_productor": self.cpu_pared_productor, "cpu_pared_consumidor": self.cpu_pared_consumidor,
+            "maquina": dict(self.maquina),
+        }  # fmt: skip
+        if self.reporte:
+            mapa["reporte"] = dict(self.reporte)
+        return mapa
+
+    @classmethod
+    def desde_mapa(cls, d: Mapping[str, object]) -> ExperimentoE3b:
+        v = leer_esquema(d, 1, que="experimento E3b")
+        try:
+            return cls(str(d["corrida"]), int(d["semilla"]), float(d["demanda_tx_por_s"]), float(d["duracion_s"]),  # type: ignore[call-overload,arg-type]
+                       int(d["transacciones"]), float(d["arranque_ms"]), float(d["tasa_neta_bps"]), float(d["consumo_bps"]),  # type: ignore[call-overload,arg-type]
+                       float(d["p95_ms"]), int(d["esperas"]), float(d["cpu_pared_productor"]), float(d["cpu_pared_consumidor"]),  # type: ignore[call-overload,arg-type]
+                       dict(d["maquina"]), v, dict(d.get("reporte", {})))  # type: ignore[call-overload]  # fmt: skip
+        except (KeyError, ValueError, TypeError) as exc:
+            raise EntradaInvalida(f"experimento E3b malformado: {exc}") from exc
+
+
+@dataclass(frozen=True, slots=True)
 class MedidaDeFuente:
     """C.E1d: una fuente SINTÉTICA (sesgada, periódica, Markov o ideal) medida por M1/M3/M4/M5, la cota MCV y el 90B."""
 

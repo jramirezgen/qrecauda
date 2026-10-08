@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Protocol
 
-from qrecauda.datos import Declaracion, Medicion, RuidoDeLectura
+from qrecauda.datos import ClaveEntregada, Declaracion, InformeDelProductor, Medicion, RuidoDeLectura
 from qrecauda.dominio.bits import Bits
 from qrecauda.dominio.metricas import Medida
 from qrecauda.dominio.muestra import Muestra
@@ -63,6 +63,33 @@ class ReservaDeClaves(Protocol):
     def restantes(self) -> int: ...
 
     def siguiente(self) -> tuple[Bits, Bits]: ...
+
+
+class GeneradorDeClaves(Protocol):
+    """Produce, una tras otra, claves aprobadas por M1–M5 con la cadena completa (F6.03). Corre dentro del proceso productor."""
+
+    def generar(self, indice: int) -> ClaveEntregada: ...
+
+
+class ProductorDeClaves(Protocol):
+    """Un productor de claves que corre aparte del consumidor (F6.03). Las claves llegan por una cola acotada, en orden y una sola vez.
+
+    `tomar(0)` no espera; `tomar(None)` espera sin límite; si el productor falla, lanza `CorridaInvalida` con la causa.
+    """
+
+    def iniciar(self) -> None: ...
+
+    def tomar(self, espera_s: float | None) -> ClaveEntregada | None: ...  # None: no hubo clave en `espera_s`
+
+    def listas(self) -> int: ...  # claves esperando en la cola (aproximado)
+
+    def detener(self) -> InformeDelProductor: ...
+
+
+class Temporizador(Protocol):
+    """Espera hasta un instante del reloj monotónico (E3b: llegadas programadas de la demanda)."""
+
+    def esperar_hasta_ns(self, instante_ns: int) -> None: ...
 
 
 class LaboratorioDeLectura(Protocol):

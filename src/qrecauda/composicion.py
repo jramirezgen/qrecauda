@@ -7,9 +7,12 @@ núcleo corre sin sus extras y un extra ausente se traduce en `FuenteNoDisponibl
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import re
 from collections.abc import Callable, Mapping
+from contextlib import ExitStack
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -20,12 +23,15 @@ from qrecauda.adaptadores.git import HistorialGit
 from qrecauda.adaptadores.libro_jsonl import LibroJsonl
 from qrecauda.adaptadores.prng import FuenteMarkov, FuentePeriodica, FuentePrng
 from qrecauda.adaptadores.sonda_local import SondaLocal
+from qrecauda.adaptadores.temporizador_local import TemporizadorLocal
 from qrecauda.aplicacion.ejecutor_e1 import EjecutorE1
 from qrecauda.aplicacion.ejecutor_e2 import EjecutorE2
 from qrecauda.aplicacion.ejecutor_e3 import EjecutorE3
+from qrecauda.aplicacion.ejecutor_e3b import EjecutorE3b
 from qrecauda.aplicacion.juez import CorrerYJuzgar
 from qrecauda.aplicacion.pipeline import ParametrosPipeline, Resultado
 from qrecauda.aplicacion.pipeline import ejecutar as _ejecutar_pipeline
+from qrecauda.aplicacion.reserva_asincrona import GeneradorDeClaveAprobada
 from qrecauda.aplicacion.transaccion import ServicioDeTransacciones
 from qrecauda.datos import Declaracion, InformeCorrida, ManifiestoDeCorrida, Medicion, RuidoDeLectura, VeredictoDeEureka
 from qrecauda.dominio.bits import Bits
@@ -36,14 +42,24 @@ from qrecauda.puertos import (
     EstimadorDeEntropia,
     EstimadorDeSesgo,
     FuenteDeBits,
+    GeneradorDeClaves,
     Historial,
     Mitigador,
+    ProductorDeClaves,
     Validador,
 )
 from qrecauda.transversal.concurrencia import candado
 from qrecauda.transversal.configuracion import Configuracion, omp_num_threads
 from qrecauda.transversal.observabilidad import RelojMonotonico
-from qrecauda.transversal.reproducibilidad import entorno, un_hilo, verificar_un_hilo
+from qrecauda.transversal.reproducibilidad import (
+    afinidad,
+    entorno,
+    fijar_afinidad,
+    nucleo_fijo,
+    un_hilo,
+    un_hilo_en_este_proceso,
+    verificar_un_hilo,
+)
 
 
 def _modelo_de_ruido(cfg: Configuracion) -> Any:
@@ -259,12 +275,23 @@ def _alinear_niveles_con_el_toml(decl: Declaracion) -> None:
 class _EnMaquina:
     """Aplica lo transversal a cada semilla: comprobación previa, candado de máquina y BLAS a un hilo (forzado y comprobado)."""
 
-    def __init__(self, interior: Ejecutor, ruta_candado: Path, previo: Callable[[Declaracion], None], espera_s: float | None) -> None:
-        self._interior, self._ruta, self._previo, self._espera = interior, ruta_candado, previo, espera_s
+    def __init__(
+        self,
+        interior: Ejecutor,
+        ruta_candado: Path,
+        previo: Callable[[Declaracion], None],
+        espera_s: float | None,
+        nucleo: Callable[[Declaracion], int] | None = None,
+    ) -> None:
+        self._interior, self._ruta, self._previo, self._espera, self._nucleo = interior, ruta_candado, previo, espera_s, nucleo
 
     def ejecutar(self, declaracion: Declaracion, semilla: int) -> Medicion:
         self._previo(declaracion)
-        with candado(self._ruta, self._espera), un_hilo():
+        with ExitStack() as pila:
+            pila.enter_context(candado(self._ruta, self._espera))
+            if self._nucleo is not None:  # E3b: el proceso del consumidor (y los que cree, que lo heredan) en SU núcleo
+                pila.enter_context(nucleo_fijo(self._nucleo(declaracion)))
+            pila.enter_context(un_hilo())
             verificar_un_hilo()
             return self._interior.ejecutar(declaracion, semilla)
 
@@ -301,6 +328,102 @@ def ejecutor_e3_de(raiz: Path, bitacora: Bitacora | None = None) -> Ejecutor:
         CifradorAesGcm, ReservaDeClave, RelojMonotonico(), SondaLocal(), bitacora,
     )  # fmt: skip
     return _EnMaquina(ejecutor, candado_de_maquina(raiz), _exigir_omp_un_hilo, 0.0)
+
+
+# ------------------------------------------------------------------ C.E3b: la reserva de claves en un proceso aparte
+
+
+@dataclass(frozen=True, slots=True)
+class _EspecificacionDeProductor:
+    """Todo lo que el proceso productor necesita para armar su cadena; sólo datos simples, para que cruce a un proceso `spawn`."""
+
+    semilla: int
+    nucleo: int
+    nivel: str
+    canal: tuple[float, float]
+    qubits: int
+    shots: int
+    epsilon_exp: int
+    profundidad_peres: int
+    bloque_twirling: int
+    muestras_90b: int
+    permitidos: tuple[int, ...]  # los núcleos de la máquina ANTES de fijar al consumidor: el hijo hereda esa fijación
+
+
+def _especificacion_de(decl: Declaracion, semilla: int, permitidos: tuple[int, ...]) -> _EspecificacionDeProductor:
+    nivel = str(decl.tabla("configuracion")["nivel_ruido"])
+    par = decl.tabla("ruido_lectura")[nivel]
+    return _EspecificacionDeProductor(
+        semilla, int(decl.numero("configuracion", "nucleo_productor")), nivel, (float(par[0]), float(par[1])),  # type: ignore[index]
+        decl.qubits, decl.shots, int(decl.numero("cadena", "epsilon_log2")), int(decl.numero("cadena", "profundidad_peres")),
+        int(decl.numero("configuracion", "twirling_bloque")), int(decl.numero("validacion", "muestras_90b")), permitidos,
+    )  # fmt: skip
+
+
+def _generador_en_hijo(esp: _EspecificacionDeProductor) -> GeneradorDeClaves:
+    """Corre DENTRO del proceso productor, antes de la primera clave: su núcleo, su único hilo y los adaptadores reales de E3."""
+    fijar_afinidad(esp.nucleo, esp.permitidos)
+    un_hilo_en_este_proceso()
+    if omp_num_threads() != "1":
+        raise CorridaInvalida(f"el productor hereda OMP_NUM_THREADS={omp_num_threads()!r}; E3b exige '1' antes de importar")
+    verificar_un_hilo()
+    try:
+        from qrecauda.adaptadores.min_entropia import EstimadorNist90B
+    except ImportError as e:
+        raise FuenteNoDisponible(f"E3b necesita el 90B y el extra «validacion»: {e}") from e
+    parametros = ParametrosPipeline(esp.qubits, esp.shots, epsilon=2.0**esp.epsilon_exp, profundidad_peres=esp.profundidad_peres)
+    return GeneradorDeClaveAprobada(
+        _LaboratorioAer(max_parallel_threads=1),
+        validador_de(Configuracion(validador="nist")),
+        EstimadorNist90B(),
+        RelojMonotonico(),
+        RuidoDeLectura(esp.nivel, esp.canal),
+        parametros,
+        esp.bloque_twirling,
+        esp.muestras_90b,
+        esp.semilla,
+    )
+
+
+def _comprobar_e3b(decl: Declaracion) -> None:
+    """Antes de la primera semilla: OMP a 1, núcleos declarados distintos y permitidos, y el binario del 90B."""
+    _exigir_omp_un_hilo(decl)
+    consumidor, productor = int(decl.numero("configuracion", "nucleo_consumidor")), int(decl.numero("configuracion", "nucleo_productor"))
+    if consumidor == productor:
+        raise CorridaInvalida(f"E3b exige dos núcleos distintos; la declaración fija el {consumidor} para los dos")
+    ajenos = sorted({consumidor, productor} - set(afinidad()))
+    if ajenos:
+        raise CorridaInvalida(f"los núcleos declarados {ajenos} no están entre los permitidos de este proceso {list(afinidad())}")
+    try:
+        from qrecauda.adaptadores.min_entropia import BINARIO_POR_DEFECTO, INSTRUCCION_BUILD
+    except ImportError as e:  # pragma: no cover - el módulo no importa nada opcional
+        raise FuenteNoDisponible(f"E3b necesita el 90B: {e}") from e
+    if not BINARIO_POR_DEFECTO.is_file():
+        raise FuenteNoDisponible(f"E3b necesita el 90B: falta {BINARIO_POR_DEFECTO}; compílalo con: {INSTRUCCION_BUILD}")
+
+
+def ejecutor_e3b_de(raiz: Path, bitacora: Bitacora | None = None) -> Ejecutor:
+    """C.E3b: la reserva de claves en un proceso productor aparte (spawn, su núcleo, un hilo) y el consumidor en el suyo, bajo el candado.
+
+    El candado no espera (`CandadoOcupado`): P.E3b pide máquina libre, no una cola."""
+    try:
+        from qrecauda.adaptadores.aes_gcm import CifradorAesGcm, ReservaDeClave
+        from qrecauda.adaptadores.productor_en_proceso import ProductorEnProceso
+    except ImportError as e:
+        raise FuenteNoDisponible(f"E3b necesita el extra «cifrado»: {e}") from e
+
+    permitidos = afinidad()  # antes de que el consumidor se fije a su núcleo
+
+    def productor(decl: Declaracion, semilla: int) -> ProductorDeClaves:
+        fabrica = functools.partial(_generador_en_hijo, _especificacion_de(decl, semilla, permitidos))
+        return ProductorEnProceso(fabrica, int(decl.numero("reserva", "capacidad_claves")))
+
+    ejecutor = EjecutorE3b(
+        productor, CifradorAesGcm, ReservaDeClave, RelojMonotonico(), TemporizadorLocal(), SondaLocal(), bitacora, afinidad
+    )
+    return _EnMaquina(
+        ejecutor, candado_de_maquina(raiz), _comprobar_e3b, 0.0, nucleo=lambda decl: int(decl.numero("configuracion", "nucleo_consumidor"))
+    )
 
 
 # ------------------------------------------------------------------ C.E1: las cuatro corridas por semilla
@@ -367,13 +490,15 @@ def ejecutor_e1_de(
 
 
 def ejecutor_de(raiz: Path, decl: Declaracion) -> Ejecutor:
-    """E1 → C.E1 (cuatro corridas); E2 → C.E2 sobre Aer; E3 → C.E3 sobre la cadena completa; el resto, el pipeline real por semilla."""
+    """E1 → C.E1 (cuatro); E2 → C.E2 sobre Aer; E3 → C.E3 (cadena completa); E3b → C.E3b (reserva aparte); el resto, el pipeline."""
     if decl.eureka == "E1":
         return ejecutor_e1_de(raiz)
     if decl.eureka == "E2":
         return ejecutor_e2_de(raiz)
     if decl.eureka == "E3":
         return ejecutor_e3_de(raiz)
+    if decl.eureka == "E3b":
+        return ejecutor_e3b_de(raiz)
     return _EjecutorDeInformes(HistorialGit(raiz))
 
 
