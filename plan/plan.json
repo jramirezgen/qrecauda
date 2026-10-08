@@ -1269,6 +1269,24 @@
    "estado": "pendiente"
   },
   {
+   "id": "R.02c",
+   "fase": "R",
+   "tipo": "aplicacion",
+   "titulo": "Correcciones de los hallazgos de R.02 en el código: presupuesto QPU, claves reproducibles, productor, 90B, demo y CI",
+   "depende_de": [
+    "E3b",
+    "F6.03",
+    "F5.05",
+    "F3.07"
+   ],
+   "entrega": "src/qrecauda/ (ibm_runtime, presupuesto_qpu, reserva_asincrona, productor_en_proceso, min_entropia, dimensionado, composicion), docs/decisiones/D-011.md y sus tests",
+   "hecho_cuando": "cada hallazgo de código de R.02 tiene su test; E3b conserva la regla de semilla que se midió; ci_local pasa; lo que no se corrigió queda dicho con su motivo",
+   "cubre": [
+    "A-honestidad"
+   ],
+   "estado": "pendiente"
+  },
+  {
    "id": "REL-0.2.0",
    "fase": "R",
    "tipo": "release",
@@ -1276,6 +1294,7 @@
    "depende_de": [
     "REL-0.1.0",
     "R.02",
+    "R.02c",
     "E3b",
     "T.TRL"
    ],

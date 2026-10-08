@@ -208,7 +208,9 @@ n("REL-0.1.0", "R", "release", "Release 0.1.0: pipeline QRNG reproducible en sim
   "expediente con alcance, arquitectura, pruebas, validación contra línea base, despliegue y límites; el título dice lo que T.TRL sostiene; un test falla si queda un ⚠️ sin verificar vigente en FUNDAMENTO o en las decisiones", ["T-empaquetado"])
 n("R.02", "R", "revision", "Revisión adversarial propia previa al release 0.2.0", ["E3b", "F6.03", "T.TRL", "E5", "F5.05"], "docs/informes/REVISION_ADVERSARIAL_0.2.0.md",
   "un agente independiente intentó romper E3b y la reserva asíncrona con la medición ya hecha; cada hallazgo verificado contra el texto y registrado; es distinta de R.01", ["A-honestidad"])
-n("REL-0.2.0", "R", "release", "Release 0.2.0: la reserva asíncrona de claves y la latencia de E3b", ["REL-0.1.0", "R.02", "E3b", "T.TRL"], "docs/releases/EXPEDIENTE_0.2.0.md y CHANGELOG.md",
+n("R.02c", "R", "aplicacion", "Correcciones de los hallazgos de R.02 en el código: presupuesto QPU, claves reproducibles, productor, 90B, demo y CI", ["E3b", "F6.03", "F5.05", "F3.07"], "src/qrecauda/ (ibm_runtime, presupuesto_qpu, reserva_asincrona, productor_en_proceso, min_entropia, dimensionado, composicion), docs/decisiones/D-011.md y sus tests",
+  "cada hallazgo de código de R.02 tiene su test; E3b conserva la regla de semilla que se midió; ci_local pasa; lo que no se corrigió queda dicho con su motivo", ["A-honestidad"])
+n("REL-0.2.0", "R", "release", "Release 0.2.0: la reserva asíncrona de claves y la latencia de E3b", ["REL-0.1.0", "R.02", "R.02c", "E3b", "T.TRL"], "docs/releases/EXPEDIENTE_0.2.0.md y CHANGELOG.md",
   "expediente con el alcance añadido a 0.1.0, el veredicto de E3b tal como salió (CUMPLE o NO_CUMPLE), la arquitectura de la reserva, las pruebas, el rótulo de TRL que T.TRL sostiene y los límites; E3 sigue como la dejó su veredicto", ["T-empaquetado"])
 
 n("R.03", "R", "revision", "Revisión adversarial propia previa al release 0.3.0", ["E4", "F3.07", "F7.08", "T.TRL"], "docs/informes/REVISION_ADVERSARIAL_0.3.0.md",
