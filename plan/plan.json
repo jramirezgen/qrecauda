@@ -1111,6 +1111,105 @@
    "estado": "pendiente"
   },
   {
+   "id": "P.E4",
+   "fase": "E",
+   "tipo": "preinscripcion",
+   "titulo": "Preinscripción E4: el hardware de IBM frente a su gemelo en Aer",
+   "depende_de": [
+    "F3.04",
+    "P.E0"
+   ],
+   "entrega": "docs/preinscripciones/E4.md y declaraciones/E4.toml",
+   "hecho_cuando": "tres trabajos de 100 000 disparos (1 PUB cruda y 7 con twirling) en hardware real y su gemelo en Aer con la calibración del mismo backend; H1 (sesgo por qubit dentro de una tolerancia declarada) y H2 (la clave del twirling pasa M1–M5), controles N1, S1 y V1, lo que NO afirma y qué no está verificado, todo fijado antes de correr",
+   "cubre": [
+    "E4"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F3.07",
+   "fase": "F3",
+   "tipo": "adaptador",
+   "titulo": "Camino a hardware: FuenteIbm con twirling por PUBs, presupuesto de QPU, ensayo y qrecauda hardware",
+   "depende_de": [
+    "P.E4",
+    "F3.04",
+    "F3.05",
+    "F5.01"
+   ],
+   "entrega": "src/qrecauda/adaptadores/ibm_runtime.py, src/qrecauda/aplicacion/ejecutor_e4.py, src/qrecauda/aplicacion/juez_e4.py, scripts/ibm_run.sh, docs/HARDWARE.md y tests/aplicacion/test_e4.py",
+   "hecho_cuando": "el ensayo contra un backend falso recorre selección de backend, transpilación ISA, SamplerV2, twirling, gemelo y registro del trabajo; el tope --max-segundos-qpu aborta antes de enviar; el ejecutor y el juez de E4 recalculan N1, S1, V1, H1 y H2 de los artefactos; docs/HARDWARE.md paso a paso",
+   "cubre": [
+    "L-integracion"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "C.E4",
+   "fase": "E",
+   "tipo": "corrida",
+   "titulo": "E4 · tres trabajos en hardware de IBM y su gemelo en Aer",
+   "depende_de": [
+    "P.E4",
+    "F3.07",
+    "F5.02"
+   ],
+   "entrega": "registro/corridas/C.E4.json",
+   "hecho_cuando": "tres trabajos reales con job_id, backend y versión del SDK, más su gemelo en Aer, las cinco corridas C.E4a a C.E4e por semilla y el sesgo por qubit; bloqueada hasta que haya credencial de IBM",
+   "cubre": [
+    "E4"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "E4",
+   "fase": "E",
+   "tipo": "eureka",
+   "titulo": "¡EUREKA 4! El hardware real coincide con su gemelo y su clave con twirling pasa M1–M5",
+   "depende_de": [
+    "C.E4"
+   ],
+   "entrega": "registro/veredictos.jsonl",
+   "hecho_cuando": "H1 y H2 de P.E4 cumplen en los tres trabajos, o el veredicto dice cuál no y por cuánto; no certifica origen cuántico",
+   "cubre": [
+    "E4"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F7.07",
+   "fase": "F7",
+   "tipo": "aplicacion",
+   "titulo": "qrecauda demo: PRNG, Aer y Aer con twirling lado a lado, con AES-GCM y rótulo de origen",
+   "depende_de": [
+    "F6.02",
+    "F3.05",
+    "F5.02"
+   ],
+   "entrega": "src/qrecauda/aplicacion/demo.py, src/qrecauda/api.py y tests/aplicacion/test_demo.py",
+   "hecho_cuando": "dos minutos como máximo, determinista con semilla, sin red ni credencial; tabla con M1, min-entropía, tres p-valores NIST y bits de clave; un peaje y un trayecto de Metro cifrados y descifrados; rótulo «simulado» salvo hardware real",
+   "cubre": [
+    "R6"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "F7.08",
+   "fase": "F7",
+   "tipo": "doc",
+   "titulo": "Cuaderno vivo: del circuito a la clave cifrada, con FUENTE aer o ibm",
+   "depende_de": [
+    "F7.07",
+    "F3.07"
+   ],
+   "entrega": "notebooks/qrecauda_vivo.ipynb y tests/presentacion/test_cuaderno_vivo.py",
+   "hecho_cuando": "corre en menos de dos minutos con nbclient y queda guardado con sus salidas: circuito, ISA, SamplerV2, twirling, Peres y Toeplitz, NIST, AES-GCM y la tabla; una celda de parámetros cambia la fuente",
+   "cubre": [
+    "O7"
+   ],
+   "estado": "pendiente"
+  },
+  {
    "id": "R.01",
    "fase": "R",
    "tipo": "revision",
@@ -1182,6 +1281,41 @@
    ],
    "entrega": "docs/releases/EXPEDIENTE_0.2.0.md y CHANGELOG.md",
    "hecho_cuando": "expediente con el alcance añadido a 0.1.0, el veredicto de E3b tal como salió (CUMPLE o NO_CUMPLE), la arquitectura de la reserva, las pruebas, el rótulo de TRL que T.TRL sostiene y los límites; E3 sigue como la dejó su veredicto",
+   "cubre": [
+    "T-empaquetado"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "R.03",
+   "fase": "R",
+   "tipo": "revision",
+   "titulo": "Revisión adversarial propia previa al release 0.3.0",
+   "depende_de": [
+    "E4",
+    "F3.07",
+    "F7.08",
+    "T.TRL"
+   ],
+   "entrega": "docs/informes/REVISION_ADVERSARIAL_0.3.0.md",
+   "hecho_cuando": "un agente independiente intentó romper E4, el ensayo y la demo con lo ya medido; cada hallazgo verificado contra el texto y registrado; es distinta de R.02",
+   "cubre": [
+    "A-honestidad"
+   ],
+   "estado": "pendiente"
+  },
+  {
+   "id": "REL-0.3.0",
+   "fase": "R",
+   "tipo": "release",
+   "titulo": "Release 0.3.0: el camino a hardware de IBM y la demo",
+   "depende_de": [
+    "REL-0.2.0",
+    "R.03",
+    "E4"
+   ],
+   "entrega": "docs/releases/EXPEDIENTE_0.3.0.md y CHANGELOG.md",
+   "hecho_cuando": "expediente con el veredicto de E4 tal como salió, el camino a hardware, la demo y el cuaderno vivo, y los límites; sin corrida real de IBM no se publica con la etiqueta de hardware",
    "cubre": [
     "T-empaquetado"
    ],

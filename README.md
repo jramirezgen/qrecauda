@@ -33,13 +33,13 @@ Las fuentes completas y su etiqueta están en [`docs/pitch/IMPACTO.md`](docs/pit
 
 ## Demo en 2 minutos
 
-> `qrecauda demo` está **disponible en 0.2.0**. En 0.1.0 el subcomando todavía no existe.
+> `qrecauda demo` está en el árbol de trabajo (sin publicar): no existía en 0.1.0. Corre en segundos con Aer y sin red; la salida lleva el rótulo «simulado: Aer es pseudoaleatorio, sin origen cuántico».
 
 ```bash
 uv run qrecauda demo
 ```
 
-Muestra tres ramas lado a lado: un PRNG clásico, la fuente de Aer sin mitigar y la fuente de Aer mitigada. La mitigación limpia la entrada (el sesgo de la muestra baja de 0,03 a cuatro diezmilésimas), pero la clave de las tres ramas pasa la batería: por eso la batería no prueba el origen. La figura sale de las corridas registradas con `presentacion/figura_demo.py` y está en el [deck](docs/pitch/DECK.md); el [guion de dos minutos](docs/pitch/GUION.md) cronometra la presentación. Mientras tanto, `uv run qrecauda juzgar E1` rejuzga la corrida registrada.
+Muestra tres ramas lado a lado: un PRNG clásico, la fuente de Aer sin mitigar y la fuente de Aer mitigada. La mitigación limpia la entrada (el sesgo de la muestra baja de 0,03 a cuatro diezmilésimas), pero la clave de las tres ramas pasa la batería: por eso la batería no prueba el origen. La figura sale de las corridas registradas con `presentacion/figura_demo.py` y está en el [deck](docs/pitch/DECK.md); el [guion de dos minutos](docs/pitch/GUION.md) cronometra la presentación. Además cifra y descifra con AES-256-GCM un peaje y un trayecto de Metro con la clave aprobada. `uv run qrecauda demo --rapido` tarda menos; `uv run qrecauda demo --fuente ibm --ensayo` recorre el camino a IBM contra un backend falso (ver [docs/HARDWARE.md](docs/HARDWARE.md)). `uv run qrecauda juzgar E1` rejuzga la corrida registrada.
 
 **Estado en una línea:** TRL **3**, prototipo de laboratorio. Lo que se probó es el postprocesamiento: mitigación de lectura, extracción de entropía, validación estadística y cifrado AES-GCM. El simulador no aporta entropía cuántica y no hay corrida en hardware IBM. La tabla honesta de resultados está debajo y los detalles en [Limitaciones](#limitaciones).
 
@@ -151,7 +151,7 @@ El detalle, con la regla de imports de cada capa y el test que la protege, está
 | `docs/preinscripciones/` | umbral y criterio de cada experimento, escritos antes de la corrida |
 | `registro/` | corridas, veredictos y estado de nodos (solo se añade) |
 | `plan/` | DAG del proyecto y su verificador |
-| `notebooks/` | `qrecauda.ipynb`, genera las tablas del informe |
+| `notebooks/` | `qrecauda.ipynb` (tablas del informe) y `qrecauda_vivo.ipynb` (del circuito a la clave cifrada, con `FUENTE` aer o ibm) |
 | `spikes/` | investigaciones acotadas (S.01 a S.04), incluida la compilación del 90B |
 | `presentacion/` | `figura_demo.py`: figura de la demo de las tres ramas, desde `registro/corridas/` |
 | `scripts/` | CI local, hooks de git, limpieza del entorno |

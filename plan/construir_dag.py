@@ -186,6 +186,21 @@ n("F7.02", "F7", "doc", "Pitch de 10 slides", ["E1", "E2", "E3", "F7.03", "T.TRL
 n("F7.04", "F7", "doc", "Roadmap TRL 4 → TRL 5 → piloto → producción", ["E3", "F3.06", "F7.03", "T.TRL"], "docs/ROADMAP.md",
   "qué evidencia falta para cada salto de TRL, empezando por el hardware real y la certificación formal que NO se hace en la hackatón", ["A-roadmap"])
 
+n("P.E4", "E", "preinscripcion", "Preinscripción E4: el hardware de IBM frente a su gemelo en Aer", ["F3.04", "P.E0"], "docs/preinscripciones/E4.md y declaraciones/E4.toml",
+  "tres trabajos de 100 000 disparos (1 PUB cruda y 7 con twirling) en hardware real y su gemelo en Aer con la calibración del mismo backend; H1 (sesgo por qubit dentro de una tolerancia declarada) y H2 (la clave del twirling pasa M1–M5), controles N1, S1 y V1, lo que NO afirma y qué no está verificado, todo fijado antes de correr", ["E4"])
+n("F3.07", "F3", "adaptador", "Camino a hardware: FuenteIbm con twirling por PUBs, presupuesto de QPU, ensayo y qrecauda hardware", ["P.E4", "F3.04", "F3.05", "F5.01"],
+  "src/qrecauda/adaptadores/ibm_runtime.py, src/qrecauda/aplicacion/ejecutor_e4.py, src/qrecauda/aplicacion/juez_e4.py, scripts/ibm_run.sh, docs/HARDWARE.md y tests/aplicacion/test_e4.py",
+  "el ensayo contra un backend falso recorre selección de backend, transpilación ISA, SamplerV2, twirling, gemelo y registro del trabajo; el tope --max-segundos-qpu aborta antes de enviar; el ejecutor y el juez de E4 recalculan N1, S1, V1, H1 y H2 de los artefactos; docs/HARDWARE.md paso a paso", ["L-integracion"])
+n("C.E4", "E", "corrida", "E4 · tres trabajos en hardware de IBM y su gemelo en Aer", ["P.E4", "F3.07", "F5.02"], "registro/corridas/C.E4.json",
+  "tres trabajos reales con job_id, backend y versión del SDK, más su gemelo en Aer, las cinco corridas C.E4a a C.E4e por semilla y el sesgo por qubit; bloqueada hasta que haya credencial de IBM", ["E4"])
+n("E4", "E", "eureka", "¡EUREKA 4! El hardware real coincide con su gemelo y su clave con twirling pasa M1–M5", ["C.E4"], "registro/veredictos.jsonl",
+  "H1 y H2 de P.E4 cumplen en los tres trabajos, o el veredicto dice cuál no y por cuánto; no certifica origen cuántico", ["E4"])
+n("F7.07", "F7", "aplicacion", "qrecauda demo: PRNG, Aer y Aer con twirling lado a lado, con AES-GCM y rótulo de origen", ["F6.02", "F3.05", "F5.02"],
+  "src/qrecauda/aplicacion/demo.py, src/qrecauda/api.py y tests/aplicacion/test_demo.py",
+  "dos minutos como máximo, determinista con semilla, sin red ni credencial; tabla con M1, min-entropía, tres p-valores NIST y bits de clave; un peaje y un trayecto de Metro cifrados y descifrados; rótulo «simulado» salvo hardware real", ["R6"])
+n("F7.08", "F7", "doc", "Cuaderno vivo: del circuito a la clave cifrada, con FUENTE aer o ibm", ["F7.07", "F3.07"], "notebooks/qrecauda_vivo.ipynb y tests/presentacion/test_cuaderno_vivo.py",
+  "corre en menos de dos minutos con nbclient y queda guardado con sus salidas: circuito, ISA, SamplerV2, twirling, Peres y Toeplitz, NIST, AES-GCM y la tabla; una celda de parámetros cambia la fuente", ["O7"])
+
 # ───────────── Cierre ─────────────
 n("R.01", "R", "revision", "Revisión adversarial propia previa al release 0.1.0", ["E1", "E2", "E3", "F7.01", "F4.02", "T.TRL", "F7.06"], "docs/informes/REVISION_ADVERSARIAL_0.1.0.md",
   "un agente independiente intentó romper las claims con las eurekas y las mediciones ya hechas; cada hallazgo verificado contra el texto y registrado; esta revisión es distinta de R.00", ["A-honestidad"])
@@ -196,6 +211,10 @@ n("R.02", "R", "revision", "Revisión adversarial propia previa al release 0.2.0
 n("REL-0.2.0", "R", "release", "Release 0.2.0: la reserva asíncrona de claves y la latencia de E3b", ["REL-0.1.0", "R.02", "E3b", "T.TRL"], "docs/releases/EXPEDIENTE_0.2.0.md y CHANGELOG.md",
   "expediente con el alcance añadido a 0.1.0, el veredicto de E3b tal como salió (CUMPLE o NO_CUMPLE), la arquitectura de la reserva, las pruebas, el rótulo de TRL que T.TRL sostiene y los límites; E3 sigue como la dejó su veredicto", ["T-empaquetado"])
 
+n("R.03", "R", "revision", "Revisión adversarial propia previa al release 0.3.0", ["E4", "F3.07", "F7.08", "T.TRL"], "docs/informes/REVISION_ADVERSARIAL_0.3.0.md",
+  "un agente independiente intentó romper E4, el ensayo y la demo con lo ya medido; cada hallazgo verificado contra el texto y registrado; es distinta de R.02", ["A-honestidad"])
+n("REL-0.3.0", "R", "release", "Release 0.3.0: el camino a hardware de IBM y la demo", ["REL-0.2.0", "R.03", "E4"], "docs/releases/EXPEDIENTE_0.3.0.md y CHANGELOG.md",
+  "expediente con el veredicto de E4 tal como salió, el camino a hardware, la demo y el cuaderno vivo, y los límites; sin corrida real de IBM no se publica con la etiqueta de hardware", ["T-empaquetado"])
 
 def construir() -> dict:
     conf = D.Config.leer(RAIZ / "plan" / "dag.json")

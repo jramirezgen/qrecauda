@@ -4,17 +4,18 @@
 
 Plan v1 · 2026-10-07
 
-## Nodos del plan (70)
+## Nodos del plan (78)
 
 | estado | nodos |
 |---|---|
-| hecho | 62 |
+| bloqueado | 1 |
+| hecho | 66 |
 | juzgado | 4 |
-| pendiente | 4 |
+| pendiente | 7 |
 
 ## En curso, bloqueados y pausados
 
-- ninguno
+- **C.E4** (bloqueado) E4 · tres trabajos en hardware de IBM y su gemelo en Aer — sin credencial IBM
 
 ## Listos
 
@@ -88,5 +89,9 @@ Plan v1 · 2026-10-07
 | F7.01 | hecho | `faeb0d7` | Notebook reproducible con versiones exactas |
 | F7.02 | hecho | `db1b5cd` | Pitch de 10 slides |
 | F7.04 | hecho | `ca8cc07` | Roadmap TRL 4 → TRL 5 → piloto → producción |
+| P.E4 | hecho | `8344ba0` | Preinscripción E4: el hardware de IBM frente a su gemelo en Aer |
+| F3.07 | hecho | `04568ab` | Camino a hardware: FuenteIbm con twirling por PUBs, presupuesto de QPU, ensayo y qrecauda hardware |
+| F7.07 | hecho | `04568ab` | qrecauda demo: PRNG, Aer y Aer con twirling lado a lado, con AES-GCM y rótulo de origen |
+| F7.08 | hecho | `9e1b0a7` | Cuaderno vivo: del circuito a la clave cifrada, con FUENTE aer o ibm |
 | R.01 | hecho | `9048da9` | Revisión adversarial propia previa al release 0.1.0 |
 | REL-0.1.0 | hecho | `ea0d08a` | Release 0.1.0: pipeline QRNG reproducible en simulador (rótulo de TRL según T.TRL) |

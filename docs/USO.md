@@ -32,7 +32,7 @@ uv sync --frozen --group dev --extra cuantico --extra mitigacion --extra validac
 ## 2. CLI
 
 ```
-qrecauda [--config TOML] [--formato {tabla,json}] [--raiz DIR] [correr DECLARACION | juzgar ID]
+qrecauda [--config TOML] [--formato {tabla,json}] [--raiz DIR] [correr DECLARACION | juzgar ID | demo | hardware]
 ```
 
 Las opciones globales van antes del subcomando.
@@ -42,6 +42,9 @@ Las opciones globales van antes del subcomando.
 | `qrecauda` | genera una clave con la configuración dada (PRNG por defecto) y muestra el veredicto M1 a M7 |
 | `qrecauda correr declaraciones/E1.toml` | corre cada semilla de la declaración y escribe `registro/corridas/` |
 | `qrecauda juzgar E1` | aplica el criterio preinscrito a la corrida ya registrada y añade una línea a `registro/veredictos.jsonl` |
+| `qrecauda demo [--rapido] [--semilla N]` | PRNG, Aer sin mitigar y Aer con twirling lado a lado (M1, min-entropía, tres p-valores NIST, bits de clave) y un peaje y un trayecto de Metro cifrados con AES-256-GCM; determinista con la semilla, sin red |
+| `qrecauda demo --fuente ibm --token-file RUTA [--backend NOMBRE]` | añade una rama con un trabajo en hardware real de IBM (gasta cuota); con `--ensayo`, el mismo camino contra un backend falso, sin credencial |
+| `qrecauda hardware [--ensayo] [--token-file RUTA] [--backend NOMBRE] [--max-segundos-qpu S] [--ia]` | E4: tres trabajos en IBM y su gemelo en Aer; real a `registro/corridas/`, ensayo a `salidas/ensayo_e4/`. Paso a paso en `docs/HARDWARE.md` |
 
 `--raiz` es la raíz del repo, donde viven `declaraciones/` y `registro/`; por defecto es el directorio actual.
 
@@ -60,6 +63,7 @@ Códigos de salida (`src/qrecauda/entrada/codigos.py`):
 | 8 | candado de máquina ocupado |
 | 9 | corrida inválida |
 | 10 | otro error de QRecauda |
+| 11 | presupuesto de QPU excedido (aborta antes de enviar nada a IBM) |
 
 Ejemplo, con salida JSON:
 
