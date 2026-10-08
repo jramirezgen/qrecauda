@@ -148,3 +148,9 @@ def test_sin_ninguna_metrica_de_calidad_no_se_cifra(resultado):
     r = Resultado(**{**_campos(resultado), "veredicto": solo_tiempos})
     with pytest.raises(ErrorQRecauda):
         _servicio(r)
+
+
+def test_el_repr_de_un_resultado_no_contiene_la_clave(resultado):
+    """M-4: ni el repr de Resultado ni el de TransaccionCifrada (nonce) vuelcan bits en claro."""
+    texto = repr(resultado) + repr(_servicio(resultado).cifrar(TX))
+    assert "".join(map(str, resultado.clave.datos[:64])) not in texto.replace(" ", "").replace(",", "")

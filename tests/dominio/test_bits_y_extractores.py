@@ -114,3 +114,13 @@ def test_toeplitz_por_fft_es_exacto_a_n_grande():
     for i in rng.integers(0, m, 200):
         fila = s[n - 1 + i - np.arange(n)]
         assert int((fila.astype(np.int64) @ x.astype(np.int64)) % 2) == int(y[i]), i
+
+
+def test_repr_de_bits_no_vuelca_la_clave():
+    """M-4: una clave en un repr, un assert o una traza es una clave filtrada; sólo longitud y huella corta."""
+    b = Bits.desde([1, 0, 1, 1, 0, 0, 1, 0] * 44)
+    r = repr(b)
+    assert "352" in r and "1, 0, 1, 1" not in r and "[1 0 1 1" not in r
+    assert len(r) < 80
+    assert repr(b) == repr(Bits.desde([1, 0, 1, 1, 0, 0, 1, 0] * 44))
+    assert repr(b) != repr(Bits.desde([0, 1, 1, 1, 0, 0, 1, 0] * 44))

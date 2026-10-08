@@ -381,7 +381,8 @@ def test_una_clave_rechazada_se_regenera_y_su_tiempo_cuenta(decl):
 
         def evaluar(self, bits):
             self.n += 1
-            return (medir(Metrica.MONOBIT, 0.0 if self.n <= 3 else 1.0),)
+            m3 = medir(Metrica.MONOBIT, 0.0 if self.n <= 3 else 1.0)
+            return (m3, *(medir(m, 0.5) for m in (Metrica.RUNS, Metrica.CHI2)), medir(Metrica.SESGO, 0.0))
 
     ej = _ejecutor(decl, validador=RechazaLaPrimera())[0]
     m = ej.ejecutar(decl, decl.semillas[0])

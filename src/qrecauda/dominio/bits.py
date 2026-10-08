@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Iterable
 from dataclasses import dataclass
 
@@ -31,6 +32,10 @@ class Bits:
     @classmethod
     def desde_bytes(cls, crudo: bytes) -> Bits:
         return cls(np.unpackbits(np.frombuffer(crudo, dtype=np.uint8)))
+
+    def __repr__(self) -> str:
+        # Una clave en un repr acaba en una traza o un assert: sólo longitud y huella corta (no reversible).
+        return f"Bits(len={len(self)}, sha256={hashlib.sha256(self.datos.tobytes()).hexdigest()[:8]})"
 
     def __len__(self) -> int:
         return int(self.datos.size)

@@ -56,9 +56,10 @@ def test_frecuencia_por_bloques_exige_100_bits():
         nist.p_frecuencia_por_bloques(Bits.desde([0, 1] * 20))
 
 
-def test_validador_devuelve_m3_m4_m5_y_aprueba_una_secuencia_buena():
-    medidas = nist.ValidadorNist().evaluar(_secuencias()[0])
-    assert [m.metrica for m in medidas] == [Metrica.MONOBIT, Metrica.RUNS, Metrica.CHI2]
+def test_validador_devuelve_m1_m3_m4_m5_y_aprueba_una_secuencia_buena():
+    buena = Bits(np.random.default_rng(5).integers(0, 2, 100_000, dtype=np.uint8))  # M1 pide |p−½| < 0,01: con 2 000 bits es de moneda
+    medidas = nist.ValidadorNist().evaluar(buena)
+    assert [m.metrica for m in medidas] == [Metrica.SESGO, Metrica.MONOBIT, Metrica.RUNS, Metrica.CHI2]
     assert all(m.cumple for m in medidas)
 
 
@@ -90,3 +91,11 @@ def test_proporcion_entradas_ilegales():
         nist.proporcion_aprobados([])
     with pytest.raises(EntradaInvalida):
         nist.proporcion_aprobados([0.5], alfa=1.5)
+
+
+def test_nist_emite_m1_igual_que_estadistica():
+    """A-2: M1 se define en dominio/entropia.sesgo; los dos validadores la emiten igual (si no, la clave se certifica sin ella)."""
+    b = Bits(np.random.default_rng(77).integers(0, 2, 20_000, dtype=np.uint8))
+    m_nist = {m.metrica: m for m in nist.ValidadorNist().evaluar(b)}
+    m_est = {m.metrica: m for m in estadistica.ValidadorEstadistico().evaluar(b)}
+    assert m_nist[Metrica.SESGO] == m_est[Metrica.SESGO]

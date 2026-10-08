@@ -69,6 +69,6 @@ class Veredicto:
 
     @property
     def calidad_de_clave_aprobada(self) -> bool:
-        """Conjunción sólo de M1–M5: lo que certifica la clave para cifrar. Sin ninguna de ellas no aprueba nada (M6/M7 no cuentan)."""
+        """Conjunción de M1–M5, TODAS presentes: lo que certifica la clave para cifrar. Una ausente no aprueba (M6/M7 no cuentan)."""
         propias = [m for m in self.medidas if m.metrica in METRICAS_DE_CLAVE]
-        return bool(propias) and all(m.cumple for m in propias)
+        return {m.metrica for m in propias} == METRICAS_DE_CLAVE and all(m.cumple for m in propias)

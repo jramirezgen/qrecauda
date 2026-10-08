@@ -1,7 +1,7 @@
 """Validador — batería NIST SP 800-22 con nistrng (DAG F5.01). Se contrasta con adaptadores/estadistica en un TEST
 (C2: los adaptadores no se importan entre sí), no aquí.
 
-Pruebas usadas: monobit (M3), runs (M4) y frecuencia por bloques (M5, §2.2).
+Pruebas usadas: sesgo (M1, de dominio), monobit (M3), runs (M4) y frecuencia por bloques (M5, §2.2).
 ⚠️ Comportamientos de nistrng 1.2.3 que se respetan sin forzarlos:
 - `RunsTest._execute` NO comprueba el prerrequisito de frecuencia (§2.3.4); lo hace `is_eligible`. Aquí, si no es elegible,
   el p-valor es 0.0 (misma convención que adaptadores/estadistica). nistrng usa `>` y estadistica `>=` en el borde |π−½| = 2/√n.
@@ -21,6 +21,7 @@ from nistrng.sp800_22r1a.test_monobit import MonobitTest
 from nistrng.sp800_22r1a.test_runs import RunsTest
 
 from qrecauda.dominio.bits import Bits
+from qrecauda.dominio.entropia import sesgo
 from qrecauda.dominio.errores import EntradaInvalida, EntropiaInsuficiente
 from qrecauda.dominio.metricas import Medida, Metrica, medir
 
@@ -46,10 +47,11 @@ def p_frecuencia_por_bloques(bits: Bits) -> float:
 
 
 class ValidadorNist:
-    """Implementa `Validador` con nistrng: M3 monobit, M4 runs, M5 frecuencia por bloques."""
+    """Implementa `Validador`: M1 sesgo (dominio puro, la misma que emite `estadistica`) y, con nistrng, M3 monobit, M4 runs, M5 frecuencia por bloques."""
 
     def evaluar(self, bits: Bits) -> tuple[Medida, ...]:
         return (
+            medir(Metrica.SESGO, sesgo(bits)),
             medir(Metrica.MONOBIT, p_monobit(bits)),
             medir(Metrica.RUNS, p_runs(bits)),
             medir(Metrica.CHI2, p_frecuencia_por_bloques(bits)),

@@ -66,7 +66,7 @@ def test_sin_mitigacion_no_hay_etapa_mitigada():
 
 def test_el_validador_nist_se_elige_por_configuracion():
     r = composicion.ejecutar(Configuracion.desde_mapa({**DEMO, "validador": "nist"}))
-    assert {m.metrica for m in r.medidas_de("clave")} == {Metrica.MONOBIT, Metrica.RUNS, Metrica.CHI2}
+    assert {m.metrica for m in r.medidas_de("clave")} == {Metrica.SESGO, Metrica.MONOBIT, Metrica.RUNS, Metrica.CHI2}
 
 
 def test_el_nivel_de_ruido_cambia_la_fuente():
