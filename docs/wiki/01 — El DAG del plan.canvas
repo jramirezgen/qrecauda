@@ -7,7 +7,7 @@
    "y": 0,
    "width": 620,
    "height": 900,
-   "text": "## QRECAUDA — el DAG del plan\n*generado de `plan/plan.json` + `registro/` · plan v1 · 2026-10-07*\n\n**59 nodos** · eurekas 0/3\n\n🟩 hecho: **37** · 🟦 juzgado: **0**\n🟧 en curso: **0**\n🟨 listo (dependencias hechas): **7**\n⬜ espera dependencias: **15**\n🟥 bloqueado: **0**\n\n**Siguiente:** F0.09, F2.07, F7.05, F3.04, C.E2, C.E3, F7.06\n\nLas flechas son la reducción transitiva de `depende_de`.\n⭐ eureka · 🏷️ release · 🧱 insumo (spike) · 🐛 incidencia anclada\n\n**Tablero:** [[INC-001 — El plan de QRECAUDA necesita su DAG visible y verificable|INC-001]] (en_curso) · [[INC-002 — La arquitectura debe separar datos, lógica, integración y transversales|INC-002]] (en_curso) · [[INC-003 — Los criterios de éxito de E1 se cumplen por construcción|INC-003]] (en_curso) · [[INC-004 — El camino a TRL 4 no está definido y el hardware opcional bloquea el release|INC-004]] (en_curso) · [[INC-005 — Nadie ejecuta, persiste ni juzga las corridas|INC-005]] (en_curso) · [[INC-006 — Fugas de capa: C2 contradice el diseño y faltan puertos|INC-006]] (en_curso) · [[INC-007 — Dimensionamiento y spikes que faltan antes de construir|INC-007]] (en_curso)",
+   "text": "## QRECAUDA — el DAG del plan\n*generado de `plan/plan.json` + `registro/` · plan v1 · 2026-10-07*\n\n**59 nodos** · eurekas 3/3\n\n🟩 hecho: **56** · 🟦 juzgado: **3**\n🟧 en curso: **0**\n🟨 listo (dependencias hechas): **0**\n⬜ espera dependencias: **0**\n🟥 bloqueado: **0**\n\n**Siguiente:** —\n\nLas flechas son la reducción transitiva de `depende_de`.\n⭐ eureka · 🏷️ release · 🧱 insumo (spike) · 🐛 incidencia anclada\n\n**Tablero:** [[INC-001 — El plan de QRECAUDA necesita su DAG visible y verificable|INC-001]] (en_curso) · [[INC-002 — La arquitectura debe separar datos, lógica, integración y transversales|INC-002]] (en_curso) · [[INC-003 — Los criterios de éxito de E1 se cumplen por construcción|INC-003]] (en_curso) · [[INC-004 — El camino a TRL 4 no está definido y el hardware opcional bloquea el release|INC-004]] (en_curso) · [[INC-005 — Nadie ejecuta, persiste ni juzga las corridas|INC-005]] (en_curso) · [[INC-006 — Fugas de capa: C2 contradice el diseño y faltan puertos|INC-006]] (en_curso) · [[INC-007 — Dimensionamiento y spikes que faltan antes de construir|INC-007]] (en_curso)",
    "color": "6"
   },
   {
@@ -47,7 +47,7 @@
    "y": 1098,
    "width": 620,
    "height": 256,
-   "text": "### 🟩 F0.04 · Contratos de imports y trinquetes de arquitectura\n*infra* · **entrega:** .importlinter y tests/arquitectura/\n\n✔ lint-imports pasa con 5 contratos y un import prohibido sembrado a propósito lo hace fallar\n\n`cubre:` C-contratos",
+   "text": "### 🟩 F0.04 · Contratos de imports y trinquetes de arquitectura\n*infra* · **entrega:** .importlinter y tests/arquitectura/\n\n✔ lint-imports pasa con 7 contratos y un import prohibido sembrado a propósito lo hace fallar\n\n`cubre:` C-contratos",
    "color": "4"
   },
   {
@@ -117,8 +117,8 @@
    "y": 3849,
    "width": 620,
    "height": 256,
-   "text": "### 🟨 F0.09 · Remotos: GitHub privado y espejo bare\n*infra* · **entrega:** scripts/remotos.md con origin y espejo, sin ningún token\n\n✔ primer push a origin y al espejo en F:/REPOSITORIOS/espejos/QRECAUDA.git; la credencial se pasa por ruta\n\n`cubre:` T-seguridad",
-   "color": "3"
+   "text": "### 🟩 F0.09 · Remotos: GitHub público y espejo bare\n*infra* · **entrega:** scripts/remotos.md con origin y espejo, sin ningún token\n\n✔ primer push a origin y al espejo en F:/REPOSITORIOS/espejos/QRECAUDA.git; la credencial se pasa por ruta\n\n`cubre:` T-seguridad",
+   "color": "4"
   },
   {
    "id": "g_F0",
@@ -235,8 +235,8 @@
    "y": 2844,
    "width": 620,
    "height": 391,
-   "text": "### 🟨 F2.07 · Correr y juzgar: de la declaración al veredicto\n*aplicacion* · **entrega:** src/qrecauda/aplicacion/juez.py, tests/aplicacion/test_juez.py\n\n✔ qrecauda correr declaraciones/E1.toml escribe registro/corridas/<id>.json por el Almacén; qrecauda juzgar E1 aplica el criterio de la declaración, añade una línea a veredictos.jsonl y se niega si la preinscripción no precede a la corrida en git (merge-base --is-ancestor) o falta un control\n\n`cubre:` L-aplicacion",
-   "color": "3"
+   "text": "### 🟩 F2.07 · Correr y juzgar: de la declaración al veredicto\n*aplicacion* · **entrega:** src/qrecauda/aplicacion/juez.py, tests/aplicacion/test_juez.py\n\n✔ qrecauda correr declaraciones/E1.toml escribe registro/corridas/<id>.json por el Almacén; qrecauda juzgar E1 aplica el criterio de la declaración, añade una línea a veredictos.jsonl y se niega si la preinscripción no precede a la corrida en git (merge-base --is-ancestor) o falta un control\n\n`cubre:` L-aplicacion",
+   "color": "4"
   },
   {
    "id": "g_F2",
@@ -324,8 +324,8 @@
    "y": 3399,
    "width": 620,
    "height": 337,
-   "text": "### 🟨 F3.04 · SamplerV2 sobre hardware IBM con Batch/Session (opcional)\n*adaptador* · **entrega:** src/qrecauda/adaptadores/ibm_runtime.py, tests/adaptadores/test_ibm_runtime.py\n\n✔ contract test sin red con un doble, token por ruta, transpilación inyectada desde la composición; el doble NO puede devolver HARDWARE_IBM sin job_id (lo impide Muestra); la corrida real es F3.06\n\n`cubre:` L-integracion",
-   "color": "3"
+   "text": "### 🟩 F3.04 · SamplerV2 sobre hardware IBM con Batch/Session (opcional)\n*adaptador* · **entrega:** src/qrecauda/adaptadores/ibm_runtime.py, tests/adaptadores/test_ibm_runtime.py\n\n✔ contract test sin red con un doble, token por ruta, transpilación inyectada desde la composición; el doble NO puede devolver HARDWARE_IBM sin job_id (lo impide Muestra); la corrida real es F3.06\n\n`cubre:` L-integracion",
+   "color": "4"
   },
   {
    "id": "F3.06",
@@ -334,7 +334,8 @@
    "y": 3846,
    "width": 620,
    "height": 337,
-   "text": "### ⬜ F3.06 · Acceso a hardware IBM: corrida real o constancia de no acceso\n*decision* · **entrega:** docs/decisiones/D-010.md y registro/corridas/HW.json\n\n✔ o bien una corrida real con job_id, backend y versión (TRL de la fuente cuántica sube a lo que T.TRL diga), o bien una constancia fechada de que no hay acceso; las dos cierran el nodo y ninguna cambia el resto del plan\n\n`cubre:` A-honestidad"
+   "text": "### 🟩 F3.06 · Acceso a hardware IBM: corrida real o constancia de no acceso\n*decision* · **entrega:** docs/decisiones/D-010.md y registro/corridas/HW.json\n\n✔ o bien una corrida real con job_id, backend y versión (TRL de la fuente cuántica sube a lo que T.TRL diga), o bien una constancia fechada de que no hay acceso; las dos cierran el nodo y ninguna cambia el resto del plan\n\n`cubre:` A-honestidad",
+   "color": "4"
   },
   {
    "id": "F3.05",
@@ -469,7 +470,8 @@
    "y": 948,
    "width": 620,
    "height": 445,
-   "text": "### ⬜ P.E1 · Preinscripción E1: el pipeline entrega claves que cumplen M1–M5 con entrada ruidosa\n*preinscripcion* · **entrega:** docs/preinscripciones/E1.md y declaraciones/E1.toml\n\n✔ criterio fijado ANTES de correr: la muestra cruda sin mitigar FALLA M1 o M3 al nivel de ruido declarado, la mitigada PASA y la clave PASA; controles negativo (un PRNG pasa) y positivo (fuentes malas rechazadas) declarados; regla de reintento sin elegir semilla\n\n`cubre:` E1\n\n🐛 [[INC-003 — Los criterios de éxito de E1 se cumplen por construcción|INC-003]] (en_curso)"
+   "text": "### 🟩 P.E1 · Preinscripción E1: el pipeline entrega claves que cumplen M1–M5 con entrada ruidosa\n*preinscripcion* · **entrega:** docs/preinscripciones/E1.md y declaraciones/E1.toml\n\n✔ criterio fijado ANTES de correr: la muestra cruda sin mitigar FALLA M1 o M3 al nivel de ruido declarado, la mitigada PASA y la clave PASA; controles negativo (un PRNG pasa) y positivo (fuentes malas rechazadas) declarados; regla de reintento sin elegir semilla\n\n`cubre:` E1\n\n🐛 [[INC-003 — Los criterios de éxito de E1 se cumplen por construcción|INC-003]] (en_curso)",
+   "color": "4"
   },
   {
    "id": "P.E2",
@@ -488,7 +490,8 @@
    "y": 1977,
    "width": 620,
    "height": 256,
-   "text": "### ⬜ C.E1a · E1a · control: PRNG clásico pasa M1–M5 (la batería no distingue origen)\n*corrida* · **entrega:** registro/corridas/E1a.json\n\n✔ la corrida del PRNG sale con su veredicto en los tres puntos; que pase es el resultado esperado y se declara\n\n`cubre:` E1, M3, M4, M5"
+   "text": "### 🟩 C.E1a · E1a · control: PRNG clásico pasa M1–M5 (la batería no distingue origen)\n*corrida* · **entrega:** registro/corridas/E1a.json\n\n✔ la corrida del PRNG sale con su veredicto en los tres puntos; que pase es el resultado esperado y se declara\n\n`cubre:` E1, M3, M4, M5",
+   "color": "4"
   },
   {
    "id": "C.E2",
@@ -497,8 +500,8 @@
    "y": 2343,
    "width": 620,
    "height": 256,
-   "text": "### 🟨 C.E2 · E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido\n*corrida* · **entrega:** registro/corridas/E2.json\n\n✔ sesgo crudo y residual por técnica y por nivel, con su intervalo\n\n`cubre:` E2, M1",
-   "color": "3"
+   "text": "### 🟩 C.E2 · E2 · sesgo antes y después de TREX, ZNE y PEC en tres niveles de ruido\n*corrida* · **entrega:** registro/corridas/C.E2.json\n\n✔ sesgo crudo y residual por técnica y por nivel, con su intervalo\n\n`cubre:` E2, M1",
+   "color": "4"
   },
   {
    "id": "C.E1b",
@@ -507,7 +510,8 @@
    "y": 2709,
    "width": 620,
    "height": 256,
-   "text": "### ⬜ C.E1b · E1b · Aer ruidoso sin mitigar\n*corrida* · **entrega:** registro/corridas/E1b.json\n\n✔ M1, M3, M4 y M5 sobre la muestra cruda ruidosa sin mitigar, y sobre la clave, al menos 3 repeticiones; el veredicto lee la muestra cruda, no sólo la clave\n\n`cubre:` E1, M3, M4, M5"
+   "text": "### 🟩 C.E1b · E1b · Aer ruidoso sin mitigar\n*corrida* · **entrega:** registro/corridas/E1b.json\n\n✔ M1, M3, M4 y M5 sobre la muestra cruda ruidosa sin mitigar, y sobre la clave, al menos 3 repeticiones; el veredicto lee la muestra cruda, no sólo la clave\n\n`cubre:` E1, M3, M4, M5",
+   "color": "4"
   },
   {
    "id": "C.E1c",
@@ -516,7 +520,8 @@
    "y": 3075,
    "width": 620,
    "height": 256,
-   "text": "### ⬜ C.E1c · E1c · Aer ruidoso mitigado\n*corrida* · **entrega:** registro/corridas/E1c.json\n\n✔ M1, M3, M4, M5 y la min-entropía de entrada y de salida sobre la muestra mitigada y sobre la clave, al menos 3 repeticiones\n\n`cubre:` E1, M3, M4, M5, M2"
+   "text": "### 🟩 C.E1c · E1c · Aer ruidoso mitigado\n*corrida* · **entrega:** registro/corridas/E1c.json\n\n✔ M1, M3, M4, M5 y la min-entropía de entrada y de salida sobre la muestra mitigada y sobre la clave, al menos 3 repeticiones\n\n`cubre:` E1, M3, M4, M5, M2",
+   "color": "4"
   },
   {
    "id": "C.E1d",
@@ -524,45 +529,49 @@
    "x": 9800,
    "y": 3441,
    "width": 620,
-   "height": 310,
-   "text": "### ⬜ C.E1d · E1d · control positivo: fuentes defectuosas rechazadas, fuente ideal aceptada\n*corrida* · **entrega:** registro/corridas/E1d.json\n\n✔ una fuente sesgada, una periódica y una de Markov (permanencia 0,8) son rechazadas por al menos una métrica o por h_min, la Markov por h_min y no por NIST, y la ideal pasa; sin esto un veredicto «pasa» no informa\n\n`cubre:` E1"
+   "height": 337,
+   "text": "### 🟩 C.E1d · E1d · control positivo: fuentes defectuosas rechazadas, fuente ideal aceptada\n*corrida* · **entrega:** registro/corridas/E1d.json\n\n✔ una fuente sesgada, una periódica y una de Markov (permanencia 0,8) son rechazadas por al menos una métrica o por h_min, la Markov pasa el MCV (≥ 0,9) y la rechaza el 90B (< 0,9), y la ideal pasa; sin esto un veredicto «pasa» no informa\n\n`cubre:` E1",
+   "color": "4"
   },
   {
    "id": "E2",
    "type": "text",
    "x": 9800,
-   "y": 3861,
+   "y": 3888,
    "width": 620,
    "height": 256,
-   "text": "### ⬜ ⭐ E2 · ¡EUREKA 2! La mitigación mueve el sesgo bajo el umbral M1\n*eureka* · **entrega:** registro/veredictos.jsonl\n\n✔ el residuo cumple M1 en los tres niveles o el veredicto lo dice con el nivel donde deja de cumplir\n\n`cubre:` E2"
+   "text": "### 🟦 ⭐ E2 · ¡EUREKA 2! La mitigación mueve el sesgo bajo el umbral M1\n*eureka* · **entrega:** registro/veredictos.jsonl\n\n✔ el residuo cumple M1 en los tres niveles o el veredicto lo dice con el nivel donde deja de cumplir\n\n`cubre:` E2",
+   "color": "5"
   },
   {
    "id": "C.E3",
    "type": "text",
    "x": 9800,
-   "y": 4227,
+   "y": 4254,
    "width": 620,
    "height": 283,
-   "text": "### 🟨 C.E3 · E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado\n*medicion* · **entrega:** registro/corridas/E3.json\n\n✔ bit/s y ms medidos con reloj monotónico sobre el pipeline con Aer, N repeticiones y la máquina registrada, con la definición de M6 y M7 de la preinscripción\n\n`cubre:` E3, M6, M7",
-   "color": "3"
+   "text": "### 🟩 C.E3 · E3 · tasa sostenida, latencia y ciclo de cifrado, a un hilo y con candado\n*medicion* · **entrega:** registro/corridas/C.E3.json\n\n✔ bit/s y ms medidos con reloj monotónico sobre el pipeline con Aer, N repeticiones y la máquina registrada, con la definición de M6 y M7 de la preinscripción\n\n`cubre:` E3, M6, M7",
+   "color": "4"
   },
   {
    "id": "E1",
    "type": "text",
    "x": 9800,
-   "y": 4620,
+   "y": 4647,
    "width": 620,
    "height": 283,
-   "text": "### ⬜ ⭐ E1 · ¡EUREKA 1! Pipeline de punta a punta con veredicto M1–M5 y control negativo\n*eureka* · **entrega:** registro/veredictos.jsonl\n\n✔ las cuatro corridas cumplen su preinscripción y el informe dice, sin adornos, qué prueba y qué NO prueba sobre el origen cuántico\n\n`cubre:` E1"
+   "text": "### 🟦 ⭐ E1 · ¡EUREKA 1! Pipeline de punta a punta con veredicto M1–M5 y control negativo\n*eureka* · **entrega:** registro/veredictos.jsonl\n\n✔ las cuatro corridas cumplen su preinscripción y el informe dice, sin adornos, qué prueba y qué NO prueba sobre el origen cuántico\n\n`cubre:` E1",
+   "color": "5"
   },
   {
    "id": "E3",
    "type": "text",
    "x": 9800,
-   "y": 5013,
+   "y": 5040,
    "width": 620,
    "height": 256,
-   "text": "### ⬜ ⭐ E3 · ¡EUREKA 3! Tasa y latencia dentro de umbral con la transacción cifrada\n*eureka* · **entrega:** registro/veredictos.jsonl\n\n✔ M6 y M7 cumplen con el pipeline completo, o el veredicto dice cuál no y por cuánto\n\n`cubre:` E3"
+   "text": "### 🟦 ⭐ E3 · ¡EUREKA 3! Tasa y latencia dentro de umbral con la transacción cifrada\n*eureka* · **entrega:** registro/veredictos.jsonl\n\n✔ M6 y M7 cumplen con el pipeline completo, o el veredicto dice cuál no y por cuánto\n\n`cubre:` E3",
+   "color": "5"
   },
   {
    "id": "g_E",
@@ -570,7 +579,7 @@
    "x": 9740,
    "y": -124,
    "width": 740,
-   "height": 5453,
+   "height": 5480,
    "label": "EUREKAS — preinscripción → corridas → veredicto"
   },
   {
@@ -590,8 +599,8 @@
    "y": 339,
    "width": 620,
    "height": 256,
-   "text": "### 🟨 F7.05 · Wiki repo: mapas, bases e incidencias publicados en la bóveda\n*doc* · **entrega:** docs/wiki/wiki.json y docs/wiki/\n\n✔ publicar.py termina sin rechazos, la nota puerta enlaza los índices y el vault_audit no marca huérfanas\n\n`cubre:` W-wiki",
-   "color": "3"
+   "text": "### 🟩 F7.05 · Wiki repo: mapas, bases e incidencias publicados en la bóveda\n*doc* · **entrega:** docs/wiki/wiki.json y docs/wiki/\n\n✔ publicar.py termina sin rechazos, la nota puerta enlaza los índices y el vault_audit no marca huérfanas\n\n`cubre:` W-wiki",
+   "color": "4"
   },
   {
    "id": "F7.06",
@@ -600,8 +609,8 @@
    "y": 705,
    "width": 620,
    "height": 256,
-   "text": "### 🟨 F7.06 · Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado\n*infra* · **entrega:** tests/integracion/test_e2e_aer.py\n\n✔ la cadena completa corre sin red en la CI local y el texto descifrado es igual al original\n\n`cubre:` L-integracion",
-   "color": "3"
+   "text": "### 🟩 F7.06 · Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado\n*infra* · **entrega:** tests/integracion/test_e2e_aer.py\n\n✔ la cadena completa corre sin red en la CI local y el texto descifrado es igual al original\n\n`cubre:` L-integracion",
+   "color": "4"
   },
   {
    "id": "T.TRL",
@@ -610,7 +619,8 @@
    "y": 1071,
    "width": 620,
    "height": 391,
-   "text": "### ⬜ T.TRL · Matriz de TRL por componente, derivada de la evidencia\n*doc* · **entrega:** docs/TRL.md y tests/arquitectura/test_trl.py\n\n✔ una fila por componente con su evidencia (id de nodo y de corrida), el TRL alcanzado sin hardware y con él; el TRL del sistema es el de la fila más baja; TRL 4 pide repetibilidad n ≥ 3, protocolo preinscrito y que un tercero pueda auditarlo; el test falla si una fila cita un nodo inexistente\n\n`cubre:` A-trl"
+   "text": "### 🟩 T.TRL · Matriz de TRL por componente, derivada de la evidencia\n*doc* · **entrega:** docs/TRL.md y tests/arquitectura/test_trl.py\n\n✔ una fila por componente con su evidencia (id de nodo y de corrida), el TRL alcanzado sin hardware y con él; el TRL del sistema es el de la fila más baja; TRL 4 pide repetibilidad n ≥ 3, protocolo preinscrito y que un tercero pueda auditarlo; el test falla si una fila cita un nodo inexistente\n\n`cubre:` A-trl",
+   "color": "4"
   },
   {
    "id": "F7.01",
@@ -619,7 +629,8 @@
    "y": 1572,
    "width": 620,
    "height": 310,
-   "text": "### ⬜ F7.01 · Notebook reproducible con versiones exactas\n*doc* · **entrega:** notebooks/qrecauda.ipynb, src/qrecauda/presentacion/figuras.py, tests/presentacion/test_figuras.py\n\n✔ un clon limpio reproduce las tablas del pitch con dos comandos y los pins de uv.lock; el notebook sólo llama a presentacion/figuras.py, que tiene su test\n\n`cubre:` O7, R5"
+   "text": "### 🟩 F7.01 · Notebook reproducible con versiones exactas\n*doc* · **entrega:** notebooks/qrecauda.ipynb, src/qrecauda/presentacion/figuras.py, tests/presentacion/test_figuras.py\n\n✔ un clon limpio reproduce las tablas del pitch con dos comandos y los pins de uv.lock; el notebook sólo llama a presentacion/figuras.py, que tiene su test\n\n`cubre:` O7, R5",
+   "color": "4"
   },
   {
    "id": "F7.02",
@@ -628,7 +639,8 @@
    "y": 1992,
    "width": 620,
    "height": 310,
-   "text": "### ⬜ F7.02 · Pitch de 10 slides\n*doc* · **entrega:** docs/pitch/PITCH.md, tests/arquitectura/test_cifras_del_pitch.py\n\n✔ las diez láminas con cada cifra marcada {{corrida:ID.métrica}} y un test que la cruza con registro/corridas/; la lámina de límites dice «validación del pipeline», no «entropía cuántica», con el TRL de T.TRL\n\n`cubre:` R6"
+   "text": "### 🟩 F7.02 · Pitch de 10 slides\n*doc* · **entrega:** docs/pitch/PITCH.md, tests/arquitectura/test_cifras_del_pitch.py\n\n✔ las diez láminas con cada cifra marcada {{corrida:ID.métrica}} y un test que la cruza con registro/corridas/; la lámina de límites dice «validación del pipeline», no «entropía cuántica», con el TRL de T.TRL\n\n`cubre:` R6",
+   "color": "4"
   },
   {
    "id": "F7.04",
@@ -637,7 +649,8 @@
    "y": 2412,
    "width": 620,
    "height": 256,
-   "text": "### ⬜ F7.04 · Roadmap TRL 4 → TRL 5 → piloto → producción\n*doc* · **entrega:** docs/ROADMAP.md\n\n✔ qué evidencia falta para cada salto de TRL, empezando por el hardware real y la certificación formal que NO se hace en la hackatón\n\n`cubre:` A-roadmap"
+   "text": "### 🟩 F7.04 · Roadmap TRL 4 → TRL 5 → piloto → producción\n*doc* · **entrega:** docs/ROADMAP.md\n\n✔ qué evidencia falta para cada salto de TRL, empezando por el hardware real y la certificación formal que NO se hace en la hackatón\n\n`cubre:` A-roadmap",
+   "color": "4"
   },
   {
    "id": "g_F7",
@@ -655,7 +668,8 @@
    "y": 0,
    "width": 620,
    "height": 337,
-   "text": "### ⬜ R.01 · Revisión adversarial propia previa al release 0.1.0\n*revision* · **entrega:** docs/informes/REVISION_ADVERSARIAL_0.1.0.md\n\n✔ un agente independiente intentó romper las claims con las eurekas y las mediciones ya hechas; cada hallazgo verificado contra el texto y registrado; esta revisión es distinta de R.00\n\n`cubre:` A-honestidad"
+   "text": "### 🟩 R.01 · Revisión adversarial propia previa al release 0.1.0\n*revision* · **entrega:** docs/informes/REVISION_ADVERSARIAL_0.1.0.md\n\n✔ un agente independiente intentó romper las claims con las eurekas y las mediciones ya hechas; cada hallazgo verificado contra el texto y registrado; esta revisión es distinta de R.00\n\n`cubre:` A-honestidad",
+   "color": "4"
   },
   {
    "id": "REL-0.1.0",
@@ -664,7 +678,8 @@
    "y": 447,
    "width": 620,
    "height": 445,
-   "text": "### ⬜ 🏷️ REL-0.1.0 · Release 0.1.0: pipeline QRNG reproducible en simulador (rótulo de TRL según T.TRL)\n*release* · **entrega:** docs/releases/EXPEDIENTE_0.1.0.md, CHANGELOG.md y tests/arquitectura/test_release_sin_dudas.py\n\n✔ expediente con alcance, arquitectura, pruebas, validación contra línea base, despliegue y límites; el título dice lo que T.TRL sostiene; un test falla si queda un ⚠️ sin verificar vigente en FUNDAMENTO o en las decisiones\n\n`cubre:` T-empaquetado\n\n🐛 [[INC-004 — El camino a TRL 4 no está definido y el hardware opcional bloquea el release|INC-004]] (en_curso)"
+   "text": "### 🟩 🏷️ REL-0.1.0 · Release 0.1.0: pipeline QRNG reproducible en simulador (rótulo de TRL según T.TRL)\n*release* · **entrega:** docs/releases/EXPEDIENTE_0.1.0.md, CHANGELOG.md y tests/arquitectura/test_release_sin_dudas.py\n\n✔ expediente con alcance, arquitectura, pruebas, validación contra línea base, despliegue y límites; el título dice lo que T.TRL sostiene; un test falla si queda un ⚠️ sin verificar vigente en FUNDAMENTO o en las decisiones\n\n`cubre:` T-empaquetado\n\n🐛 [[INC-004 — El camino a TRL 4 no está definido y el hardware opcional bloquea el release|INC-004]] (en_curso)",
+   "color": "4"
   },
   {
    "id": "g_R",
@@ -962,7 +977,8 @@
    "fromNode": "F3.04",
    "fromSide": "bottom",
    "toNode": "F3.06",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e037",
@@ -1089,7 +1105,8 @@
    "fromNode": "F2.07",
    "fromSide": "right",
    "toNode": "P.E1",
-   "toSide": "left"
+   "toSide": "left",
+   "color": "4"
   },
   {
    "id": "e053",
@@ -1104,7 +1121,8 @@
    "fromNode": "P.E1",
    "fromSide": "bottom",
    "toNode": "C.E1a",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e055",
@@ -1119,7 +1137,8 @@
    "fromNode": "P.E1",
    "fromSide": "bottom",
    "toNode": "C.E1b",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e057",
@@ -1134,7 +1153,8 @@
    "fromNode": "P.E1",
    "fromSide": "bottom",
    "toNode": "C.E1c",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e059",
@@ -1157,7 +1177,8 @@
    "fromNode": "P.E1",
    "fromSide": "bottom",
    "toNode": "C.E1d",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e062",
@@ -1180,28 +1201,32 @@
    "fromNode": "C.E1a",
    "fromSide": "bottom",
    "toNode": "E1",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e065",
    "fromNode": "C.E1b",
    "fromSide": "bottom",
    "toNode": "E1",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e066",
    "fromNode": "C.E1c",
    "fromSide": "bottom",
    "toNode": "E1",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e067",
    "fromNode": "C.E1d",
    "fromSide": "bottom",
    "toNode": "E1",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e068",
@@ -1256,7 +1281,8 @@
    "fromNode": "C.E2",
    "fromSide": "bottom",
    "toNode": "E2",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e075",
@@ -1311,7 +1337,8 @@
    "fromNode": "C.E3",
    "fromSide": "bottom",
    "toNode": "E3",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e082",
@@ -1342,14 +1369,16 @@
    "fromNode": "F3.06",
    "fromSide": "right",
    "toNode": "T.TRL",
-   "toSide": "left"
+   "toSide": "left",
+   "color": "4"
   },
   {
    "id": "e086",
    "fromNode": "F7.06",
    "fromSide": "bottom",
    "toNode": "T.TRL",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e087",
@@ -1422,7 +1451,8 @@
    "fromNode": "T.TRL",
    "fromSide": "bottom",
    "toNode": "F7.02",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e097",
@@ -1437,56 +1467,64 @@
    "fromNode": "T.TRL",
    "fromSide": "bottom",
    "toNode": "F7.04",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e099",
    "fromNode": "F7.01",
    "fromSide": "right",
    "toNode": "R.01",
-   "toSide": "left"
+   "toSide": "left",
+   "color": "4"
   },
   {
    "id": "e100",
    "fromNode": "T.TRL",
    "fromSide": "right",
    "toNode": "R.01",
-   "toSide": "left"
+   "toSide": "left",
+   "color": "4"
   },
   {
    "id": "e101",
    "fromNode": "R.01",
    "fromSide": "bottom",
    "toNode": "REL-0.1.0",
-   "toSide": "top"
+   "toSide": "top",
+   "color": "4"
   },
   {
    "id": "e102",
    "fromNode": "F7.02",
    "fromSide": "right",
    "toNode": "REL-0.1.0",
-   "toSide": "left"
+   "toSide": "left",
+   "color": "4"
   },
   {
    "id": "e103",
    "fromNode": "F7.04",
    "fromSide": "right",
    "toNode": "REL-0.1.0",
-   "toSide": "left"
+   "toSide": "left",
+   "color": "4"
   },
   {
    "id": "e104",
    "fromNode": "F0.09",
    "fromSide": "right",
    "toNode": "REL-0.1.0",
-   "toSide": "left"
+   "toSide": "left",
+   "color": "4"
   },
   {
    "id": "e105",
    "fromNode": "F7.05",
    "fromSide": "right",
    "toNode": "REL-0.1.0",
-   "toSide": "left"
+   "toSide": "left",
+   "color": "4"
   }
  ]
 }

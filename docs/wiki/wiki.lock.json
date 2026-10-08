@@ -2,10 +2,10 @@
   "_que_es": "GENERADO por publicar.py — no se edita a mano. Por artefacto, las huellas canónicas del repo Y de la bóveda tal y como quedaron la última vez. Hacen falta las dos: con una sola, adoptar una edición manual la dejaba pisable en la corrida siguiente, porque «la bóveda está donde la dejamos» se leía como «avanzó el generador».",
   "adoptado": {
     "01 — El DAG del plan.canvas": {
-      "repo": "81df35ac9476472b",
-      "vault": "81df35ac9476472b",
-      "sellado": "2026-10-07",
-      "version": 3
+      "repo": "406feca3a500d860",
+      "vault": "406feca3a500d860",
+      "sellado": "2026-10-08",
+      "version": 4
     },
     "01 — Incidencias de QRECAUDA.base": {
       "repo": "c71d6cb5cf97384c",
