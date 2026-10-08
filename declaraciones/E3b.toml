@@ -1,0 +1,65 @@
+# Declaración de E3b (nodo P.E3b), fijada ANTES de medir. Hereda PARAMETROS.toml. Ninguna cifra es un resultado.
+# Prosa y justificación: docs/preinscripciones/E3b.md
+hereda = "declaraciones/PARAMETROS.toml"        # qubits, shots, semillas, ruido_lectura, validacion
+
+[experimento]
+id = "E3b"
+nodo_corrida = "C.E3b"
+metricas = ["M6_tasa_bps", "M7_latencia_ms"]    # los umbrales viven en dominio/metricas.py; abajo se REPITEN y el juez comprueba que coinciden
+pregunta = "la latencia de la transaccion cumple M7 cuando la clave sale de una reserva generada aparte"
+
+[definiciones]
+r1 = "arranque (informativo): pared desde iniciar() del productor hasta tener la primera clave aprobada en la reserva del consumidor"
+r2 = "regimen (decide): demanda de lambda tx/s durante duracion_s de pared, reserva cebada con 1 clave, productor corriendo en paralelo"
+latencia = "pared desde la llegada PROGRAMADA de la demanda (t_ini + i/lambda) hasta que el descifrado verifica; incluye cualquier espera por reserva vacia y el cambio de clave"
+tasa_neta = "suma(bits de clave aprobada) / suma(t_gen) sobre las claves cuya generacion TERMINA dentro de la ventana de R2; t_gen incluye los intentos rechazados y NO incluye el tiempo bloqueado por cola llena"
+espera = "una llamada a siguiente() que necesita clave nueva y la reserva no la tiene lista (tomar sin esperar devuelve nada)"
+reloj = "time.perf_counter_ns (CLOCK_MONOTONIC, comun a los dos procesos)"
+sin_cola_ni_red_de_ibm = true
+
+[configuracion]
+backend = "aer_ruidoso"
+nivel_ruido = "medio"                            # valor en PARAMETROS.toml [ruido_lectura]
+mitigacion = "twirling_propio"
+twirling_bloque = 200
+semilla_clave = "semilla * 100 + i"             # i = 0, 1, 2…: indice de la clave producida; reintento k: + k * 10**9 (como E3)
+hilos = 1                                        # POR PROCESO
+omp_num_threads = 1
+aer_max_parallel_threads = 1
+carga_previa_maxima = 3.0                        # os.getloadavg()[0] < 3.0 al arrancar cada semilla (dos procesos propios; reposo hasta 900 s)
+candado_de_maquina = true
+nucleo_consumidor = 4                            # afinidad fijada con os.sched_setaffinity; 4-5 y 8-9 son pares SMT distintos (WSL2)
+nucleo_productor = 8
+maquina = "la registrada por la sonda (CPU, nucleos logicos, RAM, kernel, afinidad efectiva de cada proceso); una sola para las tres semillas"
+
+[reserva]
+capacidad_claves = 2                             # cola acotada entre procesos
+cebado_claves = 1                                # la reserva arranca R2 con 1 clave; el cebado cuenta como R1
+espera_maxima_s = 60                             # si el consumidor espera mas que esto, la reserva esta agotada (resultado, no excepcion tragada)
+claves_cruzan_por = "cola entre procesos, en memoria; nunca disco, manifiesto ni bitacora (solo huella sha256 de 12 hex)"
+
+[demanda]
+tx_por_s = 100
+duracion_s = 120
+transacciones = 12000                            # = tx_por_s * duracion_s; el ejecutor comprueba la igualdad
+bits_por_transaccion = 352                       # clave 256 + nonce 96
+consumo_bps = 35200                              # = tx_por_s * bits_por_transaccion; el juez comprueba la igualdad
+alternancia = "peaje, metro, peaje, metro…"
+datos = "sinteticos, sin datos personales"
+
+[criterios]                                      # conjuntivos, por semilla y en las tres
+t1_tasa_neta_mayor_que_bps = 10000               # M6 (estricto, medir(TASA)) Y mayor que consumo_bps (estricto)
+t2_p95_menor_que_ms = 500                        # M7 (estricto, medir(LATENCIA)), p95 method=higher de las latencias de R2
+t3_esperas_maximas = 0                           # ninguna transaccion espera reserva vacia; reserva agotada tambien falla T3
+controles = ["U1", "U2", "U3", "U4", "U5"]
+p_latencia = 95
+
+[validez_un_hilo]                                # T4: control de validez (falla => INVALIDA, no NO_CUMPLE)
+cpu_sobre_pared_maximo = 1.10                    # productor (CPU propia + hijos) y consumidor (CPU propia), cada uno en su ventana
+
+[controles_uso]
+rotulo_esperado = "validación del pipeline"
+
+[validacion_de_la_clave]                         # igual que E3 (enmienda 2026-10-07 de E3): decide la clave
+mitigada = "informativa"
+decide_para_entregar = "clave"                   # calidad_de_clave_aprobada (M1-M5 sobre la clave); rechazada => se regenera (hasta 5 intentos seguidos)
