@@ -72,3 +72,4 @@
 {"nodo":"C.E4","estado":"bloqueado","nota":"sin credencial IBM","fecha":"2026-10-08"}
 {"nodo":"C.E5","estado":"hecho","evidencia":"4349489","fecha":"2026-10-08"}
 {"nodo":"E5","estado":"hecho","evidencia":"f379ec0","fecha":"2026-10-08"}
+{"nodo":"E5","estado":"juzgado","evidencia":"f379ec0","veredicto":"registro/veredictos.jsonl#E5","fecha":"2026-10-08"}
