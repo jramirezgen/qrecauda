@@ -28,12 +28,12 @@
   },
   "_incidencias": "`situacion:` de cada incidencia, observada la última vez — sólo existe si el proyecto activó `git_commit_al_cerrar_incidencia`. Sin este 'antes', publicar no puede distinguir una incidencia que YA estaba resuelta de una que se acaba de cerrar.",
   "incidencias": {
-    "INC-001": "en_curso",
-    "INC-002": "en_curso",
-    "INC-003": "en_curso",
-    "INC-004": "en_curso",
-    "INC-005": "en_curso",
-    "INC-006": "en_curso",
-    "INC-007": "en_curso"
+    "INC-001": "resuelta",
+    "INC-002": "resuelta",
+    "INC-003": "resuelta",
+    "INC-004": "resuelta",
+    "INC-005": "resuelta",
+    "INC-006": "resuelta",
+    "INC-007": "resuelta"
   }
 }
