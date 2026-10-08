@@ -1,0 +1,1 @@
+{"corrida":"C.E2","esquema":1,"intervalo_residual":[0.029419687499999993,0.030503765625000002],"nivel":"medio","semilla":20261009,"sesgo_crudo":0.029974062500000002,"sesgo_maximo_por_qubit":0.031115000000000004,"sesgo_residual":0.029974062500000002,"shots":400000,"tecnica":"ninguna"}

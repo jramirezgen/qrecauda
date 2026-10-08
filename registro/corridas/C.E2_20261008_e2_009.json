@@ -1,0 +1,1 @@
+{"corrida":"C.E2","esquema":1,"intervalo_residual":[0.0006046718749999926,0.0014453124999999972],"nivel":"simetrico","semilla":20261008,"sesgo_crudo":0.0005150000000000085,"sesgo_maximo_por_qubit":0.0022450000000000525,"sesgo_residual":0.000780625000000007,"shots":400000,"tecnica":"twirling_propio"}
