@@ -8,9 +8,9 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 50 |
+| hecho | 51 |
 | juzgado | 3 |
-| pendiente | 6 |
+| pendiente | 5 |
 
 ## En curso, bloqueados y pausados
 
@@ -19,7 +19,8 @@ Plan v1 · 2026-10-07
 ## Listos
 
 - **F7.01** Notebook reproducible con versiones exactas
-- **T.TRL** Matriz de TRL por componente, derivada de la evidencia
+- **F7.02** Pitch de 10 slides
+- **F7.04** Roadmap TRL 4 → TRL 5 → piloto → producción
 
 ## Hechos y juzgados
 
@@ -77,4 +78,5 @@ Plan v1 · 2026-10-07
 | E3 | juzgado | `fdb4386` | ¡EUREKA 3! Tasa y latencia dentro de umbral con la transacción cifrada |
 | F7.03 | hecho | `d9609a1` | Modelo de amenazas |
 | F7.06 | hecho | `013fd62` | Prueba de integración: Aer → mitigación → extracción → validación → AES-GCM → descifrado |
+| T.TRL | hecho | `8039a6d` | Matriz de TRL por componente, derivada de la evidencia |
 | F7.05 | hecho | `7db7730` | Wiki repo: mapas, bases e incidencias publicados en la bóveda |
