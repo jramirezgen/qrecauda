@@ -1,4 +1,4 @@
-"""QRecauda — entropía cuántica certificada para la recaudación del Perú.
+"""QRecauda — pipeline QRNG reproducible en simulador para la recaudación del Perú (TRL 3; sin origen cuántico afirmado).
 
 Capas de fuera hacia dentro (docs/DISENO.md §3; las hace cumplir `.importlinter`):
 entrada → api → composicion → adaptadores | presentacion → aplicacion → puertos → datos → dominio.

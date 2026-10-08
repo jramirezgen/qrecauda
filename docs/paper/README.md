@@ -19,4 +19,4 @@ Reproducir, desde la raíz del repositorio:
 bash docs/paper/construir.sh
 ```
 
-Toda cifra procede de una corrida o veredicto nombrado del registro. No se citan rutas absolutas ni datos personales; el autor figura sólo con el alias «kaitokid».
+Toda cifra procede de una corrida o veredicto nombrado del registro. No se citan rutas absolutas. El informe es anónimo (alias «kaitokid»); la historia de git lleva la identidad de git del dueño del repo, decisión suya, y el remoto es público (`jramirezgen/qrecauda`, con espejo `bare`). No se reescribió la historia.

@@ -1,7 +1,7 @@
 # Roadmap de QRECAUDA: de TRL 3 a producción (F7.04)
 
 > Qué evidencia falta para cada salto y qué la produciría. Parte de `docs/TRL.md`, `docs/preinscripciones/E3.md`,
-> D-007 y D-010. Lo marcado ⚠️ sin verificar es hipótesis, no premisa (FUNDAMENTO). Este documento no contiene
+> D-002, D-007 y D-010. Lo marcado ⚠️ sin verificar es hipótesis, no premisa (FUNDAMENTO). Este documento no contiene
 > resultados: ninguna cifra nueva sale de aquí, salen de corridas nombradas en `registro/corridas/`.
 
 ## Dónde estamos
@@ -13,7 +13,7 @@ El TRL del sistema es **3**, la fila más baja de la matriz. Dos filas independi
 2. **Fuente real.** No hay corrida en hardware IBM. `HW.json` es una constancia con `job_id` nulo (D-010).
 
 El pipeline de postprocesamiento (extracción, mitigación, validación) está en TRL 4 sobre simulador. Eso no basta para el
-sistema: Aer muestrea con un PRNG, así que pasar M1–M5 no prueba origen cuántico (D-007; hallazgo R.00-1: la clave sin
+sistema: Aer muestrea con un PRNG, así que pasar M1–M5 no prueba origen cuántico (D-002; hallazgo R.00-1: la clave sin
 mitigar también pasa).
 
 ## Esquema
@@ -53,7 +53,7 @@ Los saltos 1 y 2 son independientes y el sistema llega a TRL 4 sólo cuando se c
 ## Certificación formal: no se hace en la hackatón
 
 Ninguna fila de esta sección se da por cumplida ni se insinúa en el pitch. Los datos de procedimiento son de conocimiento
-general del autor y **no se han verificado contra las fuentes oficiales en esta sesión** (⚠️ sin verificar), salvo que se indique.
+general del autor y **no se verificaron contra las fuentes oficiales (consulta del 2026-10-08)** (⚠️ sin verificar), salvo que se indique.
 
 | tema | qué hay hoy | qué falta |
 |---|---|---|
@@ -65,7 +65,7 @@ general del autor y **no se han verificado contra las fuentes oficiales en esta 
 
 ## Normativa peruana aplicable
 
-Verificado en esta sesión sólo contra fuentes secundarias (búsqueda web); el texto oficial de cada norma debe leerse antes
+Verificado el 2026-10-08 sólo contra fuentes secundarias (búsqueda web); el texto oficial de cada norma debe leerse antes
 de citar un artículo. Este repo no es asesoría legal.
 
 - **Ley 29733 (protección de datos personales).** Exige medidas técnicas de seguridad y confidencialidad apropiadas a la

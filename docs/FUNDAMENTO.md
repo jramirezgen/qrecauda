@@ -1,6 +1,6 @@
 # FUNDAMENTO de QRecauda
 
-> Manda sobre el objetivo, el alcance y las reglas. Sólo cambia por enmienda (`docs/enmiendas/`, aún vacía).
+> Manda sobre el objetivo, el alcance y las reglas. Sólo cambia por enmienda: una decisión fechada en `docs/decisiones/` o una enmienda dentro de la preinscripción que corresponda.
 > Fuentes: `docs/origen/MENSAJE_FUNDACIONAL.md` (el manifiesto del equipo) y
 > `docs/origen/ESTRATEGIA_QRNG_QRECAUDA.md` (la estrategia, 60 KB). Donde difieren, manda este documento,
 > y la diferencia está en «Discrepancias declaradas».
@@ -13,16 +13,16 @@ Construir un **pipeline QRNG reproducible**: circuito H⊗n → muestreo → mit
 
 *Track 4 · Hackatón Qiskit IBM Lima. Tesis del equipo: «La aleatoriedad clásica se predice. La recaudación del Perú no debería.»*
 
-## Objetivos por rama (estado: resuelto o pausado, nunca «olvidado»)
+## Objetivos por rama (estado a 2026-10-08)
 
 | rama | objetivo específico | estado |
 |---|---|---|
-| núcleo | dominio puro + bala trazadora con PRNG (F1, F2) | **escrito, sin commitear** — se cierra al commitear |
-| simulador | Aer + modelo de ruido + mitigación (F3, F4) | pausado hasta S.01 |
-| hardware | SamplerV2 sobre IBM real (F3.04) | pausado: depende de acceso y de S.01 |
-| validación | NIST + 90B, contrastados con el validador propio (F5) | pausado |
-| caso de uso | AES-GCM con la clave del pipeline (F6) | pausado |
-| difusión | notebook, pitch, roadmap, wiki (F7) | pausado |
+| núcleo | dominio puro + bala trazadora con PRNG (F1, F2) | hecho |
+| simulador | Aer + modelo de ruido + mitigación (F3, F4) | hecho; sin contraste con ruido real |
+| hardware | SamplerV2 sobre IBM real (F3.04, F3.06) | adaptador hecho con doble; sin corrida real: constancia de no acceso (D-010) |
+| validación | NIST + 90B, contrastados con el validador propio (F5) | hecho |
+| caso de uso | AES-GCM con la clave del pipeline (F6) | hecho; E3 NO CUMPLE por M7 |
+| difusión | notebook, pitch, roadmap, wiki (F7) | hecho salvo el cierre de la revisión R.01 y el release |
 
 ## Alcance v0.1.0
 
@@ -46,19 +46,19 @@ HSM, distribución de claves.
 
 El mensaje fundacional es la autoridad sobre el *objetivo*. Lo siguiente son puntos donde su *método* choca con lo que
 las bibliotecas o la estadística permiten; se declaran antes de actuar y cada una tiene un spike o un test que la resuelve.
-Todo lo marcado ⚠️ es hipótesis de trabajo, no premisa.
+Todo lo marcado «sin verificar» es hipótesis de trabajo, no premisa. Un límite declarado se escribe como tal, sin marcador.
 
 | # | El mensaje dice | Lo que hay que resolver | Cómo se resuelve | Estado |
 |---|---|---|---|---|
 | 1 | «No dependemos de hardware real» y, en la estrategia, «ejecutado sobre procesadores físicos de IBM» | Son dos alcances distintos | El backend es un puerto (D-001): simulador por defecto, hardware opcional | decidido |
-| 2 | Aer + modelo de ruido produce «entropía cuántica» | **El muestreo de AerSimulator usa un PRNG**: sus bits son pseudoaleatorios aunque el circuito sea H⊗n | `Origen.SIMULADOR_AER` no reclama origen cuántico (D-002); spike S.03 lo demuestra; el pitch lo dice | decidido, falta S.03 |
-| 3 | TREX + ZNE + PEC/PNA mitigan el *bitstream* de SamplerV2 | ⚠️ ZNE y PEC se definen sobre valores esperados (Estimator); `resilience_level` y `measure_mitigation` son opciones de EstimatorV2, no de SamplerV2 | Spike S.02; mientras tanto: lectura sobre bitstrings, ZNE/PEC sobre ⟨Z⟩ (D-003) | ⚠️ sin verificar |
-| 4 | «TREX vía `mthree`» | ⚠️ TREX (twirled readout) y `mthree` (mitigación matrix-free) son técnicas distintas; y `mthree` puede no soportar el qiskit actual | Spike S.01 fija versiones; el adaptador se llama por lo que implementa | ⚠️ sin verificar |
-| 5 | Min-entropía > 0,9 es una prueba de calidad | Medida **tras** Toeplitz es ≈ 1 por construcción: no informa. La informativa es la de la entrada al extractor | Se reportan las dos: `h_min` de entrada (decide la longitud segura) y la de salida (M2) | decidido |
-| 6 | «Claves certificadas» | NIST SP 800-22 es una batería de **pruebas estadísticas**: un PRNG las pasa. No certifica origen ni impredecibilidad | El eureka E1 lleva un control negativo (PRNG pasa) y el informe lo dice (D-007) | decidido |
-| 7 | «TRL 4» (el manifiesto lo define como «en una PC de 16 GB, sin colas ni credenciales») | La rúbrica de TRL pide repetibilidad n ≥ 3, protocolo preinscrito y auditable por un tercero, y el TRL real es el de la afirmación más débil: la fuente cuántica en simulador es TRL 3 | `T.TRL` deriva el rótulo de la evidencia; el simulador sostiene el pipeline de postprocesamiento y cifrado, y la fuente cuántica sube sólo con `F3.06` (corrida real con `job_id`) | declarado, lo cierra `T.TRL` |
-| 8 | Min-entropía por MCV decide la longitud de la clave y la «certifica» | MCV mira la frecuencia marginal y es ciego a la dependencia: una cadena de Markov con permanencia 0,8 (real 0,32 bit/bit) da 0,990 y pasa | Estimador 90B no-IID tras un puerto propio (`S.04`, `F5.02`) y control positivo `C.E1d`; ε = 2⁻⁶⁴ es un parámetro de diseño, no una garantía | decidido, falta `S.04` |
-| 9 | M1 < 1 % y M2 > 0,9 como umbrales de aceptación | A N = 800 000 monobit exige un sesgo < 0,0014 (siete veces más estricto que M1) y M2 sobre una clave de 256 bits no puede pasar de 0,785 | `P.E0` fija M2 sobre bloques de 4096 bits y el dimensionamiento de la cadena | decidido, falta `P.E0` |
+| 2 | Aer + modelo de ruido produce «entropía cuántica» | **El muestreo de AerSimulator usa un PRNG**: sus bits son pseudoaleatorios aunque el circuito sea H⊗n | `Origen.SIMULADOR_AER` no reclama origen cuántico (D-002); el spike S.03 lo demostró (nodo `S.03`, 2026-10-07); el pitch lo dice | decidido y verificado (S.03) |
+| 3 | TREX + ZNE + PEC/PNA mitigan el *bitstream* de SamplerV2 | ZNE y PEC se definen sobre valores esperados (Estimator); `resilience_level` y `measure_mitigation` son opciones de EstimatorV2, no de SamplerV2 | Spike S.02 lo midió: lectura por twirling propio sobre bitstrings (D-009), ZNE/PEC sobre ⟨Z⟩ (D-003, sustituida en parte por D-009); en C.E2 ZNE y PEC no mueven el sesgo de lectura. Que SamplerV2 aplique twirling sobre hardware real sigue sin probarse: límite declarado | verificado en simulador (S.02, C.E2); límite en hardware |
+| 4 | «TREX vía `mthree`» | TREX (twirled readout) y `mthree` (mitigación matrix-free) son técnicas distintas, y `mthree` devuelve cuasi-probabilidades, no bits | Spike S.01 fijó versiones (mthree 3.0.0 convive con qiskit 2.5.2); S.02 y D-009: twirling propio como fuente de bits, `mthree` sólo como contraste | verificado (S.01, S.02, D-009) |
+| 5 | Min-entropía > 0,9 es una prueba de calidad | Medida **tras** Toeplitz es ≈ 1 por construcción: no informa. La informativa es la de la entrada al extractor | Se reportan las dos: `h_min` de entrada (MCV, decide la longitud) y la de salida (M2) | decidido |
+| 6 | «Claves certificadas» | NIST SP 800-22 es una batería de **pruebas estadísticas**: un PRNG las pasa. No certifica origen ni impredecibilidad | El eureka E1 lleva un control negativo (PRNG pasa) y el informe lo dice (D-007; el origen es D-002) | decidido |
+| 7 | «TRL 4» (el manifiesto lo define como «en una PC de 16 GB, sin colas ni credenciales») | La rúbrica de TRL pide repetibilidad n ≥ 3, protocolo preinscrito y auditable por un tercero, y el TRL real es el de la afirmación más débil: la fuente cuántica en simulador es TRL 3 | `T.TRL` deriva el rótulo de la evidencia; el simulador sostiene el pipeline de postprocesamiento y cifrado, y la fuente cuántica sube sólo con `F3.06` (corrida real con `job_id`) | cerrado en `T.TRL` (`docs/TRL.md`) |
+| 8 | Min-entropía por MCV decide la longitud de la clave y la «certifica» | MCV mira la frecuencia marginal y es ciego a la dependencia: una cadena de Markov con permanencia 0,8 (real 0,32 bit/bit) da 0,990 y pasa | Estimador 90B no-IID tras un puerto propio (`S.04`, `F5.02`) y control positivo `C.E1d`; ε = 2⁻⁶⁴ es un parámetro de diseño, no una garantía. El 90B es contraste informativo: la clave se dimensiona con MCV, que supone IID (límite en AMENAZAS, hallazgo A1 de R.01; mitigación futura: min(MCV, 90B)) | decidido; 90B hecho (S.04), dimensionado con 90B no adoptado |
+| 9 | M1 < 1 % y M2 > 0,9 como umbrales de aceptación | A N = 800 000 monobit exige un sesgo < 0,0014 (siete veces más estricto que M1) y M2 sobre una clave de 256 bits no puede pasar de 0,785 | `P.E0` fija M2 sobre bloques de 4096 bits y el dimensionamiento de la cadena (hecho en `P.E0`) | decidido y hecho |
 
 ## Los códigos O1–O7 y R1–R6
 
@@ -87,3 +87,4 @@ El mensaje fundacional no los numera; se toman de sus listas, en su orden.
 - El semillado de Toeplitz exige bits uniformes independientes: se toman del mismo pool (D-004); la suposición de
   independencia entre bloques es una hipótesis del modelo de ruido, no un hecho medido.
 - Las latencias medidas en PC no incluyen la cola ni la red de IBM Quantum.
+- El dimensionado de la clave supone bits IID (MCV); con correlación temporal, la garantía no vale (`docs/AMENAZAS.md`).

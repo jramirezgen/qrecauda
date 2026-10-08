@@ -1,6 +1,8 @@
 # QRecauda
 
-Entropía cuántica certificada (QRNG) para la recaudación del Perú — Track 4, Hackatón Qiskit IBM Lima.
+Pipeline QRNG reproducible en simulador para la recaudación del Perú (TRL 3, validación de pipeline; sin origen cuántico afirmado) — Track 4, Hackatón Qiskit IBM Lima.
+
+Qué es y qué no: el simulador (Aer) muestrea con un PRNG, así que no hay entropía cuántica ni certificación. Pasar la batería estadística prueba el postprocesamiento, no el origen de los bits (D-002, D-005, `docs/TRL.md`). Sin corrida en hardware (D-010).
 
 Pipeline: `FuenteDeBits → [Mitigador] → Peres → Toeplitz(LHL) → Validador → Clave → AES-GCM`.
 

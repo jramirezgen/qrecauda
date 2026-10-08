@@ -28,14 +28,14 @@ Un término, un sentido. Si un nombre se usa con dos sentidos, uno se renombra.
 
 | término | definición |
 |---|---|
-| lectura (TREX / mthree) | corrección del sesgo de medición. Se aplica sobre bitstrings. ⚠️ la equivalencia TREX = mthree no está verificada (spike S.02). |
-| ZNE / PEC | técnicas de valores esperados; aquí actúan sobre ⟨Z⟩, no sobre bitstrings. ⚠️ ídem. |
+| lectura (TREX / mthree) | corrección del sesgo de medición. Se aplica sobre bitstrings. TREX y mthree no son equivalentes: mthree devuelve cuasi-probabilidades, no bits (S.02, D-009). |
+| ZNE / PEC | técnicas de valores esperados; aquí actúan sobre ⟨Z⟩, no sobre bitstrings, y no mueven el sesgo de lectura (C.E2). |
 | ⟨Z⟩ | 1 − 2·p1 promediado sobre qubits; ideal 0 tras H. El sesgo de bit M1 es \|⟨Z⟩\|/2. Positivo = más ceros. |
 | `ReporteSesgo` | ⟨Z⟩ crudo y mitigado de una fuente, con error estándar, `Tecnica`, `Efecto`, ⟨Z⟩ por factor (ZNE) o γ (PEC) (`adaptadores/zne_pec.py`). |
 | `Efecto.SIN_EFECTO_ESPERADO` | veredicto de ZNE/PEC cuando el ruido presente (p. ej. sólo lectura) no es el que actúan: se declara, no se oculta (D-009). |
 | `RelajacionConocida` | perfil T1/T2/tiempo de puerta de la H que PEC invierte; conocido, no aprendido. |
-| escala efectiva (ZNE) | variable de extrapolación s = (λ+1)/2 para H plegada λ veces; el ruido llega a ⟨Z⟩ en s de las λ puertas. ⚠️ deducida a primer orden. |
-| PNA / `Samplomatic` | ⚠️ sin verificar y NO implementados en F4.02: exigen ruido aprendido en el servicio de IBM. |
+| escala efectiva (ZNE) | variable de extrapolación s = (λ+1)/2 para H plegada λ veces; el ruido llega a ⟨Z⟩ en s de las λ puertas. Deducida a primer orden: límite declarado. |
+| PNA / `Samplomatic` | No implementados en F4.02 y sin verificar: exigen ruido aprendido en el servicio de IBM. |
 
 ## Evaluación
 
