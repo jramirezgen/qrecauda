@@ -49,3 +49,5 @@
 {"nodo":"C.E1d","estado":"hecho","evidencia":"89cdaba","fecha":"2026-10-07"}
 {"nodo":"E1","estado":"juzgado","evidencia":"89cdaba","veredicto":"registro/veredictos.jsonl#E1","fecha":"2026-10-07"}
 {"nodo":"F3.04","estado":"hecho","evidencia":"80d6cc5","fecha":"2026-10-07"}
+{"nodo":"C.E3","estado":"hecho","evidencia":"fdb4386","fecha":"2026-10-08"}
+{"nodo":"E3","estado":"juzgado","evidencia":"fdb4386","veredicto":"registro/veredictos.jsonl#E3","fecha":"2026-10-08"}
