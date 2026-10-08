@@ -8,9 +8,9 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 54 |
+| hecho | 55 |
 | juzgado | 3 |
-| pendiente | 2 |
+| pendiente | 1 |
 
 ## En curso, bloqueados y pausados
 
@@ -18,7 +18,7 @@ Plan v1 · 2026-10-07
 
 ## Listos
 
-- **R.01** Revisión adversarial propia previa al release 0.1.0
+- **REL-0.1.0** Release 0.1.0: pipeline QRNG reproducible en simulador (rótulo de TRL según T.TRL)
 
 ## Hechos y juzgados
 
@@ -33,7 +33,7 @@ Plan v1 · 2026-10-07
 | F0.06 | hecho | `d9609a1` | RETOMA.md y CLAUDE.md del repo |
 | F0.07 | hecho | `d9609a1` | Hooks commit-msg (sin atribución) y pre-push (CI local) |
 | F0.08 | hecho | `a5bf535` | CI local: ruff, mypy, lint-imports, pytest y DAG |
-| F0.09 | hecho | `1e8c1a9` | Remotos: GitHub privado y espejo bare |
+| F0.09 | hecho | `1e8c1a9` | Remotos: GitHub público y espejo bare |
 | R.00 | hecho | `564dc94` | Revisión adversarial del diseño, antes de construir |
 | F1.01 | hecho | `0419140` | Bits inmutable y errores con nombre |
 | F1.02 | hecho | `0419140` | Extractores von Neumann, Peres y Toeplitz con LHL |
@@ -81,3 +81,4 @@ Plan v1 · 2026-10-07
 | F7.01 | hecho | `faeb0d7` | Notebook reproducible con versiones exactas |
 | F7.02 | hecho | `db1b5cd` | Pitch de 10 slides |
 | F7.04 | hecho | `ca8cc07` | Roadmap TRL 4 → TRL 5 → piloto → producción |
+| R.01 | hecho | `9048da9` | Revisión adversarial propia previa al release 0.1.0 |
