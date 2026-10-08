@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "Si usas este software, cítalo con estos metadatos."
 title: "QRecauda: pipeline QRNG reproducible en simulador para recaudación"
 type: software
-version: 0.1.0
+version: 0.2.0
 date-released: 2026-10-08
 license: Apache-2.0
 repository-code: "https://github.com/jramirezgen/qrecauda"

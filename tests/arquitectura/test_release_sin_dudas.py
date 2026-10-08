@@ -1,4 +1,4 @@
-"""REL-0.1.0: un release no arrastra marcadores de duda vigentes en FUNDAMENTO ni en las decisiones, y su título no excede el TRL."""
+"""REL-0.2.0 (y 0.1.0): un release no arrastra dudas vigentes en FUNDAMENTO ni en las decisiones, y su título no excede el TRL."""
 
 from __future__ import annotations
 
@@ -20,17 +20,18 @@ def test_fundamento_y_decisiones_no_tienen_marcadores_de_duda_vigentes() -> None
 
 
 def test_el_expediente_y_el_changelog_dicen_el_trl_que_sostiene_la_matriz() -> None:
-    exp = (RAIZ / "docs" / "releases" / "EXPEDIENTE_0.1.0.md").read_text(encoding="utf-8")
     trl = (RAIZ / "docs" / "TRL.md").read_text(encoding="utf-8")
     sistema = re.search(r"TRL del sistema:\s*(\d)", trl)
     assert sistema, "docs/TRL.md debe declarar «TRL del sistema: N»"
-    assert f"TRL del sistema: {sistema.group(1)}" in exp
-    assert "certificad" not in exp.lower().replace("no entra", "").split("## 1.")[0]
-    assert "0.1.0" in (RAIZ / "CHANGELOG.md").read_text(encoding="utf-8")
+    for version in ("0.1.0", "0.2.0"):
+        exp = (RAIZ / "docs" / "releases" / f"EXPEDIENTE_{version}.md").read_text(encoding="utf-8")
+        assert f"TRL del sistema: {sistema.group(1)}" in exp, version
+        assert "certificad" not in exp.lower().replace("no entra", "").split("## 1.")[0], version
+        assert version in (RAIZ / "CHANGELOG.md").read_text(encoding="utf-8"), version
 
 
 def test_la_version_del_paquete_es_la_del_release() -> None:
     from qrecauda import __version__
 
-    assert __version__ == "0.1.0"
-    assert 'version = "0.1.0"' in (RAIZ / "pyproject.toml").read_text(encoding="utf-8")
+    assert __version__ == "0.2.0"
+    assert 'version = "0.2.0"' in (RAIZ / "pyproject.toml").read_text(encoding="utf-8")

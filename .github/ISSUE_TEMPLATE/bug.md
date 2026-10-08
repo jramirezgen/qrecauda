@@ -15,7 +15,7 @@ labels: bug
 
 ## Entorno
 
-- Versión (`qrecauda` 0.1.0 o commit):
+- Versión (`qrecauda` 0.2.0 o commit):
 - Sistema operativo:
 - Python:
 - Extras instalados:

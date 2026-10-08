@@ -1,6 +1,6 @@
 [project]
 name = "qrecauda"
-version = "0.1.0"
+version = "0.2.0"
 description = "Pipeline QRNG reproducible en simulador para recaudación (TRL 3, validación de pipeline; sin origen cuántico afirmado): Hadamard → mitigación → extractores → validación → clave"
 license = "Apache-2.0"
 readme = "README.md"

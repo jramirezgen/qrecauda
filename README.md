@@ -33,7 +33,7 @@ Las fuentes completas y su etiqueta están en [`docs/pitch/IMPACTO.md`](docs/pit
 
 ## Demo en 2 minutos
 
-> `qrecauda demo` está en el árbol de trabajo (sin publicar): no existía en 0.1.0. Corre con Aer y sin red; la salida lleva el rótulo «simulado: Aer es pseudoaleatorio, sin origen cuántico».
+> `qrecauda demo` es nuevo en 0.2.0: no existía en 0.1.0. Corre con Aer y sin red; la salida lleva el rótulo «simulado: Aer es pseudoaleatorio, sin origen cuántico».
 
 Necesita los extras de la instalación completa (ver [Instalación](#instalación)); con sólo `uv sync --group dev` no corre. Después de instalarlos, lánzala sin que `uv` los quite:
 
@@ -44,7 +44,7 @@ Necesita los extras de la instalación completa (ver [Instalación](#instalació
 
 Tiempo: sin medir, ni en la demo completa ni con `--rapido` (⚠️ sin verificar; `--rapido` usa menos disparos). La ayuda de la CLI dice lo mismo. Se probó con Python 3.13.
 
-**Dimensionado de la clave (disponible en 0.2.0).** La demo usa por defecto el dimensionado `mcv`. El dimensionado conservador de E5 se activa con `qrecauda demo --dimensionado conservador` (valores: `mcv`, `conservador`); sigue siendo opt-in.
+**Dimensionado de la clave (desde 0.2.0).** La demo usa por defecto el dimensionado `mcv`. El dimensionado conservador de E5 se activa con `qrecauda demo --dimensionado conservador` (valores: `mcv`, `conservador`); sigue siendo opt-in.
 
 Muestra tres ramas lado a lado: un PRNG clásico, la fuente de Aer sin mitigar y la fuente de Aer mitigada. La mitigación limpia la entrada (el sesgo de la muestra baja de 0,03 a cuatro diezmilésimas), pero la clave de las tres ramas pasa la batería: por eso la batería no prueba el origen. La figura sale de las corridas registradas con `presentacion/figura_demo.py` y está en el [deck](docs/pitch/DECK.md); el [guion de dos minutos](docs/pitch/GUION.md) cronometra la presentación. Además cifra y descifra con AES-256-GCM un peaje y un trayecto de Metro con la clave aprobada. `qrecauda demo --fuente ibm --ensayo` recorre el camino a IBM contra un backend falso (ver [docs/HARDWARE.md](docs/HARDWARE.md)). `qrecauda juzgar E1` rejuzga la corrida registrada. (Los comandos se muestran como `qrecauda ...`; ejecútalos con `.venv/bin/qrecauda` o `uv run --no-sync qrecauda`.)
 
@@ -80,8 +80,8 @@ Cada cifra del proyecto sale de una corrida con nombre, registrada en `registro/
 | E1 | pipeline con fuente simulada, métricas M1 a M5 | CUMPLE, condicionado | La clave sin mitigar también pasa M1 a M5, así que esas métricas no prueban el valor de la mitigación ni el origen. |
 | E2 | mitigación de lectura | CUMPLE | El twirling propio baja el sesgo de lectura entre 11 y 32 veces sobre ruido modelado. ZNE y PEC no mueven el sesgo de lectura. |
 | E3 (0.1.0) | tasa (M6) y latencia (M7), la clave se genera dentro de la transacción | **NO CUMPLE** | M6 de 180 a 195 kbit/s (umbral 10 kbit/s, cumple). M7, p95 de 5,5 a 9,4 s frente a 500 ms: falla en las tres semillas. |
-| E3b (0.2.0 en preparación) | latencia y sostenibilidad con la clave de una reserva generada aparte por un proceso productor | CUMPLE | M7, con la reserva cebada, p95 de 0,17 a 0,18 ms sobre 12 000 transacciones por semilla (umbral 500 ms). Capacidad del productor de 177 a 199 kbit/s; entregado en régimen, 47,8 kbit/s (1,36 veces el consumo declarado de 35,2 kbit/s), sin esperas. Arranque de 6,6 a 6,7 s hasta la primera clave, informado aparte: una transacción que llegue durante él incumpliría M7. No es comparable con E3 (E3 mide generar y cifrar; E3b, sólo cifrar). T2 (M7) era casi trivial por la baja utilización. |
-| E5 (0.2.0 en preparación) | control negativo del pipeline completo con fuentes que dependen de sus bits, y dimensionado conservador | CUMPLE, casi por construcción | Con el dimensionado de 0.1.0 (`mcv`), las nueve claves de fuentes defectuosas pasan M1 a M5 y salen entre 1,2 y 2,5 veces más largas que lo que la fuente sostiene (hallazgo R.00-1 en cadena completa). El dimensionado conservador las acorta (markov_fuerte: de 380 a 381 mil bits con `mcv`, de 55 a 56 mil con el conservador) y la fuente buena conserva de 856 a 883 mil bits. |
+| E3b (0.2.0) | latencia y sostenibilidad con la clave de una reserva generada aparte por un proceso productor | CUMPLE | M7, con la reserva cebada, p95 de 0,17 a 0,18 ms sobre 12 000 transacciones por semilla (umbral 500 ms). Capacidad del productor de 177 a 199 kbit/s; entregado en régimen, 47,8 kbit/s (1,36 veces el consumo declarado de 35,2 kbit/s), sin esperas. Arranque de 6,6 a 6,7 s hasta la primera clave, informado aparte: una transacción que llegue durante él incumpliría M7. No es comparable con E3 (E3 mide generar y cifrar; E3b, sólo cifrar). T2 (M7) era casi trivial por la baja utilización. |
+| E5 (0.2.0) | control negativo del pipeline completo con fuentes que dependen de sus bits, y dimensionado conservador | CUMPLE, casi por construcción | Con el dimensionado de 0.1.0 (`mcv`), las nueve claves de fuentes defectuosas pasan M1 a M5 y salen entre 1,2 y 2,5 veces más largas que lo que la fuente sostiene (hallazgo R.00-1 en cadena completa). El dimensionado conservador las acorta (markov_fuerte: de 380 a 381 mil bits con `mcv`, de 55 a 56 mil con el conservador) y la fuente buena conserva de 856 a 883 mil bits. |
 
 Las cifras salen de `registro/corridas/C.E3.json`, `C.E3b.json` y `C.E5.json` y de `registro/veredictos.jsonl`; el cociente de 1,2 a 2,5 se calcula en el veredicto de E5 (criterio HOY) frente al techo teórico de cada fuente.
 
@@ -204,7 +204,7 @@ Volver a correr un experimento completo (`qrecauda correr declaraciones/E1.toml`
 
 ## Plan y registro
 
-El plan es un grafo acíclico (`plan/`); los 59 nodos de la versión 0.1.0 están cerrados y la 0.2.0 (en preparación, sin publicar) suma E3b y E5, ambos juzgados (el plan tiene hoy 78 nodos; la cifra viva está en `ESTADO.md`). La hoja de ruta de la 0.3.0 es el camino a hardware: C.E4 y E4 siguen abiertos. El estado vive en `registro/nodos.jsonl` y `ESTADO.md` se genera de él. Un nodo se cierra con un commit que toca su entrega. Para ver el estado: `python3 plan/dag.py estado`; para ver qué sigue: `python3 plan/dag.py siguiente`. Si quieres contribuir, empieza por [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`RETOMA.md`](RETOMA.md).
+El plan es un grafo acíclico (`plan/`); los 59 nodos de la versión 0.1.0 están cerrados y la 0.2.0 (publicada, tag `v0.2.0`; expediente en `docs/releases/EXPEDIENTE_0.2.0.md`) suma E3b y E5, ambos juzgados (el plan tiene hoy 79 nodos; la cifra viva está en `ESTADO.md`). La hoja de ruta de la 0.3.0 es el camino a hardware: C.E4 y E4 siguen abiertos. El estado vive en `registro/nodos.jsonl` y `ESTADO.md` se genera de él. Un nodo se cierra con un commit que toca su entrega. Para ver el estado: `python3 plan/dag.py estado`; para ver qué sigue: `python3 plan/dag.py siguiente`. Si quieres contribuir, empieza por [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`RETOMA.md`](RETOMA.md).
 
 ## Enmiendas a las preinscripciones
 

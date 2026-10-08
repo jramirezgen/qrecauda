@@ -14,7 +14,7 @@ causa «sin credencial IBM»).
 | experimento E4 (3 trabajos, hardware frente a su gemelo en Aer) | `declaraciones/E4.toml`, `docs/preinscripciones/E4.md` | preinscrito; sin correr |
 | `qrecauda demo --fuente ibm` | `composicion.demo_de` | ensayada; con hardware real, ⚠️ sin verificar |
 
-Disponible en 0.2.0 (sin publicar): `qrecauda demo --dimensionado {mcv,conservador}` y `--instancia INSTANCIA` (CRN o nombre; también en `qrecauda hardware`) para elegir la instancia de IBM.
+Disponible desde 0.2.0: `qrecauda demo --dimensionado {mcv,conservador}` y `--instancia INSTANCIA` (CRN o nombre; también en `qrecauda hardware`) para elegir la instancia de IBM.
 
 ## 1. Una vez: cuenta, token e instancia
 

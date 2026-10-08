@@ -73,7 +73,7 @@ Fuente de bits -> Mitigación -> Peres -> Toeplitz -> Validación -> Clave -> AE
 
 - Un pasaje en el Metro o un cobro de peaje es una transacción pequeña que se firma y se cifra.
 - La clave AES-256-GCM sale de la cadena medida; el *nonce* no se repite.
-- El cuello de botella medido era la latencia (M7). El rediseño genera las claves aparte, en un proceso productor, y la transacción consume una ya lista (experimento E3b, versión 0.2.0 en preparación): p95 de 0,17{{corrida:C.E3b.p95_ms:min}} a 0,18{{corrida:C.E3b.p95_ms:max}} ms en simulador, con la reserva cebada; una transacción durante el arranque espera unos 6,6{{corrida:C.E3b.arranque_ms:min/1000}} s (el arranque llega a 6,7{{corrida:C.E3b.arranque_ms:max/1000}} s), y eso incumpliría M7. No es comparable con E3, que mide generar y cifrar.
+- El cuello de botella medido era la latencia (M7). El rediseño genera las claves aparte, en un proceso productor, y la transacción consume una ya lista (experimento E3b, versión 0.2.0): p95 de 0,17{{corrida:C.E3b.p95_ms:min}} a 0,18{{corrida:C.E3b.p95_ms:max}} ms en simulador, con la reserva cebada; una transacción durante el arranque espera unos 6,6{{corrida:C.E3b.arranque_ms:min/1000}} s (el arranque llega a 6,7{{corrida:C.E3b.arranque_ms:max/1000}} s), y eso incumpliría M7. No es comparable con E3, que mide generar y cifrar.
 - Las claves de E3b usan el dimensionado `mcv` de 0.1.0. Sin verificar (no medido) el efecto del dimensionado conservador de E5 sobre la latencia.
 
 # Lámina 7 · Impacto

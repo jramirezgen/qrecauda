@@ -50,7 +50,7 @@ Las opciones globales van antes del subcomando.
 
 El flag global `--formato` (y `--config`, `--raiz`) va **antes** del subcomando: `qrecauda --formato json juzgar E3`.
 
-Disponible en 0.2.0 (sin publicar): `qrecauda demo --dimensionado {mcv,conservador}` elige el dimensionado de la clave (por omisión `mcv`; `conservador` es el de E5 y es opt-in, no se re-midieron E3 ni E3b con él). `--instancia INSTANCIA` (en `demo` y en `hardware`) elige la instancia de IBM por CRN o nombre; vacío, la que elija el servicio (⚠️ sin verificar contra un dispositivo real). Si la ayuda de la CLI (`qrecauda demo --help`) difiere de esta tabla, manda el código.
+Disponible desde 0.2.0: `qrecauda demo --dimensionado {mcv,conservador}` elige el dimensionado de la clave (por omisión `mcv`; `conservador` es el de E5 y es opt-in, no se re-midieron E3 ni E3b con él). `--instancia INSTANCIA` (en `demo` y en `hardware`) elige la instancia de IBM por CRN o nombre; vacío, la que elija el servicio (⚠️ sin verificar contra un dispositivo real). Si la ayuda de la CLI (`qrecauda demo --help`) difiere de esta tabla, manda el código.
 
 `--raiz` es la raíz del repo, donde viven `declaraciones/` y `registro/`; por defecto es el directorio actual.
 

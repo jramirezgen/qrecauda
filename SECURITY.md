@@ -24,4 +24,4 @@ Que el simulador no aporte entropía cuántica ya está documentado y no es una 
 
 Usa el reporte privado de vulnerabilidades de GitHub: pestaña Security del repositorio, «Report a vulnerability». Si no está disponible, abre una incidencia que diga solo que tienes un reporte de seguridad, sin detalles, y te indicaremos un canal privado.
 
-Incluye la versión, los pasos para reproducir y el efecto esperado. Es un proyecto mantenido por una persona: no hay plazo garantizado de respuesta. Solo la versión 0.1.0 recibe correcciones.
+Incluye la versión, los pasos para reproducir y el efecto esperado. Es un proyecto mantenido por una persona: no hay plazo garantizado de respuesta. Solo la versión 0.2.0 recibe correcciones.

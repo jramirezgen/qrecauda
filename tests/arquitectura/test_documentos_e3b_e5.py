@@ -71,8 +71,8 @@ def test_el_dimensionado_conservador_se_declara_opt_in_y_no_re_medido():
         assert re.search(r"(?i)no se re-midi", t), f"{nombre} debe decir que E3 y E3b no se re-midieron con el conservador"
 
 
-def test_la_version_0_2_0_no_se_declara_publicada():
+def test_la_version_0_2_0_se_declara_publicada_con_fecha():
     cambios = _texto("CHANGELOG")
-    assert "0.2.0 en preparación" in cambios
-    assert not re.search(r"(?m)^## \[0\.2\.0\]", cambios), "la 0.2.0 aún no está publicada: no lleva entrada fechada"
-    assert 'version = "0.1.0"' in (RAIZ / "pyproject.toml").read_text()
+    assert re.search(r"(?m)^## \[0\.2\.0\] - 2026-10-08$", cambios), "la 0.2.0 lleva entrada fechada"
+    assert "0.2.0 en preparación" not in cambios
+    assert 'version = "0.2.0"' in (RAIZ / "pyproject.toml").read_text()

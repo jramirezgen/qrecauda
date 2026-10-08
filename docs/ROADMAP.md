@@ -3,7 +3,7 @@
 > Qué evidencia falta para cada salto y qué la produciría. Parte de `docs/TRL.md`, `docs/preinscripciones/E3.md`,
 > D-002, D-007 y D-010. Lo marcado ⚠️ sin verificar es hipótesis, no premisa (FUNDAMENTO). Este documento no contiene
 > resultados: ninguna cifra nueva sale de aquí, salen de corridas nombradas en `registro/corridas/`. Actualizado tras E3b y E5
-> (versión 0.2.0 en preparación, sin publicar).
+> (versión 0.2.0, publicada).
 
 ## Dónde estamos
 

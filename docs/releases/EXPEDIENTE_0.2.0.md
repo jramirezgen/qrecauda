@@ -1,5 +1,7 @@
 # Expediente técnico 0.2.0 — QRecauda
 
+Versión del paquete: 0.2.0 (`pyproject.toml`, `qrecauda.__version__`, `CITATION.cff`, `uv.lock`); tag local `v0.2.0`; fecha 2026-10-08.
+
 Añade a 0.1.0 la reserva asíncrona de claves y su medición (E3b), el control negativo del pipeline completo (E5), el dimensionado conservador (opt-in), la demo y el camino a IBM contra un backend falso. **TRL del sistema: 3** (`docs/TRL.md`). El origen cuántico no se afirma (D-002) y no hay corrida en hardware IBM (D-010).
 
 ## 1. Alcance del release

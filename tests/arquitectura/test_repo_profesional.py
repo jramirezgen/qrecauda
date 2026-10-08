@@ -46,7 +46,7 @@ def test_los_enlaces_relativos_del_readme_existen() -> None:
 
 def test_citation_cff_solo_nombra_al_alias() -> None:
     cff = (RAIZ / "CITATION.cff").read_text(encoding="utf-8")
-    assert re.search(r"^version:\s*0\.1\.0\s*$", cff, re.M)
+    assert re.search(r"^version:\s*0\.2\.0\s*$", cff, re.M)
     assert re.search(r"^license:\s*Apache-2\.0\s*$", cff, re.M)
     autores = cff.split("authors:", 1)[1]
     assert "alias: kaitokid" in autores
