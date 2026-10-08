@@ -14,6 +14,8 @@ import multiprocessing as mp
 import os
 import queue
 import resource
+import signal
+import sys
 import time
 from collections.abc import Callable
 from typing import Any
@@ -22,13 +24,23 @@ import numpy as np
 
 from qrecauda.datos import ClaveEntregada, InformeDelProductor, MetaClave
 from qrecauda.dominio.bits import Bits
-from qrecauda.dominio.errores import CorridaInvalida, EntradaInvalida, ErrorQRecauda
+from qrecauda.dominio.errores import CorridaInvalida, EntradaInvalida
 from qrecauda.puertos import GeneradorDeClaves
 
 SONDEO_S = 0.2  # cada cuánto el consumidor mira si el hijo sigue vivo mientras espera una clave
 SONDEO_PUT_S = 0.25  # cada cuánto el hijo bloqueado en la cola mira si le piden parar
 ESPERA_DE_PARADA_S = 120.0  # lo que el padre da al hijo para terminar la clave en curso antes de matarlo
-_FALLOS_DEL_HIJO = (ErrorQRecauda, ImportError, OSError, ValueError, RuntimeError, ArithmeticError, MemoryError)
+MAX_MENSAJE_DE_ERROR = 500  # tipo y mensaje de la excepción cruzan el canal de control; nunca la clave ni la muestra
+
+
+def _padre_vivo() -> bool:
+    """Un hijo cuyo padre murió (kill -9, OOM) no tiene a quién entregar claves: debe salir, no quedar huérfano produciendo."""
+    padre = mp.parent_process()
+    return padre is None or padre.is_alive()
+
+
+def _salir_limpio(_senal: int, _marco: object) -> None:
+    sys.exit(1)  # SIGTERM del padre: deja correr los `finally` (informe, y matar el grupo del 90B en curso)
 
 
 def _cpu_con_hijos_ns() -> int:
@@ -50,14 +62,15 @@ def _bucle_del_hijo(fabrica: Callable[[], GeneradorDeClaves], cola: Any, control
     pared0, cpu0, cpu_p0 = time.perf_counter_ns(), _cpu_con_hijos_ns(), time.process_time_ns()
     metas: list[MetaClave] = []
     nucleos: tuple[int, ...] = ()
+    signal.signal(signal.SIGTERM, _salir_limpio)
     try:
         generador = fabrica()
         nucleos = tuple(sorted(os.sched_getaffinity(0)))
         indice = 0
-        while not parar.is_set():
+        while not parar.is_set() and _padre_vivo():
             entregada = generador.generar(indice)
             b0, encolada = time.perf_counter_ns(), False
-            while not parar.is_set():
+            while not parar.is_set() and _padre_vivo():
                 try:
                     cola.put(_empaquetar(entregada), timeout=SONDEO_PUT_S)
                     encolada = True
@@ -66,9 +79,12 @@ def _bucle_del_hijo(fabrica: Callable[[], GeneradorDeClaves], cola: Any, control
                     continue
             metas.append(entregada.meta.con_bloqueo(time.perf_counter_ns() - b0, encolada))
             indice += 1
-    except _FALLOS_DEL_HIJO as exc:
-        control.put(("error", f"{type(exc).__name__}: {exc}"))
     finally:
+        exc = sys.exc_info()[1]  # cualquier excepción, esperada o no: tipo y mensaje (sin datos) al padre; la propaga igual
+        if exc is not None and not isinstance(exc, SystemExit):
+            control.put(("error", f"{type(exc).__name__}: {exc}"[:MAX_MENSAJE_DE_ERROR]))
+        elif isinstance(exc, SystemExit):
+            control.put(("error", "el proceso productor recibió la orden de terminar"))
         informe = InformeDelProductor(
             nucleos or tuple(sorted(os.sched_getaffinity(0))),
             time.perf_counter_ns() - pared0,
@@ -127,8 +143,8 @@ class ProductorEnProceso:
         return int(self._cola.qsize()) if self._cola is not None else 0
 
     def detener(self) -> InformeDelProductor:
-        if self._proceso is None:
-            raise EntradaInvalida("el productor no se inició")
+        if self._proceso is None:  # idempotente: se llama en un `finally`, y si `iniciar` no llegó a correr no debe tapar el error real
+            return InformeDelProductor((), 0, 0, 0, (), forzado=False)
         if self._informe is not None:
             return self._informe
         self._parar.set()

@@ -12,12 +12,14 @@ from qrecauda.dominio.bits import Bits
 
 
 class GeneradorRapido:
-    def __init__(self, pausa_s: float = 0.0, falla_en: int | None = None, nucleo: int | None = None) -> None:
-        self.pausa_s, self.falla_en = pausa_s, falla_en
+    def __init__(self, pausa_s: float = 0.0, falla_en: int | None = None, nucleo: int | None = None, falla_rara: bool = False) -> None:
+        self.pausa_s, self.falla_en, self.falla_rara = pausa_s, falla_en, falla_rara
         if nucleo is not None:
             os.sched_setaffinity(0, {nucleo})
 
     def generar(self, indice: int) -> ClaveEntregada:
+        if self.falla_en == indice and self.falla_rara:
+            raise KeyError("clave-que-no-esta")  # una excepción que ninguna lista de «fallos esperados» nombraba
         if self.falla_en == indice:
             raise ValueError("falla de prueba en el hijo")
         t0 = time.perf_counter_ns()
@@ -30,5 +32,5 @@ class GeneradorRapido:
         )
 
 
-def fabrica(pausa_s: float = 0.0, falla_en: int | None = None, nucleo: int | None = None) -> GeneradorRapido:
-    return GeneradorRapido(pausa_s, falla_en, nucleo)
+def fabrica(pausa_s: float = 0.0, falla_en: int | None = None, nucleo: int | None = None, falla_rara: bool = False) -> GeneradorRapido:
+    return GeneradorRapido(pausa_s, falla_en, nucleo, falla_rara)

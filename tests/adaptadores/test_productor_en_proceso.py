@@ -85,11 +85,71 @@ def test_usos_incorrectos():
     p = _productor()
     with pytest.raises(EntradaInvalida):
         p.tomar(0.0)
-    with pytest.raises(EntradaInvalida):
-        p.detener()
     p.iniciar()
     try:
         with pytest.raises(EntradaInvalida):
             p.iniciar()
     finally:
         p.detener()
+
+
+# ------------------------------------------------------------------ R.02: huérfanos, errores raros y detener() idempotente
+
+
+def test_detener_sin_haber_iniciado_no_levanta_ni_tapa_el_error_real():
+    informe = _productor().detener()
+    assert informe.claves == () and not informe.forzado
+    try:
+        try:
+            raise ValueError("el error real")
+        finally:
+            _productor().detener()  # como en ejecutor_e3b: en un `finally`
+    except ValueError as e:
+        assert str(e) == "el error real"
+
+
+def test_cualquier_excepcion_del_hijo_llega_con_tipo_y_mensaje():
+    p = _productor(falla_en=0, falla_rara=True)
+    p.iniciar()
+    try:
+        with pytest.raises(CorridaInvalida, match="KeyError.*clave-que-no-esta"):
+            p.tomar(30.0)
+    finally:
+        p.detener()
+
+
+def test_el_hijo_se_va_si_el_padre_muere(tmp_path):
+    import signal
+    import subprocess
+    import sys
+
+    guion = tmp_path / "padre.py"
+    guion.write_text(
+        "import functools, sys, time\n"
+        f"sys.path.insert(0, {os.path.dirname(__file__)!r})\n"
+        "from generadores_de_prueba import fabrica\n"
+        "from qrecauda.adaptadores.productor_en_proceso import ProductorEnProceso\n"
+        "if __name__ == '__main__':\n"
+        "    p = ProductorEnProceso(functools.partial(fabrica, pausa_s=0.01), 2)\n"
+        "    p.iniciar()\n"
+        "    print(p._proceso.pid, flush=True)\n"
+        "    time.sleep(120)\n"
+    )
+    padre = subprocess.Popen([sys.executable, str(guion)], stdout=subprocess.PIPE, text=True)
+    try:
+        assert padre.stdout is not None
+        hijo = int(padre.stdout.readline())
+        os.kill(hijo, 0)  # vive
+        padre.send_signal(signal.SIGKILL)  # sin posibilidad de limpiar nada
+        padre.wait(10)
+        limite = time.monotonic() + 20
+        vivo = True
+        while vivo and time.monotonic() < limite:
+            try:
+                os.kill(hijo, 0)
+                time.sleep(0.2)
+            except ProcessLookupError:
+                vivo = False
+        assert not vivo, "el hijo huérfano sigue produciendo claves"
+    finally:
+        padre.kill()
