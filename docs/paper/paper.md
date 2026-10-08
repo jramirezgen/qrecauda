@@ -1,17 +1,19 @@
 ---
 title: "QRecauda: un pipeline QRNG planificado como contrato verificable, preinscrito y acotado en sus afirmaciones"
-subtitle: "Planeación, metodología y resultados de los experimentos E1 y E2 (E3 pendiente)"
+subtitle: "Planeación, metodología y resultados de los experimentos E1, E2 y E3"
 author: kaitokid
-date: "2026-10-07"
+date: "2026-10-08"
 lang: es
 serie: "Informe técnico · QRecauda"
-keywords: [generador cuántico de números aleatorios (QRNG), preinscripción, DAG verificable, mitigación de lectura, extracción de aleatoriedad, reproducibilidad]
-licencia: "Licencia Apache-2.0 · Repositorio público del proyecto (enlace en la ficha del repositorio) · Estado: informe vivo; E1 y E2 con veredicto CUMPLE, E3 pendiente"
+keywords: [generador cuántico de números aleatorios (QRNG), preinscripción, DAG verificable, mitigación de lectura, extracción de aleatoriedad, latencia, reproducibilidad]
+licencia: "Licencia Apache-2.0 · Repositorio público del proyecto (enlace en la ficha del repositorio) · Estado: informe vivo; E1 y E2 con veredicto CUMPLE, E3 con veredicto NO CUMPLE (latencia)"
 subject: "Pipeline QRNG para recaudación: planeación, método preinscrito y resultados"
 abstract: |
   QRecauda genera claves AES-256-GCM a partir de los bits de un circuito de un solo gate (Hadamard sobre 8 qubits, medido en la base computacional) y las destina a cifrar transacciones de peaje y de Metro. La cadena de procesamiento es clásica y conocida: mitigación de lectura, extractor de Peres, hash de Toeplitz dimensionado con el *Leftover Hash Lemma*, y validación con NIST SP 800-22 y SP 800-90B. El aporte principal es metodológico. El plan se formaliza como un grafo dirigido acíclico de 59 nodos que una herramienta valida; cada experimento se preinscribe antes de correr, con controles positivos y negativos obligatorios y enmiendas fechadas; la arquitectura hexagonal de cuatro macro-capas se impone con seis contratos de importación; y toda cifra procede de una corrida nombrada.
 
-  El experimento E1 (calidad de la clave) obtiene el veredicto CUMPLE en las tres semillas preinscritas, con claves de unos 955 000 bits. La clave sin mitigar también pasa M1 a M5 en las tres semillas (hallazgo R.00-1): Peres y Toeplitz bastan para aprobar la batería, y la mitigación reduce el sesgo crudo de 0,030 a un máximo de 0,0004 sin ser necesaria para aprobar. El experimento E2 (sesgo de lectura) obtiene CUMPLE en las nueve celdas sintéticas: el *twirling* propio lleva el sesgo medio por qubit de 0,0098–0,0505 a 0,00074–0,00131, mientras que ZNE y PEC dejan el sesgo de lectura sin cambio apreciable (hasta 6,6 %). El nivel realista no pone a prueba la mitigación y el nivel bajo coincide con el umbral de M1. El experimento E3 (tasa y latencia), la corrida en hardware IBM, la derivación del TRL y la revisión adversarial del release están pendientes y no se reportan cifras de ellos; el incumplimiento de M7 es una hipótesis sin verificar. El simulador no aporta entropía cuántica, «certificada» significa «supera esta batería», la calibración del control P1 se hizo con conocimiento de las semillas y la estimación 90B es una cota conservadora que acortaría la clave en torno a 14 %.
+  Los tres experimentos preinscritos se han juzgado: dos cumplen y uno no. El experimento E1 (calidad de la clave) obtiene el veredicto CUMPLE en las tres semillas preinscritas, con claves de unos 955 000 bits. La clave sin mitigar también pasa M1 a M5 en las tres semillas (hallazgo R.00-1): Peres y Toeplitz bastan para aprobar la batería, y la mitigación reduce el sesgo crudo de 0,030 a un máximo de 0,0004 sin ser necesaria para aprobar. El experimento E2 (sesgo de lectura) obtiene CUMPLE en las nueve celdas sintéticas: el *twirling* propio lleva el sesgo medio por qubit de 0,0098–0,0505 a 0,00074–0,00131, mientras que ZNE y PEC dejan el sesgo de lectura sin cambio apreciable (hasta 6,6 %). El nivel realista no pone a prueba la mitigación y el nivel bajo coincide con el umbral de M1.
+
+  El experimento E3 (tasa y latencia) obtiene NO CUMPLE por la latencia. La tasa cumple con holgura (M6 de 180 466 a 195 465 bit/s frente a 10 000), pero el percentil 95 del ciclo completo es de 9 378, 5 554 y 5 547 ms frente a 500 ms (semillas 20261007, 20261008 y 20261009), un factor de 11 a 19. Generar una clave por transacción no cumple el requisito de latencia, y el 47 a 49 % del tiempo se va en la mitigación. Con una reserva de claves ya generada, el ciclo de cifrado cuesta 15 a 22 µs de mediana (30 667 a 63 638 transacciones por segundo); esa cifra es un diseño por validar y no un resultado que decida. No hay corrida en hardware IBM (decisión D-010), la derivación del TRL y la revisión adversarial del release están pendientes, y no se afirma origen cuántico: el simulador no aporta entropía cuántica, «certificada» significa «supera esta batería», la calibración del control P1 se hizo con conocimiento de las semillas y la estimación 90B es una cota conservadora que acortaría la clave en torno a 14 %.
 ---
 
 # Introducción {#sec:intro}
@@ -42,11 +44,11 @@ El objetivo general es construir un pipeline QRNG reproducible y medir, con crit
 
 : Hipótesis, experimentos y criterios preinscritos. []{#tbl:hipotesis}
 
-Se espera que H1 y H2 se sostengan en el modelo sintético, con las salvedades que el propio diseño anticipa, y que H3 sea la más expuesta al resultado negativo. Los resultados están en la [sección](#sec:resultados).
+Antes de medir se esperaba que H1 y H2 se sostuvieran en el modelo sintético, con las salvedades que el propio diseño anticipa, y que H3 fuera la más expuesta al resultado negativo. El resultado coincide en la dirección: H1 y H2 se sostienen, y H3 se sostiene sólo en la tasa (M6) y no en la latencia (M7). Los resultados están en la [sección](#sec:resultados).
 
 ## Alcance {#sec:alcance}
 
-Este trabajo es de ingeniería y de método experimental. No afirma entropía cuántica en simulación, ni certificación FIPS o ISO, ni prueba de origen cuántico (que exigiría pruebas de Bell o autoverificación [8]), ni aptitud de las claves para producción. Tampoco incluye integración con los sistemas de OSITRAN, MTC o Metro, módulos de seguridad (HSM), distribución de claves ni multiplexado de backends. El hardware IBM real es opcional: ni la demostración ni la versión 0.1.0 dependen de él.
+Este trabajo es de ingeniería y de método experimental. No afirma entropía cuántica en simulación, ni certificación FIPS o ISO, ni prueba de origen cuántico (que exigiría pruebas de Bell o autoverificación [8]), ni aptitud de las claves para producción. Tampoco incluye integración con los sistemas de OSITRAN, MTC o Metro, módulos de seguridad (HSM), distribución de claves ni multiplexado de backends. El hardware IBM real es opcional: ni la demostración ni la versión 0.1.0 dependen de él, y no hay ninguna corrida en hardware (constancia fechada en D-010: no se dispuso de credenciales de IBM Quantum).
 
 ## Contribuciones {#sec:contribuciones}
 
@@ -60,6 +62,7 @@ Cada contribución se verifica en el repositorio mediante el nodo del plan o la 
 | 4 | Hallazgo R.00-1: Peres y Toeplitz bastan para que la clave pase M1 a M5, con la fuente cruda fuera de umbral | revisión R.00; corrida C.E1b; veredicto de E1 | [8](#sec:e1) |
 | 5 | Arquitectura hexagonal en cuatro macro-capas con seis contratos de importación ejecutables, trinquetes por AST y 346 pruebas | F0.04; pruebas de arquitectura; CI local | [6](#sec:arquitectura) |
 | 6 | Protocolo de reproducibilidad: semillas declaradas, manifiestos con commit y entorno, y figuras regeneradas desde el registro | manifiestos de `registro/corridas/`; `docs/paper/figuras.py` | [11](#sec:repro) |
+| 7 | Medición de latencia de extremo a extremo con un hilo, candado de máquina, controles de integridad y desglose por etapa, que entrega un resultado negativo (M7) sin ajustar el criterio | corrida C.E3; veredicto de E3 | [8](#sec:e3) |
 
 : Contribuciones y su evidencia verificable. []{#tbl:aportes}
 
@@ -91,7 +94,7 @@ Se protege que la clave AES-256 de una transacción no sea predecible por un ata
 |:-----------------------------------|:-----------------------------------|:---------------------------------|
 | Sesgo del dispositivo (lectura asimétrica) | Mitigación de lectura, extractor y sesgo residual medido (M1) en tres puntos | cubierta (E1, E2) |
 | Correlación entre bits | Estimador SP 800-90B no-IID; el MCV se declara ciego a la dependencia | cubierta con límites |
-| Reutilización de (clave, nonce) en GCM | `ReservaDeClave` reparte trozos disjuntos de 352 bits y repetir falla | cubierta por pruebas; control U2 de E3 pendiente |
+| Reutilización de (clave, nonce) en GCM | `ReservaDeClave` reparte trozos disjuntos de 352 bits y repetir falla | cubierta por pruebas; los controles U1 a U5 de E3 pasan en las tres semillas |
 | Manipulación del texto cifrado | AES-GCM autentica; error `AutenticacionFallida` | cubierta por pruebas |
 | Agotamiento de entropía | `EntropiaInsuficiente` aborta sin degradar | cubierta |
 | Secretos en el repositorio | Secretos por ruta y trinquete antisecretos | cubierta |
@@ -129,7 +132,7 @@ La planeación es la parte más desarrollada del trabajo. El plan es un grafo di
 
 ## Estructura del DAG {#sec:dag-estructura}
 
-El plan tiene 59 nodos y 132 aristas, con una única hoja (la versión 0.1.0 del producto) y una profundidad máxima de 15 niveles. Se organiza en ocho fases más la revisión final ([Tabla](#tbl:fases)). Cada nodo declara su tipo ([Tabla](#tbl:tipos)), sus dependencias, su entrega (rutas del repositorio), el criterio de cierre y los requisitos que cubre. La [Figura](#fig:dag) muestra el estado real a la fecha: 48 nodos hechos, 2 juzgados (E1 y E2), 2 listos y 7 pendientes bloqueados.
+El plan tiene 59 nodos y 132 aristas, con una única hoja (la versión 0.1.0 del producto) y una profundidad máxima de 15 niveles. Se organiza en ocho fases más la revisión final ([Tabla](#tbl:fases)). Cada nodo declara su tipo ([Tabla](#tbl:tipos)), sus dependencias, su entrega (rutas del repositorio), el criterio de cierre y los requisitos que cubre. La [Figura](#fig:dag) muestra el estado real a la fecha: 50 nodos hechos, 3 juzgados (E1, E2 y E3), 2 listos y 4 pendientes bloqueados.
 
 ![El plan como DAG, por fases y coloreado por el estado real (plan de 59 nodos y registro de estado). Borde grueso: eureka; discontinuo: preinscripción; punteado: corrida o medición. Verde: hecho; azul: juzgado; naranja: listo; blanco: pendiente.](fig/dag.pdf){#fig:dag}
 
@@ -205,7 +208,7 @@ La regla 5 del documento de fundamento obliga a fijar el umbral y el criterio de
 
 Un error detectado antes de correr se corrige con una enmienda fechada, en commit propio y anterior a la corrida; después de correr, el documento no se modifica. Las semillas (20261007, 20261008 y 20261009) se declaran de antemano, y elegir una semilla está prohibido: el veredicto se emite sobre las tres.
 
-![Cronología de preinscripciones, enmiendas, código del ejecutor y corridas con veredicto (hora de commit del 2026-10-07; eje cortado entre 19:30 y 21:30). Cada preinscripción precede a su corrida; E3 queda pendiente.](fig/cronologia.pdf){#fig:cronologia}
+![Cronología de preinscripciones, enmiendas, código del ejecutor y corridas con veredicto (hora de commit; eje cortado entre 19:30 y 21:30 del 2026-10-07, y panel aparte para el 2026-10-08). Cada preinscripción precede a su corrida; las enmiendas de E3 del 2026-10-08 son anteriores a C.E3.](fig/cronologia.pdf){#fig:cronologia}
 
 La [Figura](#fig:cronologia) muestra el orden real, leído de los commits. El juez comprueba por máquina que el commit de la preinscripción es ancestro de la corrida.
 
@@ -244,7 +247,7 @@ Tras ver un resultado, ningún experimento puede relajar un umbral, repetirse co
 
 ## Enmiendas fechadas y desviaciones del protocolo {#sec:enmiendas}
 
-Todas las enmiendas son anteriores a la corrida a la que afectan, y ninguna cambia un umbral de M1 a M7. Cada una abre una oportunidad de sesgo del investigador y por eso se documenta ([Tabla](#tbl:enmiendas)).
+Todas las enmiendas son anteriores a la corrida a la que afectan, y ninguna cambia un umbral de M1 a M7. Las tres del 2026-10-08 afectan a las condiciones de la medición de E3 (carga previa, clave rechazada, reposo) y no a las definiciones de M6 y M7; la segunda es la única que modifica lo que se mide, y lo hace en contra de la corrida, porque el tiempo del intento rechazado se cuenta. Cada una abre una oportunidad de sesgo del investigador y por eso se documenta ([Tabla](#tbl:enmiendas)).
 
 | fecha | doc. | enmienda | commit | motivo y alcance |
 |:---------|:------|:----------------------------------|:---------------------|:----------------------------------|
@@ -252,6 +255,9 @@ Todas las enmiendas son anteriores a la corrida a la que afectan, y ninguna camb
 | 2026-10-07 | E3 | M1 a M5 en el punto «mitigada» pasan a informativas | `5a72939` | Misma causa que en E1; los criterios T1 a T4 no leen M1 a M5 |
 | 2026-10-07 | E1 | M5 sobre la mitigada pasa a informativa | `dae22a6` | Diagnóstico de escritorio sin corrida registrada ⚠️ |
 | 2026-10-07 | E1 (1) | M4 sobre la mitigada pasa a informativa; M-1 decide con M1 y M3 | `1a06602` | Misma causa; la clave sigue decidiendo con M1 a M5 |
+| 2026-10-08 | E3 | Carga previa de la máquina: de menos de 1,0 a menos de 2,0, con la corrida fijada a un núcleo libre | `15bd897` | El umbral era arbitrario y un proceso ajeno de un hilo mantenía la carga entre 1,4 y 2,0 durante horas; la validez de «un hilo» sigue decidiendo |
+| 2026-10-08 | E3 | Una clave rechazada por M1 a M5 se regenera y el tiempo del intento rechazado suma a $t_{rep}$ | `8cc0ec1` | Con $\alpha=0{,}01$ por prueba una clave válida falla alguna con probabilidad no nula; cinco rechazos seguidos invalidan la corrida |
+| 2026-10-08 | E3 | Reposo de hasta 900 s entre semillas antes de comprobar la carga | `41cd058` | La medición de una semilla eleva la carga de 1 min en ≈ 1 y habría invalidado la siguiente por autocontaminación |
 | 2026-10-07 | E1 (2) | P1 cambia de «ideal con 90B $>0{,}9$» a separación del instrumento: piso 0,8 y techo 0,5 | `37b89ca`, `447c907` | Desviación declarada, descrita a continuación |
 
 : Enmiendas fechadas, todas anteriores a la corrida. []{#tbl:enmiendas}
@@ -417,13 +423,13 @@ Con $\hat p=0{,}5$ y $n=256$, $p_u\approx0{,}581$ y $H_{\min}\approx0{,}785$: M2
 
 # Resultados {#sec:resultados}
 
-Cada cifra procede de una corrida o de un spike nombrado, y los veredictos proceden del registro de veredictos. Lo no corrido se marca PENDIENTE y no lleva cifras ni estimaciones.
+Cada cifra procede de una corrida o de un spike nombrado, y los veredictos proceden del registro de veredictos. Lo no corrido se marca PENDIENTE y no lleva cifras ni estimaciones. Los resultados cerrados son los de E1, E2 y E3.
 
 | experimento | corrida | desenlace | celdas que decidieron | observación |
 |:------------|:-------------|:----------|:-------------------------|:--------------------------------------------|
 | E1 | C.E1 (a a d) | CUMPLE | 3 semillas × 6 criterios | Hallazgo R.00-1: la clave sin mitigar también pasa M1 a M5 en 3/3; M4 y M5 de la mitigada fallan (informativas) |
 | E2 | C.E2 | CUMPLE | 9 celdas sintéticas (K1 a K4) | ZNE y PEC sin efecto; el nivel realista no pone a prueba la mitigación; el nivel bajo coincide con el umbral de M1 |
-| E3 | C.E3 | PENDIENTE | n. a. | La máquina tenía carga mayor que 1 por otros trabajos y P.E3 exige menos de 1,0 |
+| E3 | C.E3 | NO CUMPLE | 3 semillas × 2 criterios (T1, T2) | M6 cumple (T1) y M7 no (T2) en las tres semillas; T4 y los controles U1 a U5 pasan |
 
 : Resumen de veredictos (fuente: `registro/veredictos.jsonl`). []{#tbl:veredictos}
 
@@ -516,22 +522,52 @@ ZNE y PEC no mueven el sesgo de lectura. El cambio relativo llega como máximo a
 
 ## E3: tasa, latencia y ciclo de cifrado {#sec:e3}
 
-PENDIENTE: la corrida C.E3 y el veredicto de E3. La corrida no se ejecutó porque la máquina tenía carga mayor que 1 por otros trabajos, y la preinscripción exige carga previa menor que 1,0 para medir tiempos. No se reporta ninguna cifra de M6, de M7, de su desglose por etapa ni del coeficiente de variación, y tampoco se estiman. La hipótesis H3 queda sin evaluar.
+La corrida C.E3 mide el perfil A (la cadena completa con el lote de 3,2 M de bits crudos: fuente de Aer con ruido medio, *twirling*, Peres y Toeplitz, validación M1 a M5 en tres puntos más el 90B, y una transacción cifrada y descifrada) en 30 repeticiones por semilla tras 3 de calentamiento descartadas, a un hilo y con candado de máquina. La máquina es un AMD Ryzen 9 7900X3D de 20 núcleos lógicos bajo WSL2; la corrida registra Python 3.13.14, qiskit 2.5.2 y qiskit-aer 0.17.2. Los tiempos valen para esa máquina y ese reloj. La preinscripción es el commit `41cd058`, la última enmienda de E3, y precede a la corrida. El veredicto es **NO CUMPLE** y el juez nombra los tres incumplimientos: T2 (M7) en cada una de las semillas. T1 (M6), T4 (validez de un hilo) y los controles U1 a U5 se cumplen.
 
-Se formula una hipótesis, sin verificar (⚠️): M7 probablemente no se cumple en el perfil A, porque un lote de 3,2 M de bits con NIST y 90B sobre al menos $10^6$ bits no parece caber en 500 ms. Si ocurre, será un veredicto válido y se reportará como resultado negativo con el desglose por etapa. El lote y el perfil no se modificarán tras medir, y una optimización constituirá un experimento nuevo con preinscripción propia. Los valores de M6 y M7 que aparecen dentro de los informes de E1 son medidas internas del ejecutor y no se reportan aquí, para no confundirlos con los de E3.
+| semilla | M6 (bit/s) | M7: p95 de $t_{rep}$ (ms) | M7 / 500 ms | mediana (ms) | mínimo (ms) | máximo (ms) | CV de $t_{rep}$ | claves rechazadas |
+|:---------|-----------:|--------------:|---------:|-----------:|-----------:|-----------:|---------:|:----------------|
+| 20261007 | 187 438 | 9 378 ✗ | 18,8 | 4 737 | 4 518 | 9 844 | 0,244 (inestable) | 3 (2 medidas) |
+| 20261008 | 195 465 | 5 554 ✗ | 11,1 | 4 710 | 4 457 | 9 205 | 0,172 | 1 (1 medida) |
+| 20261009 | 180 466 | 5 547 ✗ | 11,1 | 5 273 | 5 061 | 5 587 | 0,028 | 0 |
+
+: E3, perfil A: M6 y M7 por semilla (fuente: `registro/corridas/C.E3_<semilla>_e3_000.json`). M6 cumple en las tres semillas (cociente a umbral 18,7; 19,5 y 18,0); M7 incumple en las tres (✗). Las claves rechazadas cuentan las 33 repeticiones, calentamiento incluido; entre paréntesis, las de las 30 medidas. []{#tbl:e3}
+
+**M6 cumple y M7 no.** La tasa excede 18 veces el umbral porque una repetición entrega unos 957 000 bits de clave (de 955 799 a 957 489 en las 90 repeticiones medidas) en unos cinco segundos. La latencia es otra magnitud: una transacción que pide una clave nueva espera ese ciclo completo. Aun la repetición más rápida de cada semilla (4 518, 4 457 y 5 061 ms) supera 8,9 veces el umbral, de modo que el incumplimiento no depende de la cola de la distribución. El coeficiente de variación de $t_{rep}$ de la semilla 20261007 (0,244) supera el 0,2 que la preinscripción manda reportar como medida inestable; no invalida la corrida.
+
+![E3: (a) mediana del tiempo por etapa del ciclo completo, apilada, frente al umbral de M7; (b) $t_{rep}$ de cada repetición medida (escala logarítmica), con el p95 de cada semilla (punteado) y las repeticiones con clave regenerada (hueco).](fig/e3_latencia.pdf){#fig:e3}
+
+**Dónde se va el tiempo.** La [Tabla](#tbl:e3etapas) y la [Figura](#fig:e3) descomponen $t_{rep}$ por etapa. La mitigación por *twirling* consume el 47 a 49 % y la fuente de Aer otro 28 %: entre ambas, tres cuartas partes del ciclo, y las dos corren 400 000 disparos por circuito. La validación (NIST más 90B) ocupa el 18 %, la extracción el 6 a 7 %, y el cifrado de la transacción 0,19 ms, el 0,004 % del ciclo. Ni la extracción ni el cifrado son el cuello. La suma de las medianas por etapa (4 721, 4 686 y 5 275 ms) no coincide exactamente con la mediana de $t_{rep}$ porque la mediana de una suma no es la suma de las medianas.
+
+| etapa | 20261007 | 20261008 | 20261009 |
+|:------------------------|-------------------:|-------------------:|-------------------:|
+| fuente (Aer) | 1 327 (28,1 %) | 1 330 (28,4 %) | 1 460 (27,7 %) |
+| mitigación (*twirling*) | 2 224 (47,1 %) | 2 209 (47,1 %) | 2 559 (48,5 %) |
+| extracción (Peres y Toeplitz) | 324 (6,9 %) | 299 (6,4 %) | 301 (5,7 %) |
+| validación (M1 a M5 y 90B) | 846 (17,9 %) | 848 (18,1 %) | 954 (18,1 %) |
+| cifrado y descifrado | 0,19 (< 0,1 %) | 0,19 (< 0,1 %) | 0,19 (< 0,1 %) |
+
+: E3: mediana por etapa en ms y fracción de la suma de medianas (fuente: `reporte.etapas_ms` de cada corrida). []{#tbl:e3etapas}
+
+**Claves rechazadas.** Cuatro de las 99 repeticiones (33 por semilla, calentamiento incluido) generaron una clave que no pasó M1 a M5 y se regeneraron: 3, 1 y 0 por semilla. Cada regeneración duplica aproximadamente $t_{rep}$ (9 205 a 9 844 ms en las tres repeticiones medidas con rechazo, frente a unos 4 700), porque el intento rechazado suma al tiempo. En la semilla 20261007 el p95 (9 378 ms) coincide con una de esas repeticiones; en las semillas 20261008 y 20261009 el p95 corresponde a una repetición sin rechazo. Una proporción de 4 en 99 es del orden del 3 % que implica $\alpha=0{,}01$ en tres pruebas (analítico, con supuesto de independencia ⚠️). La regla no favorece a M7: descartar el intento en silencio habría reducido las cifras, y contarlo las aumenta.
+
+**Perfil B: la reserva de claves.** El perfil B mide el ciclo de una transacción con la reserva ya generada (`siguiente`, `cifrar` y `descifrar`) sobre 1 000 transacciones, 500 de peaje y 500 de Metro. La mediana es de 14,9 µs (semillas 20261007), 15,1 µs (20261008) y 21,7 µs (20261009), con p95 de 17,9, 17,9 y 38,7 µs, y una tasa de 63 638, 62 626 y 30 667 transacciones por segundo. La semilla 20261009 es la más lenta y la causa no se investigó (⚠️ sin verificar). **El perfil B no decide.** Con una reserva ya cargada, cifrar una transacción cuesta microsegundos y no milisegundos, pero eso describe un diseño que genera las claves por adelantado, y ese diseño no se ha validado: queda sin medir cada cuánto se repone la reserva, qué latencia ve una transacción cuando la reserva se agota y cómo se protege la reserva en memoria. Una cuenta analítica ilustra el orden de magnitud: con M6 entre 180 466 y 195 465 bit/s y 352 bits por transacción (clave de 256 bits y nonce de 96), la cadena repondría entre 513 y 555 transacciones por segundo, y un lote de unos 957 000 bits alcanza para unas 2 700 (analítico, sin medición propia). El perfil B no puede rescatar un perfil A fallido, y no se usa para suavizar el veredicto.
+
+**Controles.** Los controles pasan en las tres semillas: ida y vuelta de las 1 000 transacciones (U1), detección de la alteración de un bit del texto cifrado y del dato asociado (U2), fallo con la clave de otra transacción (U3), ningún par (clave, nonce) repetido (U4) y rótulo «validación del pipeline» en todas las transacciones, sin «entropía cuántica» (U5). La validez de un hilo (T4) también se cumple.
+
+**Lectura.** Generar una clave por transacción no cumple el requisito de latencia de 500 ms: el ciclo cuesta entre once y diecinueve veces el umbral, y reducirlo exigiría un lote menor o un cambio de arquitectura, no un ajuste de parámetros. La hipótesis H3 se sostiene a medias: M6, sí; M7, no. La expectativa preinscrita ya señalaba el perfil A como candidato a no cumplir M7, y el resultado la confirma con un margen amplio. Ni el lote ni el perfil se modificaron tras medir. Reducir el lote, mover la mitigación fuera del camino de la transacción o precargar claves constituye un experimento nuevo con preinscripción propia (E3b), y el veredicto actual se conserva en el registro.
 
 ## Estado de la evidencia {#sec:estado}
 
-| bloque | corrida o nodo | estado a 2026-10-07 |
+| bloque | corrida o nodo | estado a 2026-10-08 |
 |:--------------------------------------|:----------------------------------|:-------------------------------|
 | Versiones, mitigación, Aer, 90B | S.01 a S.04 (con calibración de P1) | hecho |
 | E1 | C.E1a a C.E1d, E1 | juzgado: CUMPLE |
 | E2 | C.E2, E2 | juzgado: CUMPLE |
-| E3 | C.E3, E3 | PENDIENTE (carga de la máquina) |
-| Hardware IBM real | F3.06 (F3.04 hecho) | PENDIENTE (opcional) |
+| E3 | C.E3, E3 | juzgado: NO CUMPLE (M7) |
+| Hardware IBM real | F3.06 (F3.04 hecho) | F3.06 cerrado como constancia de no acceso (D-010); sin corrida en hardware |
 | TRL por componente | T.TRL | PENDIENTE |
 | Revisión adversarial del release | R.01 | PENDIENTE |
-| Difusión (informe, integración, amenazas) | F7.01, F7.02, F7.04 | PENDIENTE |
+| Difusión (informe, integración, amenazas) | F7.01, F7.02, F7.04 | F7.01 listo; F7.02 y F7.04 pendientes |
 | Release 0.1.0 | REL-0.1.0 | PENDIENTE |
 
 : Estado de las evidencias. []{#tbl:estado}
@@ -548,7 +584,9 @@ La mitigación por bloques resulta contraproducente para las pruebas locales. El
 
 El criterio de E2 se diseñó para que una celda fallida no pudiera absolverse con otras semillas, y ninguna falla. Tres hechos moderan esa lectura: el nivel bajo coincide con el umbral por construcción, el realista casi no tiene asimetría de lectura, y el piso del estadístico (≈ 0,0006) es del mismo orden que el residuo, de modo que el residuo máximo de 0,003 informa más sobre la precisión del instrumento que sobre la potencia de la técnica. La conclusión que sostienen los datos es la que la preinscripción afirma: en el modelo sintético, el *twirling* reduce el sesgo de lectura bajo M1 con holgura, sin afirmación sobre hardware real.
 
-Los dos resultados cerrados podían haber sido negativos, y el registro los habría conservado. Esa propiedad del método, junto con el orden verificable entre preinscripción y corrida, los controles obligatorios y las desviaciones declaradas, es lo que sobrevive a cualquier resultado futuro.
+E3 es el resultado negativo. La preinscripción lo había señalado como el más probable, y el registro lo conserva sin ajustes: el criterio, el lote y el perfil son los fijados antes de medir. Dos lecturas se separan. Con una clave generada por transacción, la latencia de 5 a 9 s excluye el requisito de 500 ms, y la causa dominante es la ejecución del circuito de Aer con 400 000 disparos y la mitigación por *twirling*, que juntas suman tres cuartas partes del ciclo. Con una reserva de claves generada por adelantado, el ciclo de cifrado cuesta decenas de microsegundos; es un diseño que este trabajo no ha validado, y su cifra describe sólo una operación de AES-GCM sobre una reserva ya cargada, de modo que no responde a la pregunta de latencia que plantea el sistema completo. Que M6 supere el umbral 18 veces mientras M7 lo incumple 11 a 19 veces muestra que ambas métricas miden cosas distintas: el sistema produce claves con rapidez suficiente y las entrega tarde. Ninguna de las dos cifras tiene un requisito externo que la ancle (⚠️ sin verificar).
+
+Los tres resultados podían haber sido negativos, y uno lo fue. Esa propiedad del método, junto con el orden verificable entre preinscripción y corrida, los controles obligatorios y las desviaciones declaradas, es lo que sobrevive a cualquier resultado futuro.
 
 # Amenazas a la validez y limitaciones {#sec:limitaciones}
 
@@ -572,18 +610,20 @@ El hallazgo R.00-1 impide atribuir a la mitigación la aprobación de la clave. 
 
 ## Alcance y limitaciones {#sec:alcance-limitaciones}
 
-1. E3 está pendiente y no hay cifras de tasa ni de latencia. Las cifras futuras valdrán para una máquina, un hilo y un reloj, sin cola ni red de IBM Quantum, y ningún requisito externo ancla 500 ms ni 10 kbit/s.
+1. Las cifras de E3 valen para una máquina, un hilo y un reloj, sin cola ni red de IBM Quantum, y ningún requisito externo ancla 500 ms ni 10 kbit/s. La causa de la mayor lentitud del perfil B en la semilla 20261009 no se investigó, y la carga previa de la máquina (menos de 2,0) incluyó un proceso ajeno de un hilo.
 2. La peor amenaza sin cubrir es un adversario con acceso al *pool* de semillas; también quedan fuera el canal, los canales laterales y la gestión de claves ([Tabla](#tbl:amenazas)).
 3. Peres exige independencia, y el LHL aplica $n\cdot h_{\min}$ como min-entropía del bloque, una heurística estándar que con dependencia no se sigue de una estimación por muestra. La semilla de Toeplitz sale del mismo *pool*.
 4. PNA y Samplomatic no están implementados; PEC corre con perfil de puerta conocido y no aprendido.
 5. Las dependencias son frágiles: el binario 90B se compila fuera del repositorio (requiere red y compilador, y la optimización nativa impide portarlo entre CPU), y mthree y nistrng se fijan por versión exacta.
 6. El diseño se revisó una vez de forma adversarial; la revisión del release permanece pendiente.
+7. No hay corrida en hardware IBM (D-010). El origen cuántico de las claves no se afirma, y el TRL de la fuente cuántica queda en el que sostiene el simulador hasta que T.TRL lo derive.
+8. El diseño con reserva de claves generada por adelantado no se ha validado: el perfil B mide una operación sobre una reserva ya cargada y no decide.
 
 # Reproducibilidad {#sec:repro}
 
 ## Qué es reproducible {#sec:repro-que}
 
-Son reproducibles el pipeline completo con semillas fijas (determinista, porque el muestreo de Aer es un PRNG), las tablas y figuras de este informe (se regeneran desde el plan, el registro de estado, el registro de veredictos y los artefactos de las corridas con un único script) y el orden de preinscripción, verificable en el historial de commits. La entropía no es reproducible por definición: en simulación, lo reproducible es lo contrario de lo que un QRNG real debe dar. Los tiempos de E3 corresponderán a una máquina y un reloj, y el binario 90B depende de la CPU.
+Son reproducibles el pipeline completo con semillas fijas (determinista, porque el muestreo de Aer es un PRNG), las tablas y figuras de este informe (se regeneran desde el plan, el registro de estado, el registro de veredictos y los artefactos de las corridas con un único script) y el orden de preinscripción, verificable en el historial de commits. La entropía no es reproducible por definición: en simulación, lo reproducible es lo contrario de lo que un QRNG real debe dar. Los tiempos de E3 corresponden a una máquina y un reloj, y el binario 90B depende de la CPU.
 
 ## Entorno {#sec:repro-entorno}
 
@@ -600,13 +640,13 @@ bash spikes/S04_90b/build_nist.sh        # compila ea_non_iid fuera del repo (re
 
 uv run --no-sync qrecauda correr declaraciones/E1.toml && uv run --no-sync qrecauda juzgar E1
 uv run --no-sync qrecauda correr declaraciones/E2.toml && uv run --no-sync qrecauda juzgar E2
-uv run --no-sync qrecauda correr declaraciones/E3.toml && uv run --no-sync qrecauda juzgar E3   # pendiente
+uv run --no-sync qrecauda correr declaraciones/E3.toml && uv run --no-sync qrecauda juzgar E3   # exige máquina libre
 
 .venv/bin/python docs/paper/figuras.py   # regenera docs/paper/fig/ desde plan/ y registro/
 bash docs/paper/construir.sh             # regenera paper.pdf
 ```
 
-Las corridas pesadas toman un candado de máquina, fuerzan BLAS a un hilo y registran el entorno en su manifiesto. E3 mide tiempo y exige una máquina libre. Dentro de una corrida, cada celda es determinista dada su semilla. Los comandos de E3 completan la cadena y no tienen resultados registrados.
+Las corridas pesadas toman un candado de máquina, fuerzan BLAS a un hilo y registran el entorno en su manifiesto. E3 mide tiempo y exige una máquina libre (carga previa menor que 2,0 y un hilo). Dentro de una corrida, cada celda es determinista dada su semilla; los tiempos de E3 no lo son, y repetir la medición dará cifras distintas dentro de la variación que el propio informe reporta.
 
 ## Procedencia de cifras y figuras {#sec:repro-cifras}
 
@@ -617,7 +657,9 @@ Las corridas pesadas toman un candado de máquina, fuerzan BLAS a un hilo y regi
 | [Figura](#fig:e1), [Tabla](#tbl:e1) | `registro/corridas/C.E1_<semilla>_informe_NNN.json` y `registro/veredictos.jsonl` |
 | [Figura](#fig:e1d) | `registro/corridas/C.E1_<semilla>_fuente_NNN.json` |
 | [Figura](#fig:e2), [Tabla](#tbl:e2), [Tabla](#tbl:zne) | `registro/corridas/C.E2_<semilla>_e2_NNN.json`, `registro/corridas/C.E2.json` |
+| [Figura](#fig:e3), [Tabla](#tbl:e3), [Tabla](#tbl:e3etapas) | `registro/corridas/C.E3_<semilla>_e3_000.json` (campos `reporte.etapas_ms`, `reporte.t_rep_ms`, `reporte.perfil_b`), `registro/corridas/C.E3.json` y `registro/veredictos.jsonl` |
 | [Tabla](#tbl:veredictos) | `registro/veredictos.jsonl` |
+| Constancia de no acceso a hardware IBM | `docs/decisiones/D-010.md` |
 | Calibración de P1 | `spikes/S04_90b/calibracion_p1.json` |
 | Preinscripciones y enmiendas | `docs/preinscripciones/` y `declaraciones/` |
 
@@ -626,13 +668,14 @@ Las corridas pesadas toman un candado de máquina, fuerzan BLAS a un hilo y regi
 # Conclusiones {#sec:conclusiones}
 
 1. Se construyó un pipeline QRNG de punta a punta con límites declarados: el simulador valida el postprocesamiento y no aporta entropía cuántica, y «certificada» significa «supera esta batería».
-2. El plan es un DAG de 59 nodos verificable por máquina. A la fecha hay 50 nodos cerrados (48 hechos y 2 juzgados), 2 listos y 7 pendientes.
+2. El plan es un DAG de 59 nodos verificable por máquina. A la fecha hay 53 nodos cerrados (50 hechos y 3 juzgados), 2 listos y 4 pendientes bloqueados.
 3. E1 obtiene CUMPLE en las tres semillas y se sostiene H1. El hallazgo R.00-1 muestra que la clave sin mitigar también pasa M1 a M5: la mitigación mejora el sesgo crudo y no es necesaria para aprobar la batería.
 4. E2 obtiene CUMPLE en las nueve celdas sintéticas y se sostiene H2 en el modelo sintético. El *twirling* propio reduce el sesgo de lectura bajo M1 con holgura, ZNE y PEC no lo modifican, el nivel realista no pone a prueba la mitigación y el nivel bajo coincide con el umbral.
-5. E3, la corrida en hardware IBM, la derivación del TRL, la revisión adversarial del release y el release 0.1.0 están pendientes. H3 queda sin evaluar, y el incumplimiento de M7 es una hipótesis sin verificar (⚠️).
-6. La contribución que persiste ante cualquier resultado es el método: preinscripción anterior a la corrida, controles obligatorios, enmiendas fechadas y desviaciones declaradas.
+5. E3 obtiene NO CUMPLE por M7 en las tres semillas: el percentil 95 de la latencia del ciclo completo es de 9 378, 5 554 y 5 547 ms frente a 500 ms, mientras que M6 cumple con 180 466 a 195 465 bit/s frente a 10 000. Generar una clave por transacción no cumple la latencia, y la mitigación y la fuente suman tres cuartas partes del ciclo. Con una reserva de claves, el ciclo de cifrado cuesta 15 a 22 µs de mediana; es un diseño por validar y no un resultado que decida. H3 se sostiene en la tasa y no en la latencia.
+6. Dos de los tres experimentos cumplen. No hay corrida en hardware IBM (D-010); la derivación del TRL, la revisión adversarial del release y el release 0.1.0 están pendientes. No se afirma origen cuántico.
+7. La contribución que persiste ante cualquier resultado es el método: preinscripción anterior a la corrida, controles obligatorios, enmiendas fechadas y desviaciones declaradas.
 
-El trabajo siguiente, en este orden, consiste en correr E3 con la máquina libre y juzgarlo, derivar el TRL, realizar la revisión adversarial del release y, si hay acceso, correr en hardware IBM y comparar la mitigación del muestreador de IBM con el *twirling* propio.
+El trabajo siguiente, en este orden, consiste en derivar el TRL, realizar la revisión adversarial del release y decidir, con preinscripción propia (E3b), si se mide una variante con reserva de claves generada por adelantado y una mitigación fuera del camino de la transacción; con acceso a hardware IBM, correr la fuente real y comparar la mitigación del muestreador de IBM con el *twirling* propio.
 
 # Referencias {.unnumbered}
 
@@ -683,8 +726,9 @@ Las referencias omitidas son el procedimiento original de von Neumann (1951) y l
 | D-007 | Cada experimento lleva un control negativo |
 | D-008 | Secretos por ruta, nunca por valor |
 | D-009 | F4.01 es *twirling* de lectura propio; mthree sólo de contraste; ZNE y PEC fuera del bitstream |
+| D-010 | Sin acceso a hardware IBM: constancia fechada; no se afirma origen cuántico ni se simula una corrida de hardware |
 
-: Decisiones de diseño D-001 a D-009 (`docs/decisiones/`). []{#tbl:decisiones}
+: Decisiones de diseño D-001 a D-010 (`docs/decisiones/`). []{#tbl:decisiones}
 
 # Apéndice B. Mapa de fuentes del repositorio {.unnumbered}
 
@@ -693,7 +737,7 @@ Las referencias omitidas son el procedimiento original de von Neumann (1951) y l
 | Objetivo, alcance, discrepancias | `docs/FUNDAMENTO.md` |
 | Arquitectura | `docs/DISENO.md` |
 | Amenazas | `docs/AMENAZAS.md` |
-| Decisiones D-001 a D-009 | `docs/decisiones/` |
+| Decisiones D-001 a D-010 | `docs/decisiones/` |
 | Preinscripciones P.E0 a P.E3 | `docs/preinscripciones/` y `declaraciones/*.toml` |
 | Spikes S.01 a S.04 | `spikes/` |
 | Revisión adversarial R.00 | `docs/informes/REVISION_DISENO_R00.md` |

@@ -1,6 +1,6 @@
 # Informe técnico (docs/paper)
 
-Informe de QRecauda: planeación, método preinscrito y resultados de E1 y E2 (E3 pendiente).
+Informe de QRecauda: planeación, método preinscrito y resultados de E1, E2 y E3.
 
 | fichero | función |
 |:--|:--|

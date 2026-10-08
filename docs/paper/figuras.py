@@ -331,24 +331,29 @@ def fig_cronologia() -> None:
         ("E2", "P.E2", "43e2649", "pre", True), ("E2", "ejecutor", "26e5b41", "cod", False), ("E2", "C.E2 + veredicto", "f22ffd3", "run", True),
         ("E3", "P.E3", "d0f062a", "pre", True), ("E3", "enmienda\n(guard)", "09da88c", "enm", False),
         ("E3", "enmienda\n(M1–M5 inf.)", "5a72939", "enm", True),
+        ("E3", "carga\n< 2,0", "15bd897", "enm", False), ("E3", "clave\nrechazada", "8cc0ec1", "enm", True),
+        ("E3", "reposo", "41cd058", "enm", False), ("E3", "C.E3 + veredicto", "fdb4386", "run", True),
         ("P.E0", "P.E0", "f8e21d0", "pre", True),
     ]
 
+    def fecha_minutos(sha: str) -> tuple[str, int]:
+        d, h, m = git("show", "-s", "--format=%cd", "--date=format:%d %H %M", sha).split()
+        return d, int(h) * 60 + int(m)
+
     def minutos(sha: str) -> float:
-        h, m = git("show", "-s", "--format=%cd", "--date=format:%H:%M", sha).split(":")
-        return int(h) * 60 + int(m)
+        return fecha_minutos(sha)[1]
 
     t = {h[2]: minutos(h[2]) for h in hitos}
     # coherencia con el registro: la preinscripción de cada veredicto precede a su corrida (git lo dice)
-    for e, pre in (("E1", "37b89ca"), ("E2", "43e2649")):
+    for e, pre in (("E1", "37b89ca"), ("E2", "43e2649"), ("E3", "41cd058")):
         assert ver[e]["preinscripcion_sha"].startswith(pre), (e, pre)
         subprocess.run(["git", "-C", str(RAIZ), "merge-base", "--is-ancestor", ver[e]["preinscripcion_sha"], ver[e]["commit"]], check=True)
     carriles = ["P.E0", "E1", "E2", "E3"]
     yc = {c: 3 - i for i, c in enumerate(carriles)}
     estilos = {"pre": ("D", AZUL, 38), "enm": ("^", NARANJA, 46), "cod": ("s", GRIS, 24), "run": ("o", VERDE, 54)}
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.5, 3.0), sharey=True, gridspec_kw={"width_ratios": [5.2, 1.5], "wspace": 0.05})
-    rangos = ((17 * 60 + 56, 19 * 60 + 32), (21 * 60 + 28, 21 * 60 + 53))
-    for ax, (lo, hi) in zip((a1, a2), rangos):
+    fig, (a1, a2, a3) = plt.subplots(1, 3, figsize=(6.5, 3.0), sharey=True, gridspec_kw={"width_ratios": [4.6, 1.3, 2.2], "wspace": 0.07})
+    rangos = ((17 * 60 + 56, 19 * 60 + 32), (21 * 60 + 28, 21 * 60 + 53), (14 * 60 + 12, 14 * 60 + 52))
+    for ax, (lo, hi) in zip((a1, a2, a3), rangos):
         ax.set_xlim(lo, hi)
         ax.set_ylim(-0.7, 3.8)
         ax.spines["left"].set_visible(False)
@@ -360,34 +365,36 @@ def fig_cronologia() -> None:
         ax.tick_params(axis="y", length=0)
     a1.spines["right"].set_visible(False)
     a2.spines["right"].set_visible(False)
+    a3.spines["right"].set_visible(False)
     a1.set_yticks([yc[c] for c in carriles])
     a1.set_yticklabels(["P.E0", "E1", "E2", "E3"], fontweight="bold")
     alto = defaultdict(int)
     for car, et, sha, tipo, arriba in hitos:
         x = t[sha]
-        ax = a1 if x < 20 * 60 else a2
+        dia = fecha_minutos(sha)[0]
+        ax = a3 if dia == "08" else (a1 if x < 20 * 60 else a2)
         mk, col, sz = estilos[tipo]
         y = yc[car]
         ax.scatter([x], [y], marker=mk, s=sz, color=col, ec="black", lw=0.5, zorder=3)
         ax.annotate(et, (x, y), xytext=(0, 8 if arriba else -8), textcoords="offset points", ha="center", va="bottom" if arriba else "top", fontsize=5.8, color="#222222")
-    # E3 pendiente: C.E3 abierto
-    a2.scatter([21 * 60 + 47], [yc["E3"]], marker="o", s=54, facecolors="white", edgecolors=BERMELLON, lw=1.2, zorder=3)
-    a2.annotate("C.E3\nPENDIENTE", (21 * 60 + 47, yc["E3"]), xytext=(0, 9), textcoords="offset points", ha="center", va="bottom", fontsize=5.8, color=BERMELLON)
     # corte del eje
     d = 0.012
     kw = dict(transform=a1.transAxes, color="k", clip_on=False, lw=0.7)
     a1.plot((1 - d, 1 + d), (-0.03, 0.03), **kw)
-    kw["transform"] = a2.transAxes
-    a2.plot((-d * 3.4, d * 3.4), (-0.03, 0.03), **kw)
+    for ax_ in (a2, a3):
+        kw["transform"] = ax_.transAxes
+        ax_.plot((-d * 3.4, d * 3.4), (-0.03, 0.03), **kw)
+    a2.plot((1 - d * 3.4, 1 + d * 3.4), (-0.03, 0.03), transform=a2.transAxes, color="k", clip_on=False, lw=0.7)
     a1.set_xlabel("hora del commit, 2026-10-07 (eje cortado entre 19:30 y 21:30)", loc="left")
+    a3.set_xlabel("2026-10-08", loc="left")
     # leyenda
     from matplotlib.lines import Line2D
     leyenda = [Line2D([], [], marker="D", ls="", color=AZUL, mec="k", mew=0.5, label="preinscripción"),
                Line2D([], [], marker="^", ls="", color=NARANJA, mec="k", mew=0.5, label="enmienda fechada"),
                Line2D([], [], marker="s", ls="", color=GRIS, mec="k", mew=0.5, label="código del ejecutor/juez"),
                Line2D([], [], marker="o", ls="", color=VERDE, mec="k", mew=0.5, label="corrida y veredicto"),
-               Line2D([], [], marker="o", ls="", markerfacecolor="white", mec=BERMELLON, mew=1.1, label="pendiente")]
-    a1.legend(handles=leyenda, loc="upper center", bbox_to_anchor=(0.62, 1.2), ncol=5, frameon=False, handletextpad=0.3, columnspacing=1.0, fontsize=6.2)
+               ]
+    a1.legend(handles=leyenda, loc="upper center", bbox_to_anchor=(0.62, 1.2), ncol=4, frameon=False, handletextpad=0.3, columnspacing=1.0, fontsize=6.2)
     guardar(fig, "cronologia")
 
 
@@ -545,8 +552,60 @@ def fig_e1d() -> None:
     guardar(fig, "e1d_90b_vs_mcv")
 
 
+# ── (f) E3: latencia por etapas y por repetición ──────────────────────────────────────────────
+def fig_e3() -> None:
+    semillas = (20261007, 20261008, 20261009)
+    datos = {s: json.load(open(RAIZ / f"registro/corridas/C.E3_{s}_e3_000.json")) for s in semillas}
+    etapas = [("fuente", "fuente (Aer)", CIELO), ("mitigacion", "mitigación (*twirling*)", NARANJA), ("extraccion", "extracción", PURPURA),
+              ("validacion", "validación", VERDE), ("cifrado", "cifrado (0,19 ms)", NEGRO)]
+    fig, (a, b) = plt.subplots(1, 2, figsize=(6.5, 2.7), gridspec_kw={"width_ratios": [1, 1.25], "wspace": 0.3})
+    # (a) mediana por etapa, apilada
+    for i, s in enumerate(semillas):
+        base = 0.0
+        e = datos[s]["reporte"]["etapas_ms"]
+        for clave, nombre, col in etapas:
+            v = float(np.median(e[clave])) / 1000
+            a.bar(i, v, bottom=base, color=col, ec="black", lw=0.4, width=0.6, label=nombre.replace("*", "") if i == 0 else None)
+            base += v
+        a.text(i, base + 0.08, f"{base:.2f}".replace(".", ",") + " s", ha="center", fontsize=6.5)
+    a.axhline(0.5, color=BERMELLON, lw=1.0, ls="--")
+    a.text(2.38, 0.5, "M7\n0,5 s", color=BERMELLON, fontsize=6.3, ha="left", va="center")
+    a.set_xlim(-0.5, 2.95)
+    a.set_xticks(range(3))
+    a.set_xticklabels([str(s) for s in semillas], fontsize=6.3)
+    a.set_ylabel("mediana de $t_{rep}$ por etapa (s)")
+    a.set_ylim(0, 8.3)
+    a.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:.0f}"))
+    a.legend(loc="upper left", frameon=False, fontsize=5.8, handlelength=1.0, labelspacing=0.25, ncol=2, columnspacing=0.8, bbox_to_anchor=(-0.02, 1.0))
+    a.set_title("(a) etapas", loc="left", fontsize=7.5)
+    # (b) t_rep por repetición, escala log
+    marcas = {7: "o", 8: "s", 9: "D"}
+    cols = {7: AZUL, 8: NARANJA, 9: VERDE}
+    for s in semillas:
+        r = datos[s]["reporte"]
+        t = np.array(r["t_rep_ms"]) / 1000
+        rech = np.array(r["claves_rechazadas"][3:]) > 0
+        k = int(str(s)[-1])
+        x = np.arange(1, len(t) + 1)
+        b.scatter(x[~rech], t[~rech], marker=marcas[k], s=14, color=cols[k], ec="black", lw=0.3, zorder=3, label=f"{s}")
+        b.scatter(x[rech], t[rech], marker=marcas[k], s=30, facecolors="white", edgecolors=cols[k], lw=1.3, zorder=4)
+        b.axhline(datos[s]["m7_p95_ms"] / 1000, color=cols[k], lw=0.7, ls=":")
+    b.axhline(0.5, color=BERMELLON, lw=1.0, ls="--")
+    b.text(30.5, 0.5, "M7: 0,5 s", color=BERMELLON, fontsize=6.3, ha="right", va="bottom")
+    b.set_yscale("log")
+    b.set_ylim(0.3, 14)
+    b.set_xlim(0, 31)
+    b.set_yticks([0.5, 1, 2, 5, 10])
+    b.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}".replace(".", ",")))
+    b.set_xlabel("repetición medida")
+    b.set_ylabel("$t_{rep}$ (s, escala logarítmica)")
+    b.set_title("(b) por repetición; hueco: clave regenerada; punteado: p95", loc="left", fontsize=7.0)
+    b.legend(loc="center right", frameon=False, fontsize=6.0, handletextpad=0.2, title="semilla", title_fontsize=6.0)
+    guardar(fig, "e3_latencia")
+
+
 FIGS = {"pipeline": fig_pipeline, "capas": fig_capas, "dag": fig_dag, "cronologia": fig_cronologia,
-        "e2": fig_e2, "e1": fig_e1, "e1d": fig_e1d}
+        "e2": fig_e2, "e1": fig_e1, "e1d": fig_e1d, "e3": fig_e3}
 
 if __name__ == "__main__":
     _fuentes()
