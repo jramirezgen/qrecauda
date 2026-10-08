@@ -1,4 +1,8 @@
-"""Toda cifra de resultado del pitch lleva un marcador y el marcador resuelve contra el registro (F7.02).
+"""Toda cifra de resultado del pitch y del deck lleva un marcador y el marcador resuelve contra el registro (F7.02).
+
+Se cruzan dos documentos, ``docs/pitch/PITCH.md`` y ``docs/pitch/DECK.md``, con la misma gramática. Las cifras de
+contexto del deck (Metro, peajes, NIST) no salen de una corrida: se atan con ``{{ref:docs/pitch/IMPACTO.md}}``, donde
+figuran con su fuente y su etiqueta.
 
 Gramática. Un marcador va pegado a la cifra que respalda: ``187{{corrida:C.E3.m6_bits_por_s:min/1000}}``.
 
@@ -7,7 +11,7 @@ Gramática. Un marcador va pegado a la cifra que respalda: ``187{{corrida:C.E3.m
     {{ref:docs/ruta.md}}
 
 ``ID``       valor del campo ``corrida`` de los artefactos de ``registro/corridas/*.json`` (C.E1a, C.E1b, C.E1c,
-             C.E1d, C.E2, C.E3) o el nombre del archivo si no lo trae (HW). Los manifiestos (con ``artefactos``)
+             C.E1d, C.E2, C.E3, C.E3b, C.E5) o el nombre del archivo si no lo trae (HW). Los manifiestos (con ``artefactos``)
              no cuentan: sólo los artefactos por semilla.
 ``filtro``   ``campo=valor`` sobre el artefacto (p. ej. ``[nivel=medio,tecnica=zne]``). Todos deben cumplirse.
 ``ruta``     campo con puntos; un segmento entero indexa una lista (``etapas.cruda.0.1``).
@@ -36,6 +40,9 @@ import pytest
 
 RAIZ = Path(__file__).resolve().parents[2]
 PITCH = RAIZ / "docs" / "pitch" / "PITCH.md"
+DECK = RAIZ / "docs" / "pitch" / "DECK.md"
+RUTAS = [PITCH, DECK]
+MINIMO_DE_CIFRAS = {PITCH: 25, DECK: 12}
 CORRIDAS = RAIZ / "registro" / "corridas"
 
 NUM = r"\d+(?: \d{3})*(?:,\d+)?"
@@ -114,8 +121,8 @@ def _trl_sistema() -> int:
     return int(m.group(1))
 
 
-def _cuerpo() -> str:
-    t = PITCH.read_text()
+def _cuerpo(ruta: Path = PITCH) -> str:
+    t = ruta.read_text()
     assert t.startswith("---\n"), "falta el front matter"
     return t.split("\n---\n", 1)[1]
 
@@ -135,40 +142,52 @@ def _sin_ruido(texto: str) -> str:
     return t
 
 
-def _laminas():
-    partes = re.split(r"(?m)^(?=# Lámina \d+)", _cuerpo())
+def _laminas(ruta: Path = PITCH):
+    partes = re.split(r"(?m)^(?=# Lámina \d+)", _cuerpo(ruta))
     return [p for p in partes if p.startswith("# Lámina")]
 
 
-def _marcadores():
-    return list(CIFRA_CON_MARCADOR.finditer(_cuerpo()))
+def _marcadores(ruta: Path = PITCH):
+    return list(CIFRA_CON_MARCADOR.finditer(_cuerpo(ruta)))
+
+
+def _casos_de_marcadores():
+    return [pytest.param(ruta, m, id=f"{ruta.stem}:{m.group(0)[:70]}") for ruta in RUTAS for m in _marcadores(ruta)]
+
+
+def _por_ruta(f):
+    return pytest.mark.parametrize("ruta", RUTAS, ids=lambda r: r.stem)(f)
 
 
 # --- estructura -------------------------------------------------------------------------------------------------
 
 
-def test_diez_laminas_numeradas():
-    laminas = _laminas()
+@_por_ruta
+def test_diez_laminas_numeradas(ruta):
+    laminas = _laminas(ruta)
     assert len(laminas) == 10
     nums = [int(re.match(r"# Lámina (\d+)", p).group(1)) for p in laminas]
     assert nums == list(range(1, 11))
 
 
-def test_cabecera_autor_y_sin_rutas_absolutas():
-    texto = PITCH.read_text()
+@_por_ruta
+def test_cabecera_autor_y_sin_rutas_absolutas(ruta):
+    texto = ruta.read_text()
     assert re.search(r"(?m)^author: kaitokid$", texto.split("\n---\n", 1)[0])
     assert not re.search(r"(?<![\w.])/(?:home|mnt|tmp|Users|root)/|[A-Za-z]:\\", texto)
 
 
-def test_registro_de_publicacion():
-    texto = PITCH.read_text()
+@_por_ruta
+def test_registro_de_publicacion(ruta):
+    texto = ruta.read_text()
     assert "honestidad" not in texto.lower()
     assert not re.search(r"co-authored|generated with|claude|anthropic", texto, re.I)
-    assert "—" not in _cuerpo(), "sin rayas largas (stop-slop)"
+    assert "—" not in _cuerpo(ruta), "sin rayas largas (stop-slop)"
 
 
-def test_nunca_afirma_entropia_cuantica():
-    assert "entropía cuántica" not in PITCH.read_text().lower()
+@_por_ruta
+def test_nunca_afirma_entropia_cuantica(ruta):
+    assert "entropía cuántica" not in ruta.read_text().lower()
 
 
 def test_la_lamina_de_limites_dice_validacion_del_pipeline_y_cita_el_trl():
@@ -179,19 +198,27 @@ def test_la_lamina_de_limites_dice_validacion_del_pipeline_y_cita_el_trl():
     assert "origen cuántico" in limites and "hardware" in limites.lower()
 
 
-def test_la_lamina_de_hoja_de_ruta_apunta_a_roadmap():
-    assert "docs/ROADMAP.md" in next(p for p in _laminas() if re.match(r"# Lámina \d+ · Hoja de ruta", p))
+@_por_ruta
+def test_la_lamina_de_hoja_de_ruta_apunta_a_roadmap(ruta):
+    assert "docs/ROADMAP.md" in next(p for p in _laminas(ruta) if re.match(r"# Lámina \d+ · Hoja de ruta", p))
+
+
+def test_el_deck_declara_que_sin_hardware_no_hay_origen_cuantico():
+    deck = _cuerpo(DECK)
+    assert "hardware" in deck.lower() and "origen" in deck.lower()
+    assert re.search(r"TRL-3\{\{trl:sistema\}\}", deck), "el deck debe atar su TRL al de docs/TRL.md"
 
 
 # --- cifras -----------------------------------------------------------------------------------------------------
 
 
-def test_hay_cifras_marcadas():
-    assert len(_marcadores()) >= 25
+@_por_ruta
+def test_hay_cifras_marcadas(ruta):
+    assert len(_marcadores(ruta)) >= MINIMO_DE_CIFRAS[ruta]
 
 
-@pytest.mark.parametrize("m", _marcadores(), ids=lambda m: m.group(0)[:70])
-def test_cada_marcador_resuelve_y_coincide(m):
+@pytest.mark.parametrize(("ruta", "m"), _casos_de_marcadores())
+def test_cada_marcador_resuelve_y_coincide(ruta, m):
     cifra, tipo, spec = m.groups()
     escrito, dec = _leer(cifra)
     if tipo == "corrida":
@@ -206,13 +233,15 @@ def test_cada_marcador_resuelve_y_coincide(m):
         assert re.search(rf"(?<![\w,]){re.escape(cifra)}(?![\w]|,\d)", ruta.read_text()), f"{cifra} no aparece en {spec}"
 
 
-def test_todo_marcador_va_pegado_a_una_cifra():
-    sueltos = len(MARCADOR.findall(_cuerpo())) - len(_marcadores())
+@_por_ruta
+def test_todo_marcador_va_pegado_a_una_cifra(ruta):
+    sueltos = len(MARCADOR.findall(_cuerpo(ruta))) - len(_marcadores(ruta))
     assert sueltos == 0, f"{sueltos} marcadores sin una cifra pegada a su izquierda"
 
 
-def test_no_hay_cifra_de_resultado_sin_marcador():
-    t = _sin_ruido(CIFRA_CON_MARCADOR.sub(" ", _cuerpo()))
+@_por_ruta
+def test_no_hay_cifra_de_resultado_sin_marcador(ruta):
+    t = _sin_ruido(CIFRA_CON_MARCADOR.sub(" ", _cuerpo(ruta)))
     sobrantes = re.findall(rf"(?<![\w,]){NUM}(?![\w])", t)
     assert not sobrantes, f"cifras sin marcador: {sobrantes}"
 

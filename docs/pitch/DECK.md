@@ -55,15 +55,17 @@ Fuente de bits -> Mitigación -> Peres -> Toeplitz -> Validación -> Clave -> AE
 
 # Lámina 5 · Validación
 
-**Tres experimentos preinscritos, un NO CUMPLE publicado.**
+**Cinco experimentos preinscritos, un NO CUMPLE publicado.**
 
 | experimento | veredicto | qué dice |
-|----|----|--------|
-| E1, calidad de la clave | CUMPLE, condicionado | la clave mide al menos 956,6{{corrida:C.E1c.bits_clave:min/1000}} mil bits; condicionado a dos enmiendas |
-| E2, sesgo de lectura | CUMPLE | el twirling baja el sesgo de 0,030{{corrida:C.E2[nivel=medio,tecnica=ninguna].sesgo_crudo:max}} a casi cero |
-| E3, tasa y latencia | **NO CUMPLE** | M6 cumple (de 180{{corrida:C.E3.m6_bits_por_s:min/1000}} a 195{{corrida:C.E3.m6_bits_por_s:max/1000}} kbit/s); M7 falla (de 5,5{{corrida:C.E3.m7_p95_ms:min/1000}} a 9,4{{corrida:C.E3.m7_p95_ms:max/1000}} s frente a 500{{ref:docs/preinscripciones/E3.md}} ms) |
+|-----|-----|-------------|
+| E1, calidad | CUMPLE, condicionado | la clave mide al menos 956,6{{corrida:C.E1c.bits_clave:min/1000}} mil bits; condicionado a dos enmiendas |
+| E2, sesgo | CUMPLE | el twirling baja el sesgo de 0,030{{corrida:C.E2[nivel=medio,tecnica=ninguna].sesgo_crudo:max}} a casi cero |
+| E3, latencia | **NO CUMPLE** | M6 cumple (de 180{{corrida:C.E3.m6_bits_por_s:min/1000}} a 195{{corrida:C.E3.m6_bits_por_s:max/1000}} kbit/s); M7 falla (de 5,5{{corrida:C.E3.m7_p95_ms:min/1000}} a 9,4{{corrida:C.E3.m7_p95_ms:max/1000}} s frente a 500{{ref:docs/preinscripciones/E3.md}} ms) |
+| E3b, reserva de claves | CUMPLE | otro diseño: M7 de 0,17{{corrida:C.E3b.p95_ms:min}} a 0,18{{corrida:C.E3b.p95_ms:max}} ms; productor de 177{{corrida:C.E3b.tasa_neta_bps:min/1000}} a 199{{corrida:C.E3b.tasa_neta_bps:max/1000}} kbit/s; sin esperas |
+| E5, control negativo | CUMPLE | con `mcv` la clave de una fuente dependiente pasa y sobra (hasta 381{{corrida:C.E5[fuente=markov_fuerte].resultados.0.bits_clave:max/1000}} mil bits); el conservador la acorta (56{{corrida:C.E5[fuente=markov_fuerte].resultados.2.bits_clave:max/1000}} mil) |
 
-- Es la validación del pipeline. Sin hardware IBM no se afirma origen cuántico.
+- Validación del pipeline: sin hardware IBM no se afirma origen cuántico.
 
 # Lámina 6 · Caso de uso
 
@@ -71,7 +73,8 @@ Fuente de bits -> Mitigación -> Peres -> Toeplitz -> Validación -> Clave -> AE
 
 - Un pasaje en el Metro o un cobro de peaje es una transacción pequeña que se firma y se cifra.
 - La clave AES-256-GCM sale de la cadena medida; el *nonce* no se repite.
-- El cuello de botella medido es la latencia (M7). El rediseño en estudio genera las claves antes de usarlas: una reserva cargada de antemano (experimento E3b, versión 0.2.0).
+- El cuello de botella medido era la latencia (M7). El rediseño genera las claves aparte, en un proceso productor, y la transacción consume una ya lista (experimento E3b, versión 0.2.0 en preparación): p95 de 0,17{{corrida:C.E3b.p95_ms:min}} a 0,18{{corrida:C.E3b.p95_ms:max}} ms en simulador, y el arranque, de 6,6{{corrida:C.E3b.arranque_ms:min/1000}} a 6,7{{corrida:C.E3b.arranque_ms:max/1000}} s, se informa aparte.
+- Las claves de E3b usan el dimensionado `mcv` de 0.1.0. Sin verificar (no medido) el efecto del dimensionado conservador de E5 sobre la latencia.
 
 # Lámina 7 · Impacto
 
@@ -89,8 +92,8 @@ Fuentes y etiquetas: `docs/pitch/IMPACTO.md`.
 
 | etapa | qué la cierra |
 |----|-----------|
-| Hoy: TRL-3{{trl:sistema}} | simulador; M7 no cumple; sin hardware |
-| TRL-4 | M7 cumplido con una preinscripción nueva (E3b) y una primera corrida real en IBM con `job_id` |
+| Hoy: TRL-3{{trl:sistema}} | simulador; M7 cumple con reserva (E3b); sin hardware |
+| TRL-4 | una primera corrida real en IBM con `job_id` (C.E4, preinscrita, bloqueada por credencial); M7 con cola y red de IBM |
 | TRL-5 | E1 y E2 repetidos sobre la fuente real, con el modelo de ruido contrastado |
 | Piloto | umbrales validados con quien opere el cobro |
 | Producción | custodia de claves (KMS o HSM) y certificación de la fuente |
@@ -111,6 +114,6 @@ Detalle: `docs/ROADMAP.md`.
 
 **La aleatoriedad clásica se predice. La recaudación del Perú no debería.**
 
-- Se lleva el jurado: un pipeline que corre de punta a punta en una PC, y razones medidas de lo que aún no cumple.
+- Se lleva el jurado: un pipeline que corre de punta a punta en una PC, con control negativo del pipeline completo y razones medidas de lo que aún no cumple.
 - Pedimos acceso a un backend de IBM Quantum para la primera corrida real, con la credencial entregada por ruta.
 - Pedimos que quien opere el cobro revise los umbrales de tasa y latencia, que hoy vienen del manifiesto del equipo.

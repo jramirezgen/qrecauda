@@ -16,10 +16,10 @@ corre `uv run qrecauda juzgar E1`, que sí existe.
 | 0:10 a 0:22 | 2 · Solución | Una cadena que va de los bits a la clave y mide cada etapa: mitigación, Peres, Toeplitz, validación y cifrado AES-GCM. Siete métricas con umbral escrito antes de correr. | El diagrama de la cadena. |
 | 0:22 a 0:32 | 3 · Tecnología | La fuente es un puerto. Hoy es Qiskit Aer con un circuito de un gate; la computadora de IBM entra por el mismo puerto sin tocar el resto. | Las cuatro viñetas, sin leerlas. |
 | 0:32 a 1:00 | 4 · Demo | Tres ramas: un PRNG, la fuente de Aer sin mitigar y la fuente de Aer mitigada. A la izquierda, la entrada: la muestra de Aer sin mitigar tiene un sesgo de unos tres centésimos, tres veces el umbral; la mitigación lo deja en cuatro diezmilésimas. A la derecha, la salida: las tres claves pasan. Lo digo yo antes de que lo pregunten: pasar la batería no prueba el origen de los bits. | La figura. Si hay `qrecauda demo`, correrlo aquí y dejar que imprima las tres ramas. |
-| 1:00 a 1:18 | 5 · Validación | Tres experimentos preinscritos. E1 y E2 cumplen. E3 no cumple: la tasa cumple, pero la latencia, de cinco a nueve segundos, está lejos de los quinientos milisegundos. Ese resultado está publicado y no se reabre. | La tabla, señalando la fila en negrita. |
-| 1:18 a 1:26 | 6 · Caso de uso | Una transacción de Metro o de peaje consume una clave que nadie puede recalcular. Para la latencia, el rediseño en estudio genera las claves antes de usarlas. | Nada nuevo: la viñeta de la reserva. |
+| 1:00 a 1:18 | 5 · Validación | Cinco experimentos preinscritos. E1, E2, E3b y E5 cumplen. E3 no cumplió: la tasa cumple, pero la latencia, de cinco a nueve segundos, estaba lejos de los quinientos milisegundos. Ese resultado está publicado y no se reabre. | La tabla, señalando la fila en negrita y las dos filas nuevas. |
+| 1:18 a 1:26 | 6 · Caso de uso | Una transacción de Metro o de peaje consume una clave que nadie puede recalcular. La latencia baja a décimas de milisegundo cuando la clave sale de una reserva generada aparte (E3b), en simulador. | La viñeta de la reserva, con su p95 y el arranque informado aparte. |
 | 1:26 a 1:40 | 7 · Impacto | La Línea 1 del Metro de Lima movió 203,9 millones de pasajeros en 2025 (verificado). Ninguna norma que revisamos exige un QRNG; el argumento es de entropía, medida con NIST 800-90B y 90C, no con la batería 800-22. | Las tres cifras con su etiqueta. |
-| 1:40 a 1:48 | 8 · Hoja de ruta | Estamos en TRL-3. Cerrar la latencia y hacer una primera corrida real en IBM nos lleva a TRL-4; repetir E1 y E2 sobre esa fuente, a TRL-5; luego, piloto con un operador. | La tabla de etapas. |
+| 1:40 a 1:48 | 8 · Hoja de ruta | Estamos en TRL-3. La latencia ya cerró en simulador; falta una primera corrida real en IBM, hoy bloqueada por una credencial, para llegar a TRL-4; repetir E1 y E2 sobre esa fuente, a TRL-5; luego, piloto con un operador. | La tabla de etapas. |
 | 1:48 a 1:52 | 9 · Equipo | Soy kaitokid. El plan y el registro están abiertos. | La lámina, sin leer. |
 | 1:52 a 2:00 | 10 · Cierre | Pedimos un backend de IBM Quantum para la primera corrida real, y que quien opere el cobro revise nuestros umbrales. La aleatoriedad clásica se predice. La recaudación del Perú no debería. | La frase de la tesis otra vez. |
 
@@ -32,25 +32,33 @@ se sostiene con lo que hay.
 En ningún lado todavía, y lo decimos en la lámina de validación. Aer muestrea con un generador pseudoaleatorio:
 con semilla es determinista y no tiene valor de seguridad. Lo que se valida hoy es el postprocesamiento y la medición que
 lo juzga, no el origen. El origen cuántico depende de una corrida en hardware IBM, que no existe: la constancia fechada
-está en `registro/corridas/HW.json` y el `job_id` es nulo. Por eso el sistema está en TRL-3 y no más arriba.
+está en `registro/corridas/HW.json` y el `job_id` es nulo. El camino a IBM está listo y ensayado contra un backend falso
+(`qrecauda hardware`, preinscripción P.E4), pero la corrida real espera una credencial: ningún resultado en hardware. Por eso el sistema está en TRL-3 y no más arriba.
 
 **2. «Su pipeline pasa NIST aunque la fuente sea mala.»**
 Es cierto y es un hallazgo nuestro (R.00-1). La clave de la rama sin mitigar pasa M1 en las tres semillas, y la del PRNG
 también, porque Peres y Toeplitz bastan para aprobar la batería. Por eso NIST SP 800-22 no sirve como prueba de la
-fuente, y NIST mismo aclaró en 2022 que no sirve para validar generadores criptográficos. El argumento de entropía se
-apoya en SP 800-90B sobre la fuente cruda y en 90C para componer fuentes. Tenemos un control: una fuente Markov que el 90B
-rechaza (a lo sumo 0,17 bit por bit) y que el MCV acepta (al menos 0,99). Dos límites: el piso de ese control se calibró
-con las mismas semillas, así que es una prueba de regresión y no un control con poder; y la longitud de la clave usa MCV,
-que no ve dependencia, y sobrestimó una clave Markov unas tres veces. La mitigación pendiente es dimensionar con el
-mínimo de MCV y 90B.
+fuente, y NIST mismo aclaró en 2022 que no sirve para validar generadores criptográficos. Ahora hay un control negativo
+del pipeline completo, E5, con veredicto CUMPLE: tres fuentes con dependencia entre bits (dos Markov y una semiperiódica)
+atravesaron la cadena entera, con tres semillas. Medido ahí, R.00-1 se confirma: con el dimensionado de 0.1.0 las nueve
+claves defectuosas pasan M1 a M5 y salen entre 1,2 y 2,5 veces más largas que lo que la fuente sostiene (veredicto de E5,
+criterio HOY). El dimensionado conservador (el mínimo de MCV y 90B más la contabilidad de la entropía de la fuente) las
+acorta: la fuente markov_fuerte pasa de 380 a 381 mil bits a 55 a 56 mil, y la fuente buena conserva de 856 a 883 mil.
+Dos límites: `min(MCV, 90B)` por sí solo no alcanza en markov_fuerte, y el conservador es opt-in (por defecto sigue `mcv`).
+Además, E3 y E3b no se re-midieron con él, así que ⚠️ sin verificar cómo cambia la latencia. Cubre tres defectos de
+dependencia con respuesta analítica; un defecto que imite a una fuente independiente ante los estimadores no se probó.
 
 **3. «M7 falla. ¿Qué pasó y qué hacen?»**
-Falló en las tres semillas: p95 de 5,5 a 9,4 s contra 500 ms. El veredicto de E3 está en el registro y no se reabre. La
-tasa (M6) sí cumple, de 180 a 195 kbit/s contra 10 kbit/s. El rediseño es una reserva de claves generadas de antemano,
-preinscrita como experimento nuevo (E3b) con sus propios umbrales antes de correr. Hoy no hay resultado de E3b que citar:
-la corrida está en curso y el perfil B de E3, que mostró de 30 a 64 mil transacciones por segundo, no decide nada. Además,
-los 500 ms y los 10 kbit/s vienen del manifiesto del equipo, no de un operador; no hay requisito de OSITRAN, del MTC ni del
-Metro en el repositorio.
+En E3 falló en las tres semillas: p95 de 5,5 a 9,4 s contra 500 ms. El veredicto de E3 está en el registro y no se
+reabre. La tasa (M6) sí cumple, de 180 a 195 kbit/s contra 10 kbit/s. El rediseño es una reserva de claves que un proceso
+productor genera aparte, preinscrita como experimento nuevo (E3b) con sus propios umbrales antes de correr. E3b cumple en
+las tres semillas: p95 de 0,17 a 0,18 ms con 12 000 transacciones por semilla, productor de 177 a 199 kbit/s contra un
+consumo de 35,2 kbit/s, y cero esperas. No es una corrección de E3, es otro diseño con otro veredicto, y el costo se
+trasladó al arranque: de 6,6 a 6,7 s hasta la primera clave en la reserva, que se informa aparte y no decide. Límites: se
+midió en simulador, sin la cola ni la red de IBM; las claves se generan con el dimensionado `mcv` de 0.1.0 (que E5 mostró
+que sobrestima con fuentes dependientes); y la demanda de 100 transacciones por segundo es declarada por el equipo.
+Además, los 500 ms y los 10 kbit/s vienen del manifiesto del equipo, no de un operador; no hay requisito de OSITRAN, del
+MTC ni del Metro en el repositorio.
 
 **4. «¿Por qué una mitigación propia y no TREX de IBM?»**
 Porque la nuestra opera sobre cadenas de bits y la necesitamos para dimensionar la clave; la medimos sobre ruido modelado y
