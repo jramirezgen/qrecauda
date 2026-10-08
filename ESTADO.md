@@ -8,9 +8,9 @@ Plan v1 · 2026-10-07
 
 | estado | nodos |
 |---|---|
-| hecho | 52 |
+| hecho | 53 |
 | juzgado | 3 |
-| pendiente | 4 |
+| pendiente | 3 |
 
 ## En curso, bloqueados y pausados
 
@@ -19,7 +19,6 @@ Plan v1 · 2026-10-07
 ## Listos
 
 - **F7.02** Pitch de 10 slides
-- **F7.04** Roadmap TRL 4 → TRL 5 → piloto → producción
 - **R.01** Revisión adversarial propia previa al release 0.1.0
 
 ## Hechos y juzgados
@@ -81,3 +80,4 @@ Plan v1 · 2026-10-07
 | T.TRL | hecho | `8039a6d` | Matriz de TRL por componente, derivada de la evidencia |
 | F7.05 | hecho | `7db7730` | Wiki repo: mapas, bases e incidencias publicados en la bóveda |
 | F7.01 | hecho | `faeb0d7` | Notebook reproducible con versiones exactas |
+| F7.04 | hecho | `ca8cc07` | Roadmap TRL 4 → TRL 5 → piloto → producción |
