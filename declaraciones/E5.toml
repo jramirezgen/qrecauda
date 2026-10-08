@@ -1,0 +1,71 @@
+# Declaración de E5 (nodo P.E5), fijada ANTES de medir. Hereda PARAMETROS.toml. Ninguna cifra de este archivo es un resultado.
+# Prosa y justificación: docs/preinscripciones/E5.md
+hereda = "declaraciones/PARAMETROS.toml"        # qubits, shots, semillas, epsilon, profundidad de Peres, ruido_lectura, [validacion]
+
+[experimento]
+id = "E5"
+nodo_corrida = "C.E5"
+metricas = ["M1_sesgo", "M2_min_entropia", "M3_nist_monobit", "M4_nist_runs", "M5_chi_cuadrado", "M6_tasa_bps"]   # umbrales en dominio/metricas.py; no se teclean aquí
+pregunta = "el pipeline completo rechaza o acorta la clave de una fuente con dependencia entre bits, y no rechaza ni mutila la de una fuente buena"
+
+[ruido]
+nivel = "medio"                                  # valor en PARAMETROS.toml [ruido_lectura]; el de E1 y E3
+mitigacion = "twirling_propio"                   # F4.01, REAL sobre Aer; el defecto se aplica DESPUÉS (ver E5.md)
+twirling_bloque = 200
+
+[dimensionados]
+ids = ["mcv", "min_mcv_90b", "conservador"]      # 0.1.0 | mínimo de MCV (pool entero) y 90B (prefijo del pool) | lo anterior + contabilidad de la fuente
+decide = "conservador"
+prefijo_90b = 1_000_000                          # bits sobre los que se corre el 90B: el mínimo que exige y [validacion].muestras_90b
+salida_m2 = "mcv"                                # M2 de la clave se mide con la cota MCV en los tres (el 90B no cabe en una clave de < 10^6 bits)
+
+[fuentes]
+ids = ["buena", "markov", "markov_fuerte", "periodica"]
+defectuosas = ["markov", "markov_fuerte", "periodica"]
+
+[defectos]
+desplazamiento_semilla = 7                       # la semilla del defecto es semilla + 7: independiente de la del Aer
+p_fresca_max = 0.51                              # P(bit fresco = 1) máximo supuesto para el techo analítico (límite de M1: ½ + 0,01); más alto => techo más estricto
+
+[defectos.markov]
+tipo = "persistencia"                            # el bit repite al anterior con probabilidad `peso`
+peso = 0.8
+
+[defectos.markov_fuerte]
+tipo = "persistencia"
+peso = 0.9
+
+[defectos.periodica]
+tipo = "patron"                                  # el bit toma el valor del patrón con probabilidad `peso`
+peso = 0.9
+patron = "00001111"                              # el mismo de C.E1d
+
+[criterios.defectuosas]                          # por semilla y fuente, con el dimensionado que DECIDE
+k1_techo = "bits de clave <= floor(h_min_con_defecto(peso, p_fresca_max) * bits crudos)"   # necesario: una clave no puede tener más entropía que la fuente
+k2_fraccion_maxima_de_la_buena = 0.25            # bits de clave <= 0,25 * bits de la clave de la fuente buena de la misma semilla
+rechazo = "sin clave (EntropiaInsuficiente) o clave que no pasa M1-M5: cuenta como rechazada y no se mide K1/K2"
+
+[criterios.buena]                                # por semilla, con el dimensionado que DECIDE
+g1 = "entrega clave y pasa M1-M5"
+g2_fraccion_minima_de_mcv = 0.75                 # bits de clave >= 0,75 * bits de la clave con MCV (mismo origen de bits)
+g3 = "M6 de la cadena entera (fuente + twirling + Peres + Toeplitz + validacion + 90B) estrictamente > umbral de dominio.metricas"
+
+[controles]                                      # validez del instrumento: si fallan => INVÁLIDA, no NO_CUMPLE
+requeridos = ["D5", "P5"]
+d5 = "el 90B sobre el prefijo de la muestra mitigada que entra a Peres ve el defecto: defectuosas < d5_techo_90b_defectuosa, buena >= d5_piso_90b_buena"
+d5_techo_90b_defectuosa = 0.5                    # el techo_rechazo_90b de E1 (C.E1d)
+d5_piso_90b_buena = 0.7                          # por debajo del piso de E1 (0,8): la buena de Aer con twirling sale a 0,797 en C.E1c, justo en el borde
+p5 = "los tres dimensionados de una fuente y semilla parten de la MISMA muestra (sha256 de la mitigada idéntico): la comparación es pareada"
+
+[maquina]
+carga_previa_maxima = 2.0                        # os.getloadavg()[0] < 2,0 al arrancar cada semilla (un proceso propio); reposo hasta reposo_maximo_s
+reposo_maximo_s = 900
+omp_num_threads = 1
+candado_de_maquina = true
+
+[desenlaces]
+validos = ["CUMPLE", "NO_CUMPLE"]                # INVÁLIDA no es desenlace: es CorridaInvalida (código 9)
+
+[reintento]
+otra_semilla = false                             # selección de semilla prohibida (P.E0 regla 3)
+ampliar_shots = false

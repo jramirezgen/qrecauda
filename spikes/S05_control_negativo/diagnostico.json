@@ -1,0 +1,178 @@
+[
+ {
+  "semilla": 1,
+  "fuente": "buena",
+  "techo_analitico_bits": null,
+  "h_90b_muestra_cruda": 0.8815,
+  "h_90b_pool": 0.8549,
+  "mcv": {
+   "bits_clave": 958325,
+   "h": 0.9977,
+   "aprobada": true
+  },
+  "min": {
+   "bits_clave": 862226,
+   "h": 0.8549,
+   "aprobada": true
+  },
+  "cons": {
+   "bits_clave": 862226,
+   "h": 0.8549,
+   "aprobada": true
+  }
+ },
+ {
+  "semilla": 1,
+  "fuente": "markov",
+  "techo_analitico_bits": 476162,
+  "h_90b_muestra_cruda": 0.0778,
+  "h_90b_pool": 0.6296,
+  "mcv": {
+   "bits_clave": 556838,
+   "h": 0.9969,
+   "aprobada": true
+  },
+  "min": {
+   "bits_clave": 400780,
+   "h": 0.6296,
+   "aprobada": true
+  },
+  "cons": {
+   "bits_clave": 115686,
+   "h": 0.1486,
+   "aprobada": true
+  }
+ },
+ {
+  "semilla": 1,
+  "fuente": "markov_fuerte",
+  "techo_analitico_bits": 231944,
+  "h_90b_muestra_cruda": 0.0375,
+  "h_90b_pool": 0.6425,
+  "mcv": {
+   "bits_clave": 383040,
+   "h": 0.9964,
+   "aprobada": true
+  },
+  "min": {
+   "bits_clave": 280019,
+   "h": 0.6425,
+   "aprobada": true
+  },
+  "cons": {
+   "bits_clave": 56873,
+   "h": 0.1041,
+   "aprobada": true
+  }
+ },
+ {
+  "semilla": 1,
+  "fuente": "periodica",
+  "techo_analitico_bits": 231944,
+  "h_90b_muestra_cruda": 0.0834,
+  "h_90b_pool": 0.1903,
+  "mcv": {
+   "bits_clave": 587668,
+   "h": 0.9964,
+   "aprobada": true
+  },
+  "min": {
+   "bits_clave": 153440,
+   "h": 0.1903,
+   "aprobada": true
+  },
+  "cons": {
+   "bits_clave": 123913,
+   "h": 0.1509,
+   "aprobada": true
+  }
+ },
+ {
+  "semilla": 2,
+  "fuente": "buena",
+  "techo_analitico_bits": null,
+  "h_90b_muestra_cruda": 0.8327,
+  "h_90b_pool": 0.88,
+  "mcv": {
+   "bits_clave": 956907,
+   "h": 0.9959,
+   "aprobada": true
+  },
+  "min": {
+   "bits_clave": 879557,
+   "h": 0.88,
+   "aprobada": true
+  },
+  "cons": {
+   "bits_clave": 879557,
+   "h": 0.88,
+   "aprobada": true
+  }
+ },
+ {
+  "semilla": 2,
+  "fuente": "markov",
+  "techo_analitico_bits": 476162,
+  "h_90b_muestra_cruda": 0.0773,
+  "h_90b_pool": 0.627,
+  "mcv": {
+   "bits_clave": 555883,
+   "h": 0.9968,
+   "aprobada": true
+  },
+  "min": {
+   "bits_clave": 398851,
+   "h": 0.627,
+   "aprobada": true
+  },
+  "cons": {
+   "bits_clave": 114997,
+   "h": 0.1479,
+   "aprobada": true
+  }
+ },
+ {
+  "semilla": 2,
+  "fuente": "markov_fuerte",
+  "techo_analitico_bits": 231944,
+  "h_90b_muestra_cruda": 0.0368,
+  "h_90b_pool": 0.6446,
+  "mcv": {
+   "bits_clave": 381288,
+   "h": 0.9961,
+   "aprobada": true
+  },
+  "min": {
+   "bits_clave": 279516,
+   "h": 0.6446,
+   "aprobada": true
+  },
+  "cons": {
+   "bits_clave": 55813,
+   "h": 0.1025,
+   "aprobada": true
+  }
+ },
+ {
+  "semilla": 2,
+  "fuente": "periodica",
+  "techo_analitico_bits": 231944,
+  "h_90b_muestra_cruda": 0.083,
+  "h_90b_pool": 0.1814,
+  "mcv": {
+   "bits_clave": 586874,
+   "h": 0.9957,
+   "aprobada": true
+  },
+  "min": {
+   "bits_clave": 146722,
+   "h": 0.1814,
+   "aprobada": true
+  },
+  "cons": {
+   "bits_clave": 123424,
+   "h": 0.1504,
+   "aprobada": true
+  }
+ }
+]

@@ -71,3 +71,15 @@ def h_contable(h_pool: float, bits_pool: int, h_fuente: float, bits_fuente: int)
     if bits_pool < 1 or bits_fuente < 1:
         raise ValueError("la contabilidad necesita pool y muestra no vacíos")
     return min(h_pool, h_fuente * bits_fuente / bits_pool)
+
+
+def h_min_con_defecto(peso: float, p_fresca_max: float) -> float:
+    """Min-entropía por bit (analítica) de una fuente con un defecto de peso `peso` sobre bits frescos de P(1 | 0) ≤ `p_fresca_max`.
+
+    Sirve a las dos formas de E5: con probabilidad `peso` el bit COPIA al anterior (cadena de Markov con persistencia) o toma el valor
+    de un patrón fijo (semidetermista); si no, es un bit fresco. En ambas la secuencia más probable acierta cada bit con
+    `peso + (1 − peso)·p_fresca_max`, así que H∞(N bits) = N·h con h = −log2 de eso (± un bit en la cadena de Markov, por el primer
+    bit). Con `p_fresca_max` mayor que el sesgo real el techo sale MÁS ESTRICTO, no más laxo."""
+    if not 0.0 <= peso <= 1.0 or not 0.5 <= p_fresca_max <= 1.0:
+        raise ValueError(f"peso en [0, 1] y p_fresca_max en [½, 1]; llegó {peso}, {p_fresca_max}")
+    return -math.log2(peso + (1.0 - peso) * p_fresca_max)
