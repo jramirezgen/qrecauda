@@ -14,6 +14,8 @@ causa «sin credencial IBM»).
 | experimento E4 (3 trabajos, hardware frente a su gemelo en Aer) | `declaraciones/E4.toml`, `docs/preinscripciones/E4.md` | preinscrito; sin correr |
 | `qrecauda demo --fuente ibm` | `composicion.demo_de` | ensayada; con hardware real, ⚠️ sin verificar |
 
+Disponible en 0.2.0 (sin publicar): `qrecauda demo --dimensionado {mcv,conservador}` y `--instancia` para elegir la instancia de IBM Quantum.
+
 ## 1. Una vez: cuenta, token e instancia
 
 1. Crea una cuenta en la plataforma de IBM Quantum y, en el panel, una **API key**.
@@ -28,7 +30,7 @@ causa «sin credencial IBM»).
 scripts/ibm_run.sh ensayo
 ```
 
-Equivale a `uv run qrecauda hardware --ensayo`. Recorre TODO el camino (backend, transpilación ISA, `SamplerV2`, twirling, gemelo, los cinco
+Equivale a `qrecauda hardware --ensayo` (con los extras instalados: instala `uv sync --frozen --group dev --extra cuantico --extra mitigacion --extra validacion --extra cifrado`; ejecuta con `.venv/bin/qrecauda` o `uv run --no-sync`, porque `uv run` a secas puede quitar los extras). Recorre TODO el camino (backend, transpilación ISA, `SamplerV2`, twirling, gemelo, los cinco
 pipelines por semilla, el registro de cada trabajo) contra `fake_sherbrooke`. Tarda del orden de medio minuto. Los bits los pone Aer:
 el origen queda `simulador_aer` y **nada se escribe en `registro/`**, sino en `salidas/ensayo_e4/`. El control V1 (trabajos reales)
 falla a propósito: un ensayo no es una medición. Bórralo con `rm -rf salidas/ensayo_e4` (el script lo hace solo).
@@ -52,7 +54,7 @@ Requisitos: `declaraciones/E4.toml` y `docs/preinscripciones/E4.md` **commiteado
 
 ```bash
 scripts/ibm_run.sh real RUTA_TOKEN [BACKEND]     # MAX_SEGUNDOS_QPU=<s> para otro tope
-uv run qrecauda juzgar E4
+uv run --no-sync qrecauda juzgar E4
 ```
 
 El primer comando envía **3 trabajos** (uno por semilla) y los espera (la cola puede tardar horas: la corrida no toma el candado de

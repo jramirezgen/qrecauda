@@ -8,17 +8,19 @@ Requisitos: [uv](https://docs.astral.sh/uv/) y Python 3.13 (el repo lo fija en `
 
 ```bash
 git clone https://github.com/jramirezgen/qrecauda.git && cd qrecauda
-uv sync --group dev
+uv sync --frozen --group dev --extra cuantico --extra mitigacion --extra validacion --extra cifrado
 ```
+
+Esa es la instalación mínima para `qrecauda demo` y para correr los experimentos. Con sólo `uv sync --group dev` queda el núcleo (numpy y scipy) y la demo no corre. El extra `informe` se añade para notebooks y figuras. Después de instalar, ejecuta `.venv/bin/qrecauda demo` o `uv run --no-sync qrecauda demo`.
 
 El núcleo (dominio, puertos, aplicación) usa solo numpy y scipy. Cada extra alimenta un adaptador:
 
 | extra | instala | lo necesitas para |
 |---|---|---|
-| `cuantico` | qiskit, qiskit-aer, qiskit-ibm-runtime | backend `aer_ruidoso`, backend `ibm`, E1, E2, E3 |
+| `cuantico` | qiskit, qiskit-aer, qiskit-ibm-runtime | backend `aer_ruidoso`, backend `ibm`, `qrecauda demo`, E1, E2, E3, E3b, E5 |
 | `mitigacion` | mthree | contraste con mthree en E2 |
 | `validacion` | nistrng | validador `nist`, proporciones NIST de E1 |
-| `cifrado` | cryptography | cifrado AES-GCM, E3 |
+| `cifrado` | cryptography | cifrado AES-GCM, `qrecauda demo`, E3, E3b |
 | `informe` | matplotlib, plotly, jupyter | notebook y figuras |
 
 Instalación completa, la misma que usa la CI:
@@ -45,6 +47,10 @@ Las opciones globales van antes del subcomando.
 | `qrecauda demo [--rapido] [--semilla N]` | PRNG, Aer sin mitigar y Aer con twirling lado a lado (M1, min-entropía, tres p-valores NIST, bits de clave) y un peaje y un trayecto de Metro cifrados con AES-256-GCM; determinista con la semilla, sin red |
 | `qrecauda demo --fuente ibm --token-file RUTA [--backend NOMBRE]` | añade una rama con un trabajo en hardware real de IBM (gasta cuota); con `--ensayo`, el mismo camino contra un backend falso, sin credencial |
 | `qrecauda hardware [--ensayo] [--token-file RUTA] [--backend NOMBRE] [--max-segundos-qpu S] [--ia]` | E4: tres trabajos en IBM y su gemelo en Aer; real a `registro/corridas/`, ensayo a `salidas/ensayo_e4/`. Paso a paso en `docs/HARDWARE.md` |
+
+El flag global `--formato` (y `--config`, `--raiz`) va **antes** del subcomando: `qrecauda --formato json juzgar E3`.
+
+Disponible en 0.2.0 (sin publicar): `qrecauda demo --dimensionado {mcv,conservador}` elige el dimensionado de la clave (por omisión `mcv`; `conservador` es el de E5 y es opt-in, no se re-midieron E3 ni E3b con él). `--instancia` selecciona la instancia de IBM Quantum de la rama de hardware (⚠️ sin verificar contra un dispositivo real). Si la ayuda de la CLI (`qrecauda demo --help`) difiere de esta tabla, manda el código.
 
 `--raiz` es la raíz del repo, donde viven `declaraciones/` y `registro/`; por defecto es el directorio actual.
 
@@ -76,6 +82,8 @@ Ejemplo, con salida JSON:
 `juzgar` escribe en `registro/veredictos.jsonl`. Si solo quieres leer el resultado, consulta ese archivo y `registro/corridas/`.
 
 ## 3. Declaraciones TOML
+
+En `declaraciones/` hay seis: E1, E2 y E3 (0.1.0), E3b (la clave sale de una reserva asíncrona generada aparte por un proceso productor), E4 (hardware de IBM, preinscrita y sin correr) y E5 (control negativo del pipeline completo con tres dimensionados). Los nombres de archivo de `registro/corridas/` llevan la semilla como sufijo numérico (`C.E3b_20261009_e3b_000.json`: la semilla es 20261009, no una fecha).
 
 Un experimento es una declaración en `declaraciones/` que hereda los parámetros comunes de `declaraciones/PARAMETROS.toml` (qubits, disparos, semillas, niveles de ruido, validación). Su criterio de éxito está escrito en `docs/preinscripciones/<ID>.md` antes de correr. Estructura mínima, tomada de E3:
 
@@ -165,7 +173,7 @@ Los secretos entran por ruta, nunca por valor. Para comprobar que un token carga
 ## 6. Reproducir las tablas del notebook
 
 ```bash
-uv sync --frozen --group dev --extra informe
+uv sync --frozen --group dev --extra cuantico --extra mitigacion --extra validacion --extra cifrado --extra informe
 .venv/bin/jupyter nbconvert --to notebook --execute --inplace notebooks/qrecauda.ipynb
 ```
 

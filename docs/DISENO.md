@@ -1,8 +1,8 @@
 # DISEÑO de QRecauda — arquitectura en capas
 
 > Auditado con las dos lentes de `code-principles`: principios (§1) y mapa clásico de capas (§3, cada fila con
-> sitio + regla de imports + test). La revisión adversarial independiente es el nodo `R.01` del DAG: **hasta que
-> corra, este diseño es 10/10 «en el papel», no demostrado.**
+> sitio + regla de imports + test). La revisión adversarial independiente es el nodo `R.01` del DAG (corrida para 0.1.0; la R.02 de 0.2.0
+> está en curso): **un diseño 10/10 se demuestra con revisión independiente, no se declara.**
 
 ## 0. Las cuatro macro-capas (el mapa que se lee primero)
 
@@ -34,6 +34,17 @@ contrato en `.importlinter`. La Presentación y la CLI son bordes de la lógica,
 FuenteDeBits ──▶ [Mitigador] ──▶ Peres ──▶ Toeplitz(LHL) ──▶ Validador ──▶ Clave ──▶ Cifrador
 (prng | aer | ibm)   (opcional)   dominio     dominio          (scipy|nistrng)         (AES-GCM)
 ```
+
+### 2·bis. Reserva asíncrona de claves y experimentos con ella (0.2.0, F6.03)
+
+Para el experimento E3b la clave de una transacción no se genera dentro de ella: un **proceso productor** corre la cadena
+(Aer, *twirling*, Peres, Toeplitz, validación M1 a M5 y 90B) y deposita las claves en una cola acotada, con contrapresión;
+el consumidor toma trozos de 352 bits (clave de 256 y *nonce* de 96) con un registro de consumo, de modo que ningún par
+(clave, *nonce*) sale dos veces. Vive en `aplicacion/reserva_asincrona.py` (con `datos/reserva.py` y el ejecutor
+`aplicacion/ejecutor_e3b.py`), tras el puerto `ReservaDeClaves`; el dominio no la conoce. E5 (`declaraciones/E5.toml`) ejerce
+el pipeline completo con fuentes que dependen de sus bits y tres dimensionados de la clave (`mcv`, `min_mcv_90b`,
+`conservador`); el predeterminado sigue siendo `mcv` y el conservador es opt-in. Las declaraciones de E3b, E4 y E5 conviven
+con las de E1 a E3 en `declaraciones/`.
 
 ## 3. Mapa de capas (lente 2)
 

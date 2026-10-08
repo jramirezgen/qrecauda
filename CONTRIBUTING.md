@@ -1,6 +1,6 @@
 # Cómo contribuir
 
-Gracias por mirar el proyecto. Antes de abrir un cambio, lee [`docs/FUNDAMENTO.md`](docs/FUNDAMENTO.md) (objetivo, alcance y reglas) y [`docs/DISENO.md`](docs/DISENO.md) (capas). Para instalar y ejecutar, ver [`docs/USO.md`](docs/USO.md).
+Gracias por mirar el proyecto. Antes de abrir un cambio, lee [`docs/FUNDAMENTO.md`](docs/FUNDAMENTO.md) (objetivo, alcance y reglas) y [`docs/DISENO.md`](docs/DISENO.md) (capas). Para instalar y ejecutar, ver [`docs/USO.md`](docs/USO.md). `CLAUDE.md`, en la raíz, está versionado a propósito: es el protocolo de trabajo del repositorio (qué leer primero, dónde vive el estado, reglas de cifras, secretos y commits) para quien trabaje en él con un asistente; no es una configuración personal.
 
 ## Entorno
 

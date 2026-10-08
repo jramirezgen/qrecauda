@@ -16,9 +16,11 @@ Lo que cambió desde 0.1.0 (cifras en `registro/corridas/` y `registro/veredicto
 
 1. **Latencia (M7), cerrada en simulador con otro diseño.** E3 (0.1.0, la clave se genera dentro de la transacción) sigue en
    NO CUMPLE: p95 de 5,5 a 9,4 s frente a 500 ms, y no se reabre. E3b, con la clave de una reserva generada aparte por un
-   proceso productor y una preinscripción propia, CUMPLE en las tres semillas (`C.E3b`): p95 de 0,17 a 0,18 ms, productor de
-   177 a 199 kbit/s contra 10 kbit/s, sin esperas. El arranque (6,6 a 6,7 s hasta la primera clave) se informa aparte.
-   El componente queda en TRL 4 (n = 3, protocolo preinscrito, simulador); no sube al sistema.
+   proceso productor y una preinscripción propia, CUMPLE en las tres semillas (`C.E3b`): p95 de 0,17 a 0,18 ms con la reserva
+   cebada, capacidad del productor de 177 a 199 kbit/s (entregado en régimen, 47,8 kbit/s) contra 10 kbit/s, sin esperas. El
+   arranque (6,6 a 6,7 s hasta la primera clave) se informa aparte e incumpliría M7 para una transacción que llegue durante él.
+   No es comparable con E3 (generar y cifrar frente a sólo cifrar). El componente queda en TRL 3 (4 sólo con la reserva cebada;
+   simulador); no sube al sistema.
 2. **Control negativo del pipeline completo (E5, CUMPLE).** El hallazgo R.00-1 se midió en cadena completa: con el
    dimensionado de 0.1.0 las claves de fuentes con dependencia pasan M1–M5 y salen entre 1,2 y 2,5 veces más largas que lo
    que la fuente sostiene (veredicto E5). El dimensionado conservador (mínimo de MCV y 90B más la contabilidad de la

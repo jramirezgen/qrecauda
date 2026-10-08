@@ -1,6 +1,6 @@
 # Informe técnico (docs/paper)
 
-Informe de QRecauda: planeación, método preinscrito y resultados de E1, E2 y E3.
+Informe de QRecauda: planeación, método preinscrito y resultados de E1, E2, E3, E3b y E5.
 
 | fichero | función |
 |:--|:--|
@@ -19,4 +19,4 @@ Reproducir, desde la raíz del repositorio:
 bash docs/paper/construir.sh
 ```
 
-Toda cifra procede de una corrida o veredicto nombrado del registro. No se citan rutas absolutas. El informe es anónimo (alias «kaitokid»); la historia de git lleva la identidad de git del dueño del repo, decisión suya, y el remoto es público (`jramirezgen/qrecauda`, con espejo `bare`). No se reescribió la historia.
+Toda cifra procede de una corrida o veredicto nombrado del registro. No se citan rutas absolutas. El informe es anónimo (alias «kaitokid»); la historia de git lleva la identidad de git del dueño del repo, decisión suya, y el remoto es público (`jramirezgen/qrecauda`, con espejo `bare`). No se reescribió la historia: los sha de esos commits están citados en el registro. El repositorio público conserva, en commits anteriores, la autoría con la identidad real de git; el texto del informe es anónimo, pero **no se promete anonimato del repositorio**.
