@@ -4,9 +4,44 @@
 [![Licencia: Apache-2.0](https://img.shields.io/badge/licencia-Apache--2.0-blue.svg)](LICENSE)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](.python-version)
 
-Pipeline reproducible de generación de claves a partir de un circuito QRNG simulado, con un caso de uso de recaudación (peaje y Metro de Lima). Nació en el Track 4 del Hackatón Qiskit IBM Lima.
+**La aleatoriedad clásica se predice. La recaudación del Perú no debería.**
 
-Nivel de madurez (TRL): **3**. Lo que se probó es el postprocesamiento: mitigación de lectura, extracción de entropía, validación estadística y cifrado AES-GCM. El simulador no aporta entropía cuántica y no hay corrida en hardware IBM. Los detalles están en [Limitaciones](#limitaciones).
+QRecauda es un pipeline reproducible que convierte los bits de un circuito cuántico en claves de cifrado para cobros masivos (peaje y Metro de Lima), y mide cada etapa de la cadena. Hoy corre en simulador y está diseñado para recibir, por el mismo puerto, bits de una computadora cuántica de IBM. Nació en el Track 4 del Hackatón Qiskit IBM Lima.
+
+## Por qué importa
+
+Cada cobro es una transacción pequeña que se firma y se cifra con una clave y un *nonce*. Si el generador que los produce es pseudoaleatorio, quien reconstruye su estado reproduce las claves siguientes. El volumen que depende de eso es grande:
+
+- **Metro de Lima, L1:** 203,9 millones de pasajeros en 2025, un récord (*verificado*, [energiminas](https://energiminas.com/?p=48912)). Más de 600 000 usuarios por día (*tercero*).
+- **Peajes:** 24,6 millones de vehículos en el primer cuatrimestre de 2021, el único dato nacional hallado (*tercero*, desactualizado, sin cifra de recaudación, [andina](https://andina.pe/agencia/noticia-ositran-trafico-vehicular-crece-24-carreteras-concesionadas-852013.aspx)).
+
+Las fuentes completas y su etiqueta están en [`docs/pitch/IMPACTO.md`](docs/pitch/IMPACTO.md).
+
+**Lo que no se afirma.** Ninguna norma que revisamos (Ley 29733 con su DS 016-2024-JUS, SBS Res. 504-2021, reglamento del MTC) exige un QRNG; piden medidas técnicas de seguridad (*tercero*). El argumento de QRecauda es de ingeniería: la entropía de la fuente se mide, no se supone. Para eso se apoya en NIST SP 800-90B (estimación de entropía de la fuente) y SP 800-90C (construcción de generadores, versión final del 2025-09-25, *verificado*). NIST SP 800-22 se usa sólo como chequeo de regresión del postprocesamiento: en 2022 NIST aclaró que no sirve para validar generadores aleatorios criptográficos (*tercero*), y aquí lo confirmamos, porque una clave de PRNG y una de fuente sesgada la pasan igual.
+
+## Qué hay hoy y qué añade la computadora de IBM
+
+| | hoy, en simulador | lo que añade la computadora cuántica de IBM |
+|---|---|---|
+| Fuente de bits | Qiskit Aer, circuito de un gate sobre ocho qubits | mediciones de un dispositivo real, con `job_id` trazable |
+| Origen de la entropía | un PRNG: sin valor de seguridad | proceso físico de medición, **no certificado** (no hallamos un QRNG certificado de IBM) |
+| Ruido de lectura | modelado (sesgo crudo de 0,03 en el nivel medio) | ruido real, posiblemente asimétrico, correlacionado y con deriva |
+| Mitigación | twirling propio medido sobre ruido modelado; ZNE y PEC no mueven el sesgo | comprobar que funciona sobre ruido real y compararlo con `mthree` y con las opciones de IBM (⚠️ sin verificar) |
+| Validación | NIST 800-22 y 90B sobre las etapas; control de fuente Markov | 90B sobre los bits crudos del dispositivo, que es lo que informa sobre la fuente |
+| Latencia | M7 NO CUMPLE; reserva de claves en estudio (E3b) | sumará latencia de cola y de red, hoy fuera de M7 |
+| Qué se puede afirmar | que el postprocesamiento y su medición funcionan | nada nuevo hasta que corra E1 y E2 sobre esa fuente con tres semillas |
+
+## Demo en 2 minutos
+
+> `qrecauda demo` está **disponible en 0.2.0**. En 0.1.0 el subcomando todavía no existe.
+
+```bash
+uv run qrecauda demo
+```
+
+Muestra tres ramas lado a lado: un PRNG clásico, la fuente de Aer sin mitigar y la fuente de Aer mitigada. La mitigación limpia la entrada (el sesgo de la muestra baja de 0,03 a cuatro diezmilésimas), pero la clave de las tres ramas pasa la batería: por eso la batería no prueba el origen. La figura sale de las corridas registradas con `presentacion/figura_demo.py` y está en el [deck](docs/pitch/DECK.md); el [guion de dos minutos](docs/pitch/GUION.md) cronometra la presentación. Mientras tanto, `uv run qrecauda juzgar E1` rejuzga la corrida registrada.
+
+**Estado en una línea:** TRL **3**, prototipo de laboratorio. Lo que se probó es el postprocesamiento: mitigación de lectura, extracción de entropía, validación estadística y cifrado AES-GCM. El simulador no aporta entropía cuántica y no hay corrida en hardware IBM. La tabla honesta de resultados está debajo y los detalles en [Limitaciones](#limitaciones).
 
 ## Qué problema aborda
 
@@ -118,8 +153,9 @@ El detalle, con la regla de imports de cada capa y el test que la protege, está
 | `plan/` | DAG del proyecto y su verificador |
 | `notebooks/` | `qrecauda.ipynb`, genera las tablas del informe |
 | `spikes/` | investigaciones acotadas (S.01 a S.04), incluida la compilación del 90B |
+| `presentacion/` | `figura_demo.py`: figura de la demo de las tres ramas, desde `registro/corridas/` |
 | `scripts/` | CI local, hooks de git, limpieza del entorno |
-| `docs/` | fundamento, diseño, amenazas, TRL, roadmap, glosario, decisiones, informes |
+| `docs/` | fundamento, diseño, amenazas, TRL, roadmap, glosario, decisiones, informes; `docs/pitch/` con deck, guion e impacto |
 
 ## Reproducir los resultados
 
